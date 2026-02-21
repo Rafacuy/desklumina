@@ -1,7 +1,42 @@
 import { logger } from "../logger";
+import { analyzeCommand, rofiConfirm } from "../security";
 
-export async function execute(command: string): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+export async function execute(
+  command: string
+): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   logger.info("terminal", `Eksekusi: ${command}`);
+
+  // Analisis keamanan perintah
+  const analysis = analyzeCommand(command);
+
+  if (analysis.isDangerous) {
+    const severity = analysis.highestSeverity as
+      | "critical"
+      | "high"
+      | "medium";
+
+    logger.warn(
+      "terminal",
+      `Perintah berbahaya terdeteksi [${severity}]: ${analysis.summary}`
+    );
+
+    const confirmed = await rofiConfirm(
+      "Perintah Berbahaya Terdeteksi",
+      `Perintah: ${command}\n\nAlasan: ${analysis.summary}`,
+      severity
+    );
+
+    if (!confirmed) {
+      logger.info("terminal", "Perintah dibatalkan oleh pengguna");
+      return {
+        stdout: "",
+        stderr: "Operasi dibatalkan oleh pengguna",
+        exitCode: 1,
+      };
+    }
+
+    logger.info("terminal", "Perintah berbahaya disetujui pengguna");
+  }
 
   const proc = Bun.spawn(["bash", "-c", command], {
     stdout: "pipe",

@@ -1,8 +1,10 @@
 import { execute } from "./terminal";
 import { logger } from "../logger";
+import { checkDangerousCommand } from "../security/dangerous-commands";
+import { rofiConfirm } from "../security/confirmation";
 
 export async function bspwm(action: string): Promise<string> {
-  logger.info("bspwm", `Action: ${action}`);
+  logger.info("bspwm", `Aksi: ${action}`);
 
   const parts = action.trim().split(/\s+/);
   const cmd = parts[0];
@@ -29,6 +31,21 @@ export async function bspwm(action: string): Promise<string> {
   };
 
   const command = actions[cmd] || action;
+
+  const dangerous = checkDangerousCommand(command);
+  if (dangerous) {
+    const confirmed = await rofiConfirm(
+      `${dangerous.description}`,
+      `Perintah: ${command}\n\nTingkat Bahaya: ${dangerous.severity.toUpperCase()}`,
+      dangerous.severity
+    );
+
+    if (!confirmed) {
+      logger.info("bspwm", `Perintah berbahaya dibatalkan pengguna`);
+      return "Operasi dibatalkan pengguna";
+    }
+  }
+
   const result = await execute(command);
   return result.stdout || "Selesai";
 }

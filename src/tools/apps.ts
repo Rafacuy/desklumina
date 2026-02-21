@@ -1,4 +1,6 @@
 import { logger } from "../logger";
+import { checkDangerousCommand } from "../security/dangerous-commands";
+import { rofiConfirm } from "../security/confirmation";
 import appsData from "../config/apps.json";
 
 const apps = appsData as Record<string, string>;
@@ -12,6 +14,21 @@ export async function launch(alias: string): Promise<void> {
 
   if (!command) {
     logger.warn("apps", `Alias tidak ditemukan: ${alias}, fallback ke terminal`);
+    
+    const dangerous = checkDangerousCommand(alias);
+    if (dangerous) {
+      const confirmed = await rofiConfirm(
+        `${dangerous.description}`,
+        `Perintah: ${alias}\n\nTingkat Bahaya: ${dangerous.severity.toUpperCase()}`,
+        dangerous.severity
+      );
+      
+      if (!confirmed) {
+        logger.info("apps", `Perintah berbahaya dibatalkan pengguna`);
+        return;
+      }
+    }
+    
     Bun.spawn(["bash", "-c", alias], { detached: true, stdio: ["ignore", "ignore", "ignore"] });
     return;
   }
