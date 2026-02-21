@@ -2,9 +2,9 @@
 
 AI-powered desktop automation agent designed for BSPWM window manager environments. Lumina acts as an intelligent assistant that can control your desktop, manage applications, execute commands, and automate daily tasks through natural language interaction.
 
-| WARNING:
-| THIS BSPWM APP ONLY SUPPORTED ON THE [https://github.com/github.com/gh0stzk/dotfiles](gh0stzk) DOTFILES ONLY.
-| MAKE SURE TO INSTALL THE DOTFILES FIRST.
+> WARNING:
+> THIS BSPWM APP ONLY SUPPORTED ON THE [gh0stzk](https://github.com/github.com/gh0stzk/dotfiles) DOTFILES ONLY.
+> MAKE SURE TO INSTALL THE DOTFILES FIRST.
 
 ## Features
 
