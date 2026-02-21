@@ -1,0 +1,97 @@
+* {
+    white: #ffffff;
+    off-white: #f8f9fa;
+    light-gray: #e9ecef;
+    gray: #adb5bd;
+    dark-gray: #495057;
+    blue: #228be6;
+    light-blue: #e7f5ff;
+    accent: #1c7ed6;
+    
+    bg: @white;
+    fg: @dark-gray;
+    accent-color: @blue;
+    
+    font: "JetBrainsMono Nerd Font 10";
+}
+
+window {
+    anchor: northeast;
+    location: northeast;
+    x-offset: -10;
+    y-offset: 10;
+    width: 320px;
+    border: 0px;
+    border-radius: 10px;
+    padding: 0px;
+    background-color: @bg;
+}
+
+mainbox {
+    padding: 0px;
+    spacing: 0px;
+}
+
+inputbar {
+    padding: 10px 12px;
+    border-radius: 10px 10px 0 0;
+    spacing: 6px;
+    background-color: @bg;
+    children: [prompt, entry];
+}
+
+prompt {
+    text-color: @accent-color;
+    font: "JetBrainsMono Nerd Font Bold 10";
+    str: "❯";
+}
+
+entry {
+    text-color: @fg;
+    placeholder: "Type a message...";
+    placeholder-color: @gray;
+    background-color: transparent;
+}
+
+message {
+    background-color: @off-white;
+    padding: 6px 12px;
+    text-color: @fg;
+    font: "JetBrainsMono Nerd Font 9";
+}
+
+textbox {
+    background-color: transparent;
+    text-color: @fg;
+}
+
+listview {
+    lines: 6;
+    fixed-height: false;
+    scrollbar: false;
+    border: 0;
+    padding: 4px 6px 8px 6px;
+    spacing: 2px;
+    background-color: @bg;
+}
+
+element {
+    padding: 6px 10px;
+    border-radius: 6px;
+    spacing: 6px;
+    background-color: transparent;
+}
+
+element selected {
+    background-color: @light-blue;
+}
+
+element-text {
+    background-color: inherit;
+    text-color: inherit;
+}
+
+element-icon {
+    size: 1em;
+    background-color: transparent;
+}
