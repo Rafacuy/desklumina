@@ -2,11 +2,15 @@
 
 AI-powered desktop automation agent designed for BSPWM window manager environments. Lumina acts as an intelligent assistant that can control your desktop, manage applications, execute commands, and automate daily tasks through natural language interaction.
 
+| WARNING:
+| THIS BSPWM APP ONLY SUPPORTED ON THE [https://github.com/github.com/gh0stzk/dotfiles](gh0stzk) DOTFILES ONLY.
+| MAKE SURE TO INSTALL THE DOTFILES FIRST.
+
 ## Features
 
 - **Natural Language Control** - Interact with your desktop using conversational commands
 - **BSPWM Integration** - Full control over workspaces, windows, and window manager settings
-- **Application Launcher** - Open and manage applications with simple aliases
+- **Application La:uncher** - Open and manage applications with simple aliases
 - **File Operations** - Create, move, copy, delete, and search files
 - **Media Control** - Control MPD music player with play, pause, volume, and playlist management
 - **Clipboard Management** - Access and manipulate clipboard history via clipcat
@@ -90,7 +94,7 @@ MODEL_NAME=openai/gpt-oss-120b
 Launches the Rofi-based graphical interface:
 
 ```bash
-bun run start
+bun start
 ```
 
 ### Terminal Chat Mode
@@ -208,7 +212,7 @@ Lumina reads the active theme from `~/.config/bspwm/.rice` and applies correspon
 
 ### Chat Storage
 
-Conversations are stored as JSON files in `~/.config/bspwm/agent/chats/` with automatic title generation based on the first message.
+Conversations are stored as JSON files in `chats/` with automatic title generation based on the first message.
 
 ## Development
 
