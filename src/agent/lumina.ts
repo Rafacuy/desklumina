@@ -26,7 +26,7 @@ export class Lumina {
     }
 
     const messages = [
-      { role: "system" as const, content: buildSystemPrompt() },
+      { role: "system" as const, content: await buildSystemPrompt() },
       ...contextMessages,
     ];
 

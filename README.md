@@ -44,6 +44,7 @@
 |----------|----------|
 | **🤖 AI Integration** | Natural language control, streaming responses via Groq API, automatic model fallback |
 | **🖥️ Window Manager** | Full BSPWM integration - workspaces, windows, layouts |
+| **🪟 Context Awareness** | Automatic detection of active window/application for context-aware commands |
 | **🚀 Applications** | Launch apps with simple aliases, detached process support |
 | **📁 File Operations** | Create, move, copy, delete, search files and directories |
 | **🎵 Media Control** | MPD integration - play, pause, volume, playlists |
@@ -79,7 +80,8 @@ src/
 │   ├── files.ts               # File system operations
 │   ├── media.ts               # MPD music player control
 │   ├── clipboard.ts           # Clipcat clipboard management
-│   └── notify.ts              # Dunst notification sender
+│   ├── notify.ts              # Dunst notification sender
+│   └── window-info.ts         # Active window detection and context
 │
 ├── ui/
 │   ├── rofi.ts                # Rofi launcher integration
