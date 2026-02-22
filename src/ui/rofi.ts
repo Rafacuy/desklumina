@@ -9,8 +9,15 @@ export async function rofiChatInput(
 ): Promise<{ action: "send" | "new" | "select" | "exit"; input?: string }> {
   const currentChat = chatManager.getCurrentChat();
   const historyPreview = chatManager.getChatHistoryPreview(300);
+  const toolContextPreview = chatManager.getToolContextPreview();
   
   const menuItems: string[] = [];
+  
+  // Show tool context first if available
+  if (toolContextPreview) {
+    menuItems.push(toolContextPreview);
+    menuItems.push("──────────────────");
+  }
   
   if (historyPreview) {
     menuItems.push("── Recent Messages ──");
@@ -54,7 +61,7 @@ export async function rofiChatInput(
     return { action: "exit" };
   }
 
-  if (input.startsWith("You: ") || input.startsWith("Lumina: ") || input.startsWith("──") || input.startsWith("───")) {
+  if (input.startsWith("You: ") || input.startsWith("Lumina: ") || input.startsWith("──") || input.startsWith("───") || input.startsWith("🔧") || input.startsWith("✓")) {
     const message = await rofiSimpleInput("Message", "");
     if (message) {
       return { action: "send", input: message };

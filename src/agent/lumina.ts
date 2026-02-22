@@ -1,7 +1,7 @@
 import { streamGroq } from "../ai/groq";
 import { buildSystemPrompt } from "../ai/prompts";
 import { Context } from "./context";
-import { ChatManager } from "./chat-manager";
+import { ChatManager, ToolResult } from "./chat-manager";
 import { parseToolCalls } from "./planner";
 import { dispatch } from "../tools";
 import { logger } from "../logger";
@@ -46,16 +46,22 @@ export class Lumina {
       const toolCalls = parseToolCalls(fullResponse);
 
       if (toolCalls.length > 0) {
+        const toolResults: ToolResult[] = [];
         const results: string[] = [];
+        
         for (const call of toolCalls) {
           const result = await dispatch(call.tool, call.arg);
+          toolResults.push({ tool: call.tool, result });
           results.push(`[${call.tool}] ${result}`);
         }
         
         const toolOutput = results.join("\n");
         logger.info("lumina", `Tool results: ${toolOutput}`);
         
-        if (!this.chatManager) {
+        // Save tool results to chatManager if available (FIX: previously was not saving)
+        if (this.chatManager) {
+          this.chatManager.addToolResults(toolResults);
+        } else {
           this.context.add("user", `Tool execution results:\n${toolOutput}`);
         }
       }

@@ -6,6 +6,18 @@ export type Message = {
   role: "user" | "assistant";
   content: string;
   timestamp: number;
+  toolCalls?: ToolCall[];
+  toolResults?: ToolResult[];
+};
+
+export type ToolCall = {
+  tool: string;
+  arg: string;
+};
+
+export type ToolResult = {
+  tool: string;
+  result: string;
 };
 
 export type Chat = {
@@ -78,16 +90,22 @@ export class ChatManager {
     return this.currentChat;
   }
 
-  addMessage(content: string, role: "user" | "assistant"): void {
+  addMessage(content: string, role: "user" | "assistant", toolCalls?: ToolCall[]): void {
     if (!this.currentChat) {
       this.currentChat = this.createChat(content);
     }
 
-    this.currentChat.messages.push({
+    const message: Message = {
       role,
       content,
       timestamp: Date.now(),
-    });
+    };
+    
+    if (toolCalls) {
+      message.toolCalls = toolCalls;
+    }
+
+    this.currentChat.messages.push(message);
 
     if (this.currentChat.messages.length === 1 && role === "user") {
       this.currentChat.title = generateTitle(content);
@@ -95,6 +113,32 @@ export class ChatManager {
 
     this.currentChat.updatedAt = Date.now();
     this.saveChat(this.currentChat);
+  }
+
+  addToolResults(results: ToolResult[]): void {
+    if (!this.currentChat || this.currentChat.messages.length === 0) return;
+
+    const lastMessage = this.currentChat.messages[this.currentChat.messages.length - 1];
+    if (lastMessage && lastMessage.role === "assistant") {
+      lastMessage.toolResults = results;
+      this.currentChat.updatedAt = Date.now();
+      this.saveChat(this.currentChat);
+    }
+  }
+
+  getLastToolContext(): { calls: ToolCall[]; results: ToolResult[] } | null {
+    if (!this.currentChat || this.currentChat.messages.length === 0) return null;
+
+    const recentMessages = [...this.currentChat.messages].reverse();
+    for (const msg of recentMessages) {
+      if (msg.toolCalls && msg.toolCalls.length > 0) {
+        return {
+          calls: msg.toolCalls,
+          results: msg.toolResults || [],
+        };
+      }
+    }
+    return null;
   }
 
   getAllChats(): Chat[] {
@@ -128,10 +172,25 @@ export class ChatManager {
 
   getMessagesForAPI(): { role: "user" | "assistant"; content: string }[] {
     if (!this.currentChat) return [];
-    return this.currentChat.messages.map(m => ({
-      role: m.role,
-      content: m.content,
-    }));
+    
+    const messages: { role: "user" | "assistant"; content: string }[] = [];
+    
+    for (const m of this.currentChat.messages) {
+      let content = m.content;
+      
+      // Append tool results to message content for context
+      if (m.toolResults && m.toolResults.length > 0) {
+        const resultsStr = m.toolResults.map(r => `[${r.tool}]: ${r.result}`).join("\n");
+        content += `\n\n--- Tool Results ---\n${resultsStr}`;
+      }
+      
+      messages.push({
+        role: m.role,
+        content,
+      });
+    }
+    
+    return messages;
   }
 
   getChatHistoryPreview(maxChars: number = 500): string {
@@ -154,8 +213,41 @@ export class ChatManager {
       if (totalChars + line.length > maxChars) break;
       preview.unshift(line);
       totalChars += line.length;
+      
+      // Add tool context if available
+      if (msg.toolCalls && msg.toolCalls.length > 0) {
+        const toolLine = `  🔧 Tools: ${msg.toolCalls.map(t => t.tool).join(", ")}`;
+        if (totalChars + toolLine.length <= maxChars) {
+          preview.push(toolLine);
+          totalChars += toolLine.length;
+        }
+      }
     }
 
     return preview.join("\n");
+  }
+
+  getToolContextPreview(): string {
+    const toolContext = this.getLastToolContext();
+    if (!toolContext) return "";
+
+    const lines: string[] = [];
+    
+    if (toolContext.calls.length > 0) {
+      lines.push("── Last Tool Calls ──");
+      for (const call of toolContext.calls) {
+        lines.push(`🔧 ${call.tool}: ${call.arg.substring(0, 50)}${call.arg.length > 50 ? "..." : ""}`);
+      }
+    }
+    
+    if (toolContext.results.length > 0) {
+      lines.push("── Results ──");
+      for (const result of toolContext.results) {
+        const truncated = result.result.substring(0, 60);
+        lines.push(`✓ ${result.tool}: ${truncated}${result.result.length > 60 ? "..." : ""}`);
+      }
+    }
+
+    return lines.join("\n");
   }
 }
