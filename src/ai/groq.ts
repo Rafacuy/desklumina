@@ -1,10 +1,29 @@
-import { env } from "../config/env";
+import { env, modelConfig } from "../config/env";
 import { logger } from "../logger";
 import { parseSSE } from "./stream";
 
 export class GroqAPIError extends Error {
-  constructor(public statusCode: number, public body: string) {
-    super(`Groq API Error ${statusCode}: ${body}`);
+  constructor(
+    public statusCode: number,
+    public body: string,
+    public model: string
+  ) {
+    super(`Groq API Error ${statusCode} (model: ${model}): ${body}`);
+    this.name = "GroqAPIError";
+  }
+}
+
+export class ModelNotFoundError extends GroqAPIError {
+  constructor(model: string, body: string) {
+    super(404, body, model);
+    this.name = "ModelNotFoundError";
+  }
+}
+
+export class AllModelsFailedError extends Error {
+  constructor(public attemptedModels: string[], public lastError: Error) {
+    super(`Semua model gagal. Model yang dicoba: ${attemptedModels.join(", ")}`);
+    this.name = "AllModelsFailedError";
   }
 }
 
@@ -13,8 +32,33 @@ type Message = {
   content: string;
 };
 
-export async function* streamGroq(messages: Message[]): AsyncGenerator<string> {
-  logger.info("groq", `Mengirim request ke Groq dengan model ${env.MODEL_NAME}`);
+/**
+ * Check if error indicates model not found/unavailable
+ */
+function isModelNotFoundError(statusCode: number, body: string): boolean {
+  if (statusCode === 404) return true;
+  if (statusCode === 400) {
+    const lowerBody = body.toLowerCase();
+    return (
+      lowerBody.includes("model_not_found") ||
+      lowerBody.includes("model not found") ||
+      lowerBody.includes("does not exist") ||
+      lowerBody.includes("is not available") ||
+      lowerBody.includes("unsupported model") ||
+      lowerBody.includes("unknown model")
+    );
+  }
+  return false;
+}
+
+/**
+ * Stream response from Groq API with a specific model
+ */
+async function* streamWithModel(
+  messages: Message[],
+  model: string
+): AsyncGenerator<string> {
+  logger.info("groq", `Mengirim request ke Groq dengan model ${model}`);
 
   const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -23,7 +67,7 @@ export async function* streamGroq(messages: Message[]): AsyncGenerator<string> {
       Authorization: `Bearer ${env.GROQ_API_KEY}`,
     },
     body: JSON.stringify({
-      model: env.MODEL_NAME,
+      model,
       messages,
       stream: true,
       temperature: 0.7,
@@ -33,8 +77,13 @@ export async function* streamGroq(messages: Message[]): AsyncGenerator<string> {
 
   if (!response.ok) {
     const body = await response.text();
-    logger.error("groq", `API error: ${response.status} - ${body}`);
-    throw new GroqAPIError(response.status, body);
+    logger.error("groq", `API error untuk model ${model}: ${response.status} - ${body}`);
+    
+    if (isModelNotFoundError(response.status, body)) {
+      throw new ModelNotFoundError(model, body);
+    }
+    
+    throw new GroqAPIError(response.status, body, model);
   }
 
   if (!response.body) {
@@ -42,4 +91,59 @@ export async function* streamGroq(messages: Message[]): AsyncGenerator<string> {
   }
 
   yield* parseSSE(response.body);
+}
+
+/**
+ * Stream response from Groq API with automatic fallback
+ * If the primary model fails (not found/unavailable), it will try fallback models
+ */
+export async function* streamGroq(messages: Message[]): AsyncGenerator<string> {
+  const models = modelConfig.getAllModels();
+  const attemptedModels: string[] = [];
+  let lastError: Error | null = null;
+
+  for (const model of models) {
+    attemptedModels.push(model);
+    
+    try {
+      yield* streamWithModel(messages, model);
+      return; // Success, exit the generator
+    } catch (error) {
+      if (error instanceof ModelNotFoundError) {
+        logger.warn("groq", `Model ${model} tidak tersedia, mencoba fallback...`);
+        lastError = error;
+        continue; // Try next model
+      }
+      
+      // For other errors, also try fallback but log differently
+      if (error instanceof GroqAPIError) {
+        logger.warn("groq", `Model ${model} gagal dengan error ${error.statusCode}, mencoba fallback...`);
+        lastError = error;
+        continue;
+      }
+      
+      // Non-API errors (network, etc.) - rethrow immediately
+      throw error;
+    }
+  }
+
+  // All models failed
+  throw new AllModelsFailedError(attemptedModels, lastError || new Error("Unknown error"));
+}
+
+/**
+ * Get list of available models (primary + fallbacks)
+ */
+export function getAvailableModels(): string[] {
+  return modelConfig.getAllModels();
+}
+
+/**
+ * Get current active model info
+ */
+export function getModelInfo(): { primary: string; fallbacks: string[] } {
+  return {
+    primary: modelConfig.primaryModel,
+    fallbacks: modelConfig.fallbackModels,
+  };
 }
