@@ -4,7 +4,7 @@ AI-powered desktop automation agent designed for BSPWM window manager environmen
 
 > WARNING:
 
-> THIS BSPWM APP ONLY SUPPORTED ON THE [gh0stzk](https://github.com/github.com/gh0stzk/dotfiles) DOTFILES ONLY.
+> THIS BSPWM APP ONLY SUPPORTED ON THE [gh0stzk](https://github.com/gh0stzk/dotfiles) DOTFILES ONLY.
 
 > MAKE SURE TO INSTALL THE DOTFILES FIRST.
 
