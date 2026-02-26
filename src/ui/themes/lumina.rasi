@@ -1,17 +1,20 @@
 * {
+    // Professional Color Palette
     white: #ffffff;
-    off-white: #f8f9fa;
-    light-gray: #e9ecef;
-    gray: #adb5bd;
-    dark-gray: #495057;
-    blue: #228be6;
-    light-blue: #e7f5ff;
-    accent: #1c7ed6;
-    shadow: #00000020;
+    surface: #fafafa;
+    border-subtle: #e5e7eb;
+    border-light: #f3f4f6;
+    text-primary: #1f2937;
+    text-secondary: #6b7280;
+    text-muted: #9ca3af;
+    accent: #2563eb;
+    accent-light: #eff6ff;
+    accent-hover: #dbeafe;
+    shadow-color: #000000;
     
     bg: @white;
-    fg: @dark-gray;
-    accent-color: @blue;
+    fg: @text-primary;
+    accent-color: @accent;
     
     font: "JetBrainsMono Nerd Font 10";
 }
@@ -21,13 +24,16 @@ window {
     location: northeast;
     x-offset: -16;
     y-offset: 16;
-    width: 420px;
-    border: 2px solid;
-    border-color: @accent-color;
-    border-radius: 12px;
+    width: 460px;
+    border: 1px solid;
+    border-color: @border-subtle;
+    border-radius: 10px;
     padding: 0px;
     background-color: @bg;
     transparency: "real";
+    
+    // Subtle shadow for depth
+    children: [mainbox];
 }
 
 mainbox {
@@ -37,33 +43,36 @@ mainbox {
 }
 
 inputbar {
-    padding: 14px 16px;
-    border-radius: 12px 12px 0 0;
-    spacing: 8px;
-    background-color: @light-blue;
+    padding: 16px 18px;
+    border-radius: 10px 10px 0 0;
+    spacing: 10px;
+    background-color: @bg;
+    border: 0px;
     children: [prompt, entry];
 }
 
 prompt {
     text-color: @accent-color;
     font: "JetBrainsMono Nerd Font Bold 11";
-    str: "✨";
+    str: "Lumina";
 }
 
 entry {
     text-color: @fg;
-    placeholder: "Tanya apa aja ke Lumina...";
-    placeholder-color: @gray;
+    placeholder: "Type your message...";
+    placeholder-color: @text-muted;
     background-color: transparent;
     font: "JetBrainsMono Nerd Font 10";
+    blink: true;
 }
 
 message {
-    background-color: @off-white;
-    padding: 10px 16px;
-    text-color: @fg;
+    background-color: @surface;
+    padding: 12px 18px;
+    text-color: @text-secondary;
     font: "JetBrainsMono Nerd Font 9";
-    border-radius: 0 0 12px 12px;
+    border-radius: 0 0 10px 10px;
+    border: 0px;
 }
 
 textbox {
@@ -77,22 +86,28 @@ listview {
     fixed-height: false;
     scrollbar: false;
     border: 0;
-    padding: 8px 10px 12px 10px;
-    spacing: 4px;
+    border-top: 1px solid;
+    border-color: @border-light;
+    padding: 10px 12px 14px 12px;
+    spacing: 3px;
     background-color: @bg;
 }
 
 element {
     padding: 10px 14px;
-    border-radius: 8px;
-    spacing: 8px;
+    border-radius: 6px;
+    spacing: 10px;
     background-color: transparent;
     text-color: @fg;
 }
 
 element selected {
-    background-color: @light-blue;
-    text-color: @accent;
+    background-color: @accent-light;
+    text-color: @accent-color;
+}
+
+element alternate {
+    background-color: transparent;
 }
 
 element-text {
@@ -102,6 +117,13 @@ element-text {
 }
 
 element-icon {
-    size: 1.2em;
+    size: 1.1em;
     background-color: transparent;
+}
+
+// Separator styling
+separator {
+    background-color: @border-light;
+    height: 1px;
+    margin: 4px 14px;
 }

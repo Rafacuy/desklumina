@@ -146,28 +146,28 @@ async function rofiDmenu(items: string, prompt: string = "Lumina"): Promise<stri
 }
 
 export async function rofiDisplay(message: string): Promise<void> {
-  // Format message dengan header yang menarik
-  const formattedMessage = `✨ Lumina Response\n${"─".repeat(40)}\n\n${message}`;
+  // Format message dengan header yang clean
+  const formattedMessage = `Lumina\n${"─".repeat(36)}\n\n${message}`;
   
   const proc = spawn([
     "rofi", "-e", formattedMessage,
     "-theme", THEME_PATH,
     "-theme-str", `
       window {
-        width: 480px;
-        border-radius: 12px;
-        border: 2px solid;
-        border-color: #228be6;
+        width: 500px;
+        border-radius: 10px;
+        border: 1px solid;
+        border-color: #e5e7eb;
         background-color: #ffffff;
       }
       mainbox {
         children: [textbox];
-        padding: 20px;
+        padding: 20px 24px;
         background-color: transparent;
       }
       textbox {
         background-color: transparent;
-        text-color: #2c3e50;
+        text-color: #1f2937;
         font: "JetBrainsMono Nerd Font 10";
         expand: true;
         vertical-align: 0.0;
