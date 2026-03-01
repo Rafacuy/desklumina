@@ -1,3 +1,4 @@
+# --- Runtime ---
 # dependencies (bun install)
 node_modules
 
@@ -10,26 +11,113 @@ dist
 coverage
 *.lcov
 
+# --- Logs & Data ---
 # logs
 logs
-chats
-_.log
+*.log
 report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
+# chat history
+chats
+
+# --- Environment ---
 # dotenv environment variable files
 .env
 .env.development.local
 .env.test.local
 .env.production.local
 .env.local
+.env*.local
 
-# caches
+# --- Caches ---
+# bun cache
+.bun
+
+# eslint cache
 .eslintcache
-.cache
+
+# typescript build info
 *.tsbuildinfo
 
+# general cache
+.cache
+
+# --- IDE ---
 # IntelliJ based IDEs
 .idea
 
-# Finder (MacOS) folder config
+# VS Code
+.vscode
+*.code-workspace
+
+# Vim/Neovim
+*.swp
+*.swo
+*~
+*.un~
+Session.vim
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# --- OS ---
+# Finder (MacOS)
 .DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# --- Editor ---
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.orig
+
+# --- Build ---
+# compiled files
+*.js
+*.mjs
+*.cjs
+*.d.ts
+!src/**/*.d.ts
+
+# test files
+*.test.ts
+*.spec.ts
+__tests__
+*.test.js
+*.spec.js
+
+# --- Security ---
+# Private keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# SSH
+*.pub
+id_rsa
+id_ed25519
+
+# --- Misc ---
+# Temporary directories
+tmp/
+temp/
+.tmp/
+.temp/
+
+# Build artifacts
+build/
+artifacts/

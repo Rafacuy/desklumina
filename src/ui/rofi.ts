@@ -1,5 +1,5 @@
 import { spawn } from "bun";
-import type { ChatManager, Chat } from "../agent/chat-manager";
+import type { ChatManager, Chat } from "../core/chat-manager";
 
 const THEME_PATH = `${process.env.HOME}/.config/bspwm/agent/src/ui/themes/lumina.rasi`;
 
@@ -80,10 +80,10 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
     return null;
   }
 
-  const items = chats.map(chat => {
+  const items = chats.map((chat: Chat) => {
     const date = new Date(chat.updatedAt).toLocaleDateString();
     const lastMsg = chat.messages[chat.messages.length - 1];
-    const preview = lastMsg 
+    const preview = lastMsg
       ? lastMsg.content.substring(0, 40)
       : "Empty chat";
     return `${chat.title} | ${date} | ${chat.messages.length} msgs | "${preview}..."`;
@@ -104,7 +104,7 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
   }
 
   const chatTitle = selected.split(" | ")[0];
-  const chat = chats.find(c => c.title === chatTitle);
+  const chat = chats.find((c: Chat) => c.title === chatTitle);
   
   if (!chat) return null;
   return chat.id;

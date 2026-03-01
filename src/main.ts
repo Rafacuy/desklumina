@@ -1,7 +1,6 @@
 #!/usr/bin/env bun
-import { Lumina } from "./agent/lumina";
-import { ChatManager } from "./agent/chat-manager";
-import { rofiChatLoop, rofiInput, rofiDisplay, rofiSelectChat, rofiSimpleInput } from "./ui/rofi";
+import { Lumina, ChatManager } from "./core";
+import { rofiChatLoop } from "./ui";
 import { startLoader, stopLoader } from "./ui/loader";
 import { logger } from "./logger";
 import { env } from "./config/env";
@@ -30,7 +29,7 @@ async function main() {
       const chatInfo = currentChat ? ` [${currentChat.title}]` : "";
       rl.question(`You${chatInfo}: `, async (input: string) => {
         const trimmed = input.trim();
-        
+
         if (trimmed === "exit") {
           console.log("Goodbye! 👋");
           rl.close();
@@ -81,7 +80,7 @@ async function main() {
         }
 
         chatManager.addMessage(trimmed, "user");
-        
+
         startLoader();
         let response = "";
         await lumina.chat(trimmed, (chunk) => {
@@ -89,7 +88,7 @@ async function main() {
           response += chunk;
           process.stdout.write(chunk);
         });
-        
+
         chatManager.addMessage(response, "assistant");
         console.log("\n");
         prompt();
@@ -115,7 +114,7 @@ async function main() {
       await lumina.chat(message, (chunk) => {
         response += chunk;
       });
-      
+
       response = response.replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "").trim();
       return response || "Done.";
     });

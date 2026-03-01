@@ -90,7 +90,7 @@ export async function fileOp(operation: string): Promise<string> {
     },
   };
 
-  const handler = ops[cmd];
+  const handler = cmd ? ops[cmd] : undefined;
   if (handler) {
     return await handler();
   }

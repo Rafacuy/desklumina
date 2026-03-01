@@ -1,3 +1,5 @@
+import { DANGEROUS_COMMAND_PATTERNS } from "../constants";
+
 export interface DangerousPattern {
   pattern: RegExp;
   category: string;
@@ -270,19 +272,30 @@ function isSafeCommand(command: string): boolean {
   return safePatterns.some((p) => p.test(command.trim()));
 }
 
-export function checkDangerousCommand(
-  command: string
-): DangerousPattern | null {
+/**
+ * Check if a command is dangerous (alias for analyzeCommand)
+ */
+export function isDangerousCommand(command: string): boolean {
+  return analyzeCommand(command).isDangerous;
+}
+
+/**
+ * Check command for dangerous patterns
+ */
+export function checkDangerousCommand(command: string): DangerousPattern | null {
   if (isSafeCommand(command)) return null;
 
   for (const entry of dangerousPatterns) {
-    if (entry.pattern && entry.pattern.test(command)) {
+    if (entry.pattern.test(command)) {
       return entry;
     }
   }
   return null;
 }
 
+/**
+ * Analyze command for dangerous patterns
+ */
 export function analyzeCommand(command: string): CommandAnalysis {
   if (isSafeCommand(command)) {
     return {
@@ -295,7 +308,7 @@ export function analyzeCommand(command: string): CommandAnalysis {
 
   const matches: DangerousPattern[] = [];
   for (const entry of dangerousPatterns) {
-    if (entry.pattern && entry.pattern.test(command)) {
+    if (entry.pattern.test(command)) {
       matches.push(entry);
     }
   }

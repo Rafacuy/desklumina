@@ -21,7 +21,7 @@ export async function media(action: string): Promise<string> {
     search: `mpc search any "${parts.slice(1).join(" ")}"`,
   };
 
-  const command = actions[cmd] || action;
+  const command = (cmd && actions[cmd]) || action;
   const result = await execute(command);
   return result.stdout || "Selesai";
 }

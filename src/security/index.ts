@@ -1,9 +1,14 @@
+/**
+ * Security module exports
+ */
+
+export { confirmDangerousCommand, rofiConfirm, rofiAlert } from "./confirmation";
 export {
-  type DangerousPattern,
-  type CommandAnalysis,
-  dangerousPatterns,
+  isDangerousCommand,
   checkDangerousCommand,
   analyzeCommand,
 } from "./dangerous-commands";
-
-export { rofiConfirm, rofiAlert } from "./confirmation";
+export type {
+  DangerousPattern,
+  CommandAnalysis,
+} from "./dangerous-commands";

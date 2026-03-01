@@ -1,10 +1,11 @@
-import { streamGroq } from "../ai/groq";
+import { streamGroq } from "../ai";
 import { buildSystemPrompt } from "../ai/prompts";
 import { Context } from "./context";
-import { ChatManager, ToolResult } from "./chat-manager";
+import { ChatManager } from "./chat-manager";
 import { parseToolCalls } from "./planner";
 import { dispatch } from "../tools";
 import { logger } from "../logger";
+import type { ToolResult } from "../types";
 
 export class Lumina {
   private context = new Context();
@@ -17,7 +18,7 @@ export class Lumina {
   async chat(userMessage: string, onChunk?: (chunk: string) => void): Promise<string> {
     logger.info("lumina", `User: ${userMessage}`);
 
-    const contextMessages = this.chatManager 
+    const contextMessages = this.chatManager
       ? this.chatManager.getMessagesForAPI()
       : this.context.getMessages();
 
@@ -48,17 +49,16 @@ export class Lumina {
       if (toolCalls.length > 0) {
         const toolResults: ToolResult[] = [];
         const results: string[] = [];
-        
+
         for (const call of toolCalls) {
           const result = await dispatch(call.tool, call.arg);
           toolResults.push({ tool: call.tool, result });
           results.push(`[${call.tool}] ${result}`);
         }
-        
+
         const toolOutput = results.join("\n");
         logger.info("lumina", `Tool results: ${toolOutput}`);
-        
-        // Save tool results to chatManager if available (FIX: previously was not saving)
+
         if (this.chatManager) {
           this.chatManager.addToolResults(toolResults);
         } else {

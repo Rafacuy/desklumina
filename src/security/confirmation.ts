@@ -3,10 +3,16 @@ import { logger } from "../logger";
 
 const THEME_PATH = `${process.env.HOME}/.config/bspwm/agent/src/ui/themes/lumina.rasi`;
 
+type Severity = "critical" | "high" | "medium";
+type AlertSeverity = "info" | "warning" | "error";
+
+/**
+ * Show confirmation dialog using Rofi
+ */
 export async function rofiConfirm(
   title: string,
   message: string,
-  severity: "critical" | "high" | "medium" = "high"
+  severity: Severity = "high"
 ): Promise<boolean> {
   const severityIcon =
     severity === "critical" ? "⛔" : severity === "high" ? "⚠️" : "⚡";
@@ -64,10 +70,13 @@ export async function rofiConfirm(
   return result === "✓ Lanjutkan";
 }
 
+/**
+ * Show alert dialog using Rofi
+ */
 export async function rofiAlert(
   title: string,
   message: string,
-  severity: "info" | "warning" | "error" = "info"
+  severity: AlertSeverity = "info"
 ): Promise<void> {
   const severityIcon =
     severity === "error" ? "❌" : severity === "warning" ? "⚠️" : "ℹ️";
@@ -92,4 +101,15 @@ export async function rofiAlert(
   );
 
   await proc.exited;
+}
+
+/**
+ * Alias for rofiConfirm for backward compatibility
+ */
+export async function confirmDangerousCommand(
+  title: string,
+  message: string,
+  severity: Severity
+): Promise<boolean> {
+  return rofiConfirm(title, message, severity);
 }

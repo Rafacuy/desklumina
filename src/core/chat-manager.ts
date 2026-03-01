@@ -1,31 +1,14 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
+import type { Chat, ChatMessage, ToolCall, ToolResult } from "../types";
 
-export type Message = {
-  role: "user" | "assistant";
-  content: string;
+export type { Chat, ChatMessage, ToolCall, ToolResult };
+
+type InternalMessage = ChatMessage & {
   timestamp: number;
   toolCalls?: ToolCall[];
   toolResults?: ToolResult[];
-};
-
-export type ToolCall = {
-  tool: string;
-  arg: string;
-};
-
-export type ToolResult = {
-  tool: string;
-  result: string;
-};
-
-export type Chat = {
-  id: string;
-  title: string;
-  messages: Message[];
-  createdAt: number;
-  updatedAt: number;
 };
 
 const CHAT_DIR = join(homedir(), ".config/bspwm/agent/chats");
@@ -70,10 +53,10 @@ export class ChatManager {
   loadChat(chatId: string): Chat | null {
     const path = join(CHAT_DIR, `${chatId}.json`);
     if (!existsSync(path)) return null;
-    
+
     try {
       const data = readFileSync(path, "utf-8");
-      this.currentChat = JSON.parse(data);
+      this.currentChat = JSON.parse(data) as Chat;
       return this.currentChat;
     } catch {
       return null;
@@ -95,12 +78,12 @@ export class ChatManager {
       this.currentChat = this.createChat(content);
     }
 
-    const message: Message = {
+    const message: InternalMessage = {
       role,
       content,
       timestamp: Date.now(),
     };
-    
+
     if (toolCalls) {
       message.toolCalls = toolCalls;
     }
@@ -149,7 +132,7 @@ export class ChatManager {
     for (const file of files) {
       try {
         const data = readFileSync(join(CHAT_DIR, file), "utf-8");
-        chats.push(JSON.parse(data));
+        chats.push(JSON.parse(data) as Chat);
       } catch {}
     }
 
@@ -172,24 +155,26 @@ export class ChatManager {
 
   getMessagesForAPI(): { role: "user" | "assistant"; content: string }[] {
     if (!this.currentChat) return [];
-    
+
     const messages: { role: "user" | "assistant"; content: string }[] = [];
-    
+
     for (const m of this.currentChat.messages) {
-      let content = m.content;
+      if (m.role === "system") continue; // Skip system messages
       
+      let content = m.content;
+
       // Append tool results to message content for context
       if (m.toolResults && m.toolResults.length > 0) {
-        const resultsStr = m.toolResults.map(r => `[${r.tool}]: ${r.result}`).join("\n");
+        const resultsStr = m.toolResults.map((r) => `[${r.tool}]: ${r.result}`).join("\n");
         content += `\n\n--- Tool Results ---\n${resultsStr}`;
       }
-      
+
       messages.push({
-        role: m.role,
+        role: m.role as "user" | "assistant",
         content,
       });
     }
-    
+
     return messages;
   }
 

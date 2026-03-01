@@ -1,6 +1,8 @@
 import { env, modelConfig } from "../config/env";
 import { logger } from "../logger";
 import { parseSSE } from "./stream";
+import { GROQ_API_ENDPOINT, MODEL_TEMPERATURE, MAX_TOKENS } from "../constants";
+import type { AIMessage } from "../types";
 
 export class GroqAPIError extends Error {
   constructor(
@@ -27,11 +29,6 @@ export class AllModelsFailedError extends Error {
   }
 }
 
-type Message = {
-  role: "system" | "user" | "assistant";
-  content: string;
-};
-
 /**
  * Check if error indicates model not found/unavailable
  */
@@ -55,12 +52,12 @@ function isModelNotFoundError(statusCode: number, body: string): boolean {
  * Stream response from Groq API with a specific model
  */
 async function* streamWithModel(
-  messages: Message[],
+  messages: AIMessage[],
   model: string
 ): AsyncGenerator<string> {
   logger.info("groq", `Mengirim request ke Groq dengan model ${model}`);
 
-  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+  const response = await fetch(GROQ_API_ENDPOINT, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -70,19 +67,19 @@ async function* streamWithModel(
       model,
       messages,
       stream: true,
-      temperature: 0.7,
-      max_tokens: 2048,
+      temperature: MODEL_TEMPERATURE,
+      max_tokens: MAX_TOKENS,
     }),
   });
 
   if (!response.ok) {
     const body = await response.text();
     logger.error("groq", `API error untuk model ${model}: ${response.status} - ${body}`);
-    
+
     if (isModelNotFoundError(response.status, body)) {
       throw new ModelNotFoundError(model, body);
     }
-    
+
     throw new GroqAPIError(response.status, body, model);
   }
 
@@ -95,16 +92,15 @@ async function* streamWithModel(
 
 /**
  * Stream response from Groq API with automatic fallback
- * If the primary model fails (not found/unavailable), it will try fallback models
  */
-export async function* streamGroq(messages: Message[]): AsyncGenerator<string> {
+export async function* streamGroq(messages: AIMessage[]): AsyncGenerator<string> {
   const models = modelConfig.getAllModels();
   const attemptedModels: string[] = [];
   let lastError: Error | null = null;
 
   for (const model of models) {
     attemptedModels.push(model);
-    
+
     try {
       yield* streamWithModel(messages, model);
       return; // Success, exit the generator
@@ -114,14 +110,13 @@ export async function* streamGroq(messages: Message[]): AsyncGenerator<string> {
         lastError = error;
         continue; // Try next model
       }
-      
-      // For other errors, also try fallback but log differently
+
       if (error instanceof GroqAPIError) {
         logger.warn("groq", `Model ${model} gagal dengan error ${error.statusCode}, mencoba fallback...`);
         lastError = error;
         continue;
       }
-      
+
       // Non-API errors (network, etc.) - rethrow immediately
       throw error;
     }

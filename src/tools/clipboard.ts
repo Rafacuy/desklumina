@@ -27,5 +27,5 @@ export async function clipboard(action: string): Promise<string> {
     },
   };
 
-  return actions[cmd] ? await actions[cmd]() : "Action tidak dikenal";
+  return (cmd && actions[cmd]) ? await actions[cmd]() : "Action tidak dikenal";
 }

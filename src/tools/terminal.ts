@@ -1,19 +1,24 @@
 import { logger } from "../logger";
 import { analyzeCommand, rofiConfirm } from "../security";
+import { COMMAND_TIMEOUT } from "../constants";
 
-export async function execute(
-  command: string
-): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+export interface CommandResult {
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+}
+
+/**
+ * Execute a shell command with timeout and security checks
+ */
+export async function execute(command: string): Promise<CommandResult> {
   logger.info("terminal", `Eksekusi: ${command}`);
 
   // Analisis keamanan perintah
   const analysis = analyzeCommand(command);
 
   if (analysis.isDangerous) {
-    const severity = analysis.highestSeverity as
-      | "critical"
-      | "high"
-      | "medium";
+    const severity = analysis.highestSeverity as "critical" | "high" | "medium";
 
     logger.warn(
       "terminal",
@@ -46,7 +51,7 @@ export async function execute(
   const timeout = setTimeout(() => {
     proc.kill();
     logger.error("terminal", `Timeout: ${command}`);
-  }, 30000);
+  }, COMMAND_TIMEOUT);
 
   const [stdout, stderr] = await Promise.all([
     new Response(proc.stdout).text(),
