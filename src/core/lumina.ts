@@ -5,6 +5,7 @@ import { ChatManager } from "./chat-manager";
 import { parseToolCalls } from "./planner";
 import { dispatch } from "../tools";
 import { logger } from "../logger";
+import { formatToolCalls, formatToolResults } from "../ui";
 import type { ToolResult } from "../types";
 
 export class Lumina {
@@ -47,21 +48,27 @@ export class Lumina {
       const toolCalls = parseToolCalls(fullResponse);
 
       if (toolCalls.length > 0) {
+        // Show formatted tool calls
+        const formattedCalls = formatToolCalls(toolCalls);
+        onChunk?.(formattedCalls ? `\n${formattedCalls}` : "");
+
         const toolResults: ToolResult[] = [];
-        const results: string[] = [];
 
         for (const call of toolCalls) {
           const result = await dispatch(call.tool, call.arg);
           toolResults.push({ tool: call.tool, result });
-          results.push(`[${call.tool}] ${result}`);
         }
 
-        const toolOutput = results.join("\n");
-        logger.info("lumina", `Tool results: ${toolOutput}`);
+        // Show formatted results
+        const formattedResults = formatToolResults(toolResults);
+        onChunk?.(formattedResults ? `\n${formattedResults}` : "");
+
+        logger.info("lumina", `Tool results: ${JSON.stringify(toolResults)}`);
 
         if (this.chatManager) {
           this.chatManager.addToolResults(toolResults);
         } else {
+          const toolOutput = toolResults.map(r => `[${r.tool}] ${r.result}`).join("\n");
           this.context.add("user", `Tool execution results:\n${toolOutput}`);
         }
       }

@@ -31,7 +31,7 @@ export async function rofiConfirm(
   const themeOverride = [
     "window { width: 420px; }",
     "listview { lines: 2; }",
-    'message { padding: 10px 14px; background-color: @off-white; font: "JetBrainsMono Nerd Font 9"; }',
+    'message { padding: 10px 14px; background-color: #ffffff; font: "JetBrainsMono Nerd Font 9"; }',
   ].join(" ");
 
   const proc = spawn(

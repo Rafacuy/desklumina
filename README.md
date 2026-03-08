@@ -575,24 +575,7 @@ bun run src/main.ts --exec "your command"
 - Strict TypeScript with `noUncheckedIndexedAccess`
 - Skip library checks for faster compilation
 
-### Project Structure Guidelines
 
-```typescript
-✅ Do:
-- Use TypeScript strict mode
-- Follow existing code patterns
-- Add proper error handling
-- Document new features
-- Use barrel exports for clean imports
-- Leverage constants from src/constants/
-
-❌ Don't:
-- Use `any` type
-- Skip error handling
-- Hardcode configuration values
-- Ignore timeout protection
-- Import directly from deep paths
-```
 
 ### Adding New Tools
 

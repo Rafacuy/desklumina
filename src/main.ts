@@ -114,9 +114,11 @@ async function main() {
       await lumina.chat(message, (chunk) => {
         response += chunk;
       });
-
-      response = response.replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "").trim();
-      return response || "Done.";
+      // Remove JSON tool call blocks and tool tags
+      return response
+        .replace(/```json\s*\n[\s\S]*?\n```/g, "")
+        .replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "")
+        .trim() || "Done.";
     });
   }
 }

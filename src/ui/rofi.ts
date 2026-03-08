@@ -146,23 +146,23 @@ async function rofiDmenu(items: string, prompt: string = "Lumina"): Promise<stri
 }
 
 export async function rofiDisplay(message: string): Promise<void> {
-  // Format message dengan header yang clean
-  const formattedMessage = `Lumina\n${"─".repeat(36)}\n\n${message}`;
+  const formattedMessage = `💫 Lumina\n${"─".repeat(60)}\n\n${message}`;
   
   const proc = spawn([
     "rofi", "-e", formattedMessage,
     "-theme", THEME_PATH,
     "-theme-str", `
       window {
-        width: 500px;
-        border-radius: 10px;
-        border: 1px solid;
-        border-color: #e5e7eb;
+        width: 700px;
+        height: 500px;
+        border-radius: 12px;
+        border: 2px solid;
+        border-color: #3b82f6;
         background-color: #ffffff;
       }
       mainbox {
         children: [textbox];
-        padding: 20px 24px;
+        padding: 24px 28px;
         background-color: transparent;
       }
       textbox {
@@ -196,7 +196,11 @@ export async function rofiChatLoop(
           chatManager.addMessage(result.input, "user");
           const response = await onMessage(result.input);
           chatManager.addMessage(response, "assistant");
-          await rofiDisplay(response);
+          
+          // Show response in Rofi window
+          if (response && response !== "Done.") {
+            await rofiDisplay(response);
+          }
         }
         break;
 
