@@ -1,15 +1,17 @@
 {
   "name": "lumina",
   "version": "1.0.0",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "latest"
+  },
   "description": "AI automation agent for BSPWM",
   "scripts": {
     "start": "bun run src/main.ts",
     "dev": "bun --watch run src/main.ts --chat",
     "lint": "bun x tsc --noEmit"
   },
-  "dependencies": {},
-  "devDependencies": {
-    "typescript": "latest",
-    "@types/bun": "latest"
+  "dependencies": {
+    "edge-tts-universal": "^1.4.0"
   }
 }

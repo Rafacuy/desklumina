@@ -1,4 +1,4 @@
-import { streamGroq } from "../ai";
+import { streamGroq, textToSpeech } from "../ai";
 import { buildSystemPrompt } from "../ai/prompts";
 import { Context } from "./context";
 import { ChatManager } from "./chat-manager";
@@ -6,6 +6,7 @@ import { parseToolCalls } from "./planner";
 import { dispatch } from "../tools";
 import { logger } from "../logger";
 import { formatToolCalls, formatToolResults } from "../ui";
+import { settingsManager } from "./settings-manager";
 import type { ToolResult } from "../types";
 
 export class Lumina {
@@ -33,6 +34,7 @@ export class Lumina {
     ];
 
     let fullResponse = "";
+    const settings = settingsManager.get();
 
     try {
       for await (const chunk of streamGroq(messages)) {
@@ -45,12 +47,22 @@ export class Lumina {
       }
       logger.info("lumina", `Assistant: ${fullResponse}`);
 
+      // TTS if enabled
+      if (settings.features.tts) {
+        logger.info("lumina", "TTS enabled, triggering text-to-speech...");
+        textToSpeech(fullResponse);
+      } else {
+        logger.info("lumina", "TTS disabled in settings");
+      }
+
       const toolCalls = parseToolCalls(fullResponse);
 
       if (toolCalls.length > 0) {
         // Show formatted tool calls
-        const formattedCalls = formatToolCalls(toolCalls);
-        onChunk?.(formattedCalls ? `\n${formattedCalls}` : "");
+        if (settings.features.toolDisplay) {
+          const formattedCalls = formatToolCalls(toolCalls);
+          onChunk?.(formattedCalls ? `\n${formattedCalls}` : "");
+        }
 
         const toolResults: ToolResult[] = [];
 
@@ -60,8 +72,10 @@ export class Lumina {
         }
 
         // Show formatted results
-        const formattedResults = formatToolResults(toolResults);
-        onChunk?.(formattedResults ? `\n${formattedResults}` : "");
+        if (settings.features.toolDisplay) {
+          const formattedResults = formatToolResults(toolResults);
+          onChunk?.(formattedResults ? `\n${formattedResults}` : "");
+        }
 
         logger.info("lumina", `Tool results: ${JSON.stringify(toolResults)}`);
 

@@ -1,8 +1,10 @@
 import { readFileSync } from "fs";
 import { getActiveWindowInfo, formatWindowContext } from "../tools/window-info";
+import { settingsManager } from "../core/settings-manager";
 
 export async function buildSystemPrompt(): Promise<string> {
-  const windowInfo = await getActiveWindowInfo();
+  const settings = settingsManager.get();
+  const windowInfo = settings.features.windowContext ? await getActiveWindowInfo() : null;
   const home = process.env.HOME || "~";
   let currentTheme = "isabel";
   
@@ -11,7 +13,7 @@ export async function buildSystemPrompt(): Promise<string> {
   } catch {}
 
   return `You are Lumina, an action-oriented BSPWM desktop assistant. Execute user requests immediately using tools—never just acknowledge without action.
-${formatWindowContext(windowInfo)}
+${settings.features.windowContext ? formatWindowContext(windowInfo) : ""}
 
 ENVIRONMENT:
 Desktop: BSPWM (6 workspaces) | Terminal: alacritty/kitty | Theme: ${currentTheme}

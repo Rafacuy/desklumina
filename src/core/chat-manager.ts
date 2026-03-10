@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlink
 import { join } from "path";
 import { homedir } from "os";
 import type { Chat, ChatMessage, ToolCall, ToolResult } from "../types";
+import { settingsManager } from "./settings-manager";
 
 export type { Chat, ChatMessage, ToolCall, ToolResult };
 
@@ -179,6 +180,9 @@ export class ChatManager {
   }
 
   getChatHistoryPreview(maxChars: number = 500): string {
+    const settings = settingsManager.get();
+    if (!settings.features.chatHistory) return "";
+    
     if (!this.currentChat || this.currentChat.messages.length === 0) {
       return "";
     }
@@ -213,6 +217,9 @@ export class ChatManager {
   }
 
   getToolContextPreview(): string {
+    const settings = settingsManager.get();
+    if (!settings.features.toolDisplay) return "";
+    
     const toolContext = this.getLastToolContext();
     if (!toolContext) return "";
 

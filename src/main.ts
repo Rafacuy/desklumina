@@ -109,12 +109,12 @@ async function main() {
     console.log("Lumina v1.0.0");
     console.log(`Model: ${env.MODEL_NAME}`);
   } else {
+    // Default: Rofi chat mode
     await rofiChatLoop(chatManager, async (message) => {
       let response = "";
       await lumina.chat(message, (chunk) => {
         response += chunk;
       });
-      // Remove JSON tool call blocks and tool tags
       return response
         .replace(/```json\s*\n[\s\S]*?\n```/g, "")
         .replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "")

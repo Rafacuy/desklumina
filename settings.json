@@ -1,0 +1,13 @@
+{
+  "features": {
+    "tts": true,
+    "toolDisplay": true,
+    "chatHistory": true,
+    "windowContext": true,
+    "dangerousCommandConfirmation": true
+  },
+  "tts": {
+    "voiceId": "id-ID-GadisNeural",
+    "speed": 1
+  }
+}

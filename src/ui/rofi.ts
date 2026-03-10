@@ -6,7 +6,7 @@ const THEME_PATH = `${process.env.HOME}/.config/bspwm/agent/src/ui/themes/lumina
 export async function rofiChatInput(
   chatManager: ChatManager,
   prompt: string = "Lumina"
-): Promise<{ action: "send" | "new" | "select" | "exit"; input?: string }> {
+): Promise<{ action: "send" | "new" | "select" | "settings" | "exit"; input?: string }> {
   const currentChat = chatManager.getCurrentChat();
   const historyPreview = chatManager.getChatHistoryPreview(300);
   const toolContextPreview = chatManager.getToolContextPreview();
@@ -28,6 +28,7 @@ export async function rofiChatInput(
   menuItems.push("💬 Send message");
   menuItems.push("📝 New Chat");
   menuItems.push("📂 Select Chat");
+  menuItems.push("⚙️ Settings");
   menuItems.push("✕ Close");
 
   const input = await rofiDmenu(menuItems.join("\n"), prompt);
@@ -55,6 +56,10 @@ export async function rofiChatInput(
 
   if (input === "📂 Select Chat") {
     return { action: "select" };
+  }
+
+  if (input === "⚙️ Settings") {
+    return { action: "settings" };
   }
 
   if (input === "✕ Close") {
@@ -211,6 +216,11 @@ export async function rofiChatLoop(
         } else if (chatId) {
           chatManager.loadChat(chatId);
         }
+        break;
+
+      case "settings":
+        const { rofiSettings } = await import("./settings");
+        await rofiSettings();
         break;
 
       case "new":

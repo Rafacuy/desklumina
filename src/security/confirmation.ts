@@ -1,5 +1,6 @@
 import { spawn } from "bun";
 import { logger } from "../logger";
+import { settingsManager } from "../core/settings-manager";
 
 const THEME_PATH = `${process.env.HOME}/.config/bspwm/agent/src/ui/themes/lumina.rasi`;
 
@@ -14,6 +15,14 @@ export async function rofiConfirm(
   message: string,
   severity: Severity = "high"
 ): Promise<boolean> {
+  const settings = settingsManager.get();
+  
+  // If dangerous command confirmation is disabled, auto-approve
+  if (!settings.features.dangerousCommandConfirmation) {
+    logger.info("security", `Auto-approved (feature disabled): "${title}"`);
+    return true;
+  }
+  
   const severityIcon =
     severity === "critical" ? "⛔" : severity === "high" ? "⚠️" : "⚡";
   const severityLabel = severity.toUpperCase();

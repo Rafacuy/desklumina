@@ -52,6 +52,7 @@
 | **📋 Clipboard** | Clipcat clipboard management and history |
 | **🔔 Notifications** | Dunst desktop notifications with urgency levels |
 | **💬 Chat History** | Persistent conversations with auto-generated titles |
+| **🔊 Text-to-Speech** | Edge TTS integration with Indonesian voices (Gadis/Ardi), speed control |
 | **🎨 UI** | Beautiful Rofi-based graphical interface with theme support |
 | **🔒 Security** | Dangerous command detection, confirmation prompts, timeout protection |
 
@@ -499,6 +500,29 @@ Conversations are stored as JSON files in `~/.config/bspwm/agent/chats/` with:
 - Full conversation history with timestamps
 - Tool call and result tracking
 - Automatic cleanup and sorting
+
+### TTS Configuration
+
+Text-to-Speech is configured in `settings.json` with the following options:
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `voiceId` | Voice to use for speech | `id-ID-GadisNeural` |
+| `speed` | Speech speed multiplier (0.5-2.0) | `1.0` |
+
+**Available Voices:**
+- `id-ID-GadisNeural` - Female voice (Gadis)
+- `id-ID-ArdiNeural` - Male voice (Ardi)
+
+**TTS Speed Options:**
+- `0.5x` - Slow
+- `0.75x` - Slightly slow
+- `1.0x` - Normal (default)
+- `1.25x` - Slightly fast
+- `1.5x` - Fast
+- `2.0x` - Very fast
+
+> **Note:** TTS can be toggled on/off via the settings menu (`rofiSettings`).
 
 ---
 

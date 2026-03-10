@@ -22,17 +22,20 @@ const TOOL_NAMES: Record<string, string> = {
 
 export function formatToolCall(call: ParsedToolCall): string {
   const icon = TOOL_ICONS[call.tool] || "🔧";
-  return `${icon} ${call.arg}`;
+  return `${icon} ${call.arg || ""}`;
 }
 
 export function formatToolCalls(calls: ParsedToolCall[]): string {
   if (calls.length === 0) return "";
-  
+
+  const firstCall = calls[0];
+  if (!firstCall) return "";
+
   if (calls.length === 1) {
-    return `⚡ ${formatToolCall(calls[0])}`;
+    return `⚡ ${formatToolCall(firstCall)}`;
   }
-  
-  const formatted = calls.map((call, i) => `${i + 1}. ${formatToolCall(call)}`).join("\n");
+
+  const formatted = calls.map((call) => formatToolCall(call)).join("\n");
   return `⚡ Actions:\n${formatted}`;
 }
 
@@ -43,11 +46,14 @@ export function formatToolResult(tool: string, result: string): string {
 
 export function formatToolResults(results: Array<{ tool: string; result: string }>): string {
   if (results.length === 0) return "";
-  
+
+  const firstResult = results[0];
+  if (!firstResult) return "";
+
   if (results.length === 1) {
-    return `✓ ${formatToolResult(results[0].tool, results[0].result)}`;
+    return `✓ ${formatToolResult(firstResult.tool, firstResult.result)}`;
   }
-  
-  const formatted = results.map((r, i) => `${i + 1}. ${formatToolResult(r.tool, r.result)}`).join("\n");
+
+  const formatted = results.map((r) => formatToolResult(r.tool, r.result)).join("\n");
   return `✓ Results:\n${formatted}`;
 }
