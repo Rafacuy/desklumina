@@ -62,67 +62,73 @@
 
 ```
 src/
-├── main.ts                      # Entry point with CLI argument handling
+├── main.ts                          # Entry point with CLI argument handling
 │
-├── types/                       # TypeScript type definitions
-│   ├── index.ts                 # Barrel export
-│   ├── chat.ts                  # Chat, ChatMessage, ToolCall, ToolResult
-│   ├── tool.ts                  # ToolHandler, ToolRegistry
-│   └── ai.ts                    # AIMessage, ModelConfig
+├── types/                           # TypeScript type definitions
+│   ├── index.ts                     # Barrel export
+│   ├── ai.ts                        # AIMessage, ModelConfig
+│   ├── chat.ts                      # Chat, ChatMessage, ToolCall, ToolResult
+│   ├── settings.ts                  # Settings, FeatureFlags, DEFAULT_SETTINGS
+│   └── tool.ts                      # ToolHandler, ToolRegistry, ParsedToolCall
 │
-├── constants/                   # Application constants
-│   ├── index.ts                 # Barrel export
-│   ├── models.ts                # DEFAULT_FALLBACK_MODELS, GROQ_API_ENDPOINT
-│   └── commands.ts              # DANGEROUS_COMMAND_PATTERNS, COMMAND_TIMEOUT
+├── constants/                       # Application constants
+│   ├── index.ts                     # Barrel export
+│   ├── commands.ts                  # DANGEROUS_COMMAND_PATTERNS, COMMAND_TIMEOUT
+│   └── models.ts                    # DEFAULT_FALLBACK_MODELS, GROQ_API_ENDPOINT
 │
-├── core/                        # Core business logic
-│   ├── index.ts                 # Barrel export
-│   ├── lumina.ts                # AI agent orchestration
-│   ├── chat-manager.ts          # Chat persistence and history management
-│   ├── context.ts               # Conversation context tracking
-│   └── planner.ts               # Tool call parsing and planning
+├── core/                            # Core business logic
+│   ├── index.ts                     # Barrel export
+│   ├── chat-manager.ts              # Chat persistence and history management
+│   ├── context.ts                   # Conversation context tracking
+│   ├── lumina.ts                    # AI agent orchestration with TTS support
+│   ├── planner.ts                   # Tool call parsing and planning
+│   └── settings-manager.ts          # Settings persistence and feature flags
 │
-├── ai/                          # AI integration
-│   ├── index.ts                 # Barrel export
-│   ├── groq.ts                  # Groq API streaming with fallback support
-│   ├── prompts.ts               # System prompt builder with environment context
-│   └── stream.ts                # SSE response parser
+├── ai/                              # AI integration
+│   ├── index.ts                     # Barrel export
+│   ├── groq.ts                      # Groq API streaming with fallback support
+│   ├── prompts.ts                   # System prompt builder with environment context
+│   ├── stream.ts                    # SSE response parser
+│   └── tts.ts                       # Edge TTS text-to-speech with Indonesian voices
 │
-├── tools/                       # Tool implementations
-│   ├── index.ts                 # Tool dispatcher barrel export
-│   ├── registry.ts              # Tool registry with registerTool()
-│   ├── terminal.ts              # Shell command execution with security
-│   ├── apps.ts                  # Application launcher with aliases
-│   ├── bspwm.ts                 # BSPWM window manager control
-│   ├── files.ts                 # File system operations
-│   ├── media.ts                 # MPD music player control
-│   ├── clipboard.ts             # Clipcat clipboard management
-│   ├── notify.ts                # Dunst notification sender
-│   └── window-info.ts           # Active window detection and context
+├── tools/                           # Tool implementations
+│   ├── index.ts                     # Tool dispatcher barrel export
+│   ├── registry.ts                  # Tool registry with registerTool()
+│   ├── apps.ts                      # Application launcher with aliases
+│   ├── bspwm.ts                     # BSPWM window manager control
+│   ├── clipboard.ts                 # Clipcat clipboard management
+│   ├── files.ts                     # File system operations
+│   ├── media.ts                     # MPD music player control
+│   ├── notify.ts                    # Dunst notification sender
+│   ├── terminal.ts                  # Shell command execution with security
+│   └── window-info.ts               # Active window detection and context
 │
-├── ui/                          # User interface components
-│   ├── index.ts                 # Barrel export
-│   ├── rofi.ts                  # Rofi launcher integration
-│   ├── loader.ts                # Loading animation component
-│   └── themes/                  # Rofi theme configurations
+├── ui/                              # User interface components
+│   ├── index.ts                     # Barrel export
+│   ├── loader.ts                    # Loading animation component
+│   ├── rofi.ts                      # Rofi launcher integration
+│   ├── settings.ts                  # Settings menu UI
+│   ├── tool-display.ts              # Tool call/result formatting
+│   └── themes/                      # Rofi theme configurations
+│       └── lumina.rasi              # Main Rofi theme
 │
-├── security/                    # Security & validation
-│   ├── index.ts                 # Barrel export
-│   ├── confirmation.ts          # Rofi confirmation dialogs
-│   └── dangerous-commands.ts    # Command pattern analysis
+├── security/                        # Security & validation
+│   ├── index.ts                     # Barrel export
+│   ├── confirmation.ts              # Rofi confirmation dialogs
+│   └── dangerous-commands.ts        # Command pattern analysis
 │
-├── utils/                       # Helper functions
-│   ├── index.ts                 # Barrel export
-│   ├── path.ts                  # Path utilities (expandTilde, normalizePath)
-│   └── format.ts                # Formatting utilities (formatFileSize, truncate)
+├── utils/                           # Helper functions
+│   ├── index.ts                     # Barrel export
+│   ├── format.ts                    # Formatting utilities (formatFileSize, truncate)
+│   └── path.ts                      # Path utilities (expandTilde, normalizePath)
 │
-├── config/                      # Configuration
-│   ├── env.ts                   # Environment variable validation
-│   └── apps.json                # Application alias mappings
+├── config/                          # Configuration
+│   ├── apps.json                    # Application alias mappings
+│   └── env.ts                       # Environment variable validation
 │
-└── logger/                      # Logging system
-    ├── index.ts                 # Centralized logger
-    └── types.ts                 # Logger type exports
+└── logger/                          # Logging system
+    ├── index.ts                     # Centralized logger
+    └── types.ts                     # Logger type exports
 ```
 
 ---
