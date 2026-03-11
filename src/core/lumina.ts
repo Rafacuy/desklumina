@@ -42,22 +42,28 @@ export class Lumina {
         onChunk?.(chunk);
       }
 
-      if (!this.chatManager) {
+      logger.info("lumina", `Assistant: ${fullResponse.substring(0, 100)}...`);
+
+      const toolCalls = parseToolCalls(fullResponse);
+      
+      // Save assistant message with tool calls BEFORE executing tools
+      if (this.chatManager) {
+        this.chatManager.addMessage(fullResponse, "assistant", toolCalls);
+      } else {
         this.context.add("assistant", fullResponse);
       }
-      logger.info("lumina", `Assistant: ${fullResponse}`);
 
       // TTS if enabled
       if (settings.features.tts) {
-        logger.info("lumina", "TTS enabled, triggering text-to-speech...");
-        textToSpeech(fullResponse);
-      } else {
-        logger.info("lumina", "TTS disabled in settings");
+        logger.debug("lumina", "TTS enabled, triggering text-to-speech");
+        textToSpeech(fullResponse).catch(err => {
+          logger.error("lumina", "TTS failed", err instanceof Error ? err : new Error(String(err)));
+        });
       }
 
-      const toolCalls = parseToolCalls(fullResponse);
-
       if (toolCalls.length > 0) {
+        logger.info("lumina", `Executing ${toolCalls.length} tool call(s)`);
+        
         // Show formatted tool calls
         if (settings.features.toolDisplay) {
           const formattedCalls = formatToolCalls(toolCalls);
@@ -67,8 +73,13 @@ export class Lumina {
         const toolResults: ToolResult[] = [];
 
         for (const call of toolCalls) {
-          const result = await dispatch(call.tool, call.arg);
-          toolResults.push({ tool: call.tool, result });
+          try {
+            const result = await dispatch(call.tool, call.arg);
+            toolResults.push({ tool: call.tool, result });
+          } catch (error) {
+            const errMsg = logger.catchError(`tool:${call.tool}`, error);
+            toolResults.push({ tool: call.tool, result: `❌ Error: ${errMsg}` });
+          }
         }
 
         // Show formatted results
@@ -77,7 +88,7 @@ export class Lumina {
           onChunk?.(formattedResults ? `\n${formattedResults}` : "");
         }
 
-        logger.info("lumina", `Tool results: ${JSON.stringify(toolResults)}`);
+        logger.debug("lumina", `Tool execution completed: ${toolResults.length} results`);
 
         if (this.chatManager) {
           this.chatManager.addToolResults(toolResults);
@@ -89,9 +100,11 @@ export class Lumina {
 
       return fullResponse;
     } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      logger.error("lumina", `Error: ${msg}`);
-      return `❌ Error: ${msg}`;
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error("lumina", `Chat error: ${err.message}`, err);
+      const errorMsg = `❌ Error: ${err.message}`;
+      onChunk?.(errorMsg);
+      return errorMsg;
     }
   }
 

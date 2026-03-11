@@ -31,15 +31,18 @@ export async function dispatch(toolName: string, arg: string): Promise<string> {
   const handler = tools[toolName];
   if (!handler) {
     logger.warn("tools", `Tool tidak ditemukan: ${toolName}`);
-    return "Tool tidak ditemukan";
+    return `⚠️ Tool '${toolName}' tidak ditemukan`;
   }
 
   try {
-    return await handler(arg);
+    logger.debug("tools", `Executing ${toolName} with arg: ${arg}`);
+    const result = await handler(arg);
+    logger.debug("tools", `${toolName} completed successfully`);
+    return result;
   } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
-    logger.error("tools", `Error di ${toolName}: ${msg}`);
-    return `Error: ${msg}`;
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error("tools", `Error in ${toolName}: ${err.message}`, err);
+    return `❌ ${toolName} error: ${err.message}`;
   }
 }
 

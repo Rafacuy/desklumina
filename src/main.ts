@@ -89,7 +89,6 @@ async function main() {
           process.stdout.write(chunk);
         });
 
-        chatManager.addMessage(response, "assistant");
         console.log("\n");
         prompt();
       });
@@ -103,6 +102,8 @@ async function main() {
       process.exit(1);
     }
 
+    chatManager.createChat(message);
+    chatManager.addMessage(message, "user");
     const response = await lumina.chat(message);
     console.log(response);
   } else if (mode === "--version") {

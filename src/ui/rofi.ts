@@ -200,7 +200,6 @@ export async function rofiChatLoop(
         if (result.input) {
           chatManager.addMessage(result.input, "user");
           const response = await onMessage(result.input);
-          chatManager.addMessage(response, "assistant");
           
           // Show response in Rofi window
           if (response && response !== "Done.") {

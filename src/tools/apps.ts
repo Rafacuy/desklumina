@@ -16,31 +16,37 @@ export function lookup(alias: string): string | null {
  * Launch an application by alias
  */
 export async function launch(alias: string): Promise<void> {
-  const command = lookup(alias);
+  try {
+    const command = lookup(alias);
 
-  if (!command) {
-    logger.warn("apps", `Alias tidak ditemukan: ${alias}, fallback ke terminal`);
+    if (!command) {
+      logger.warn("apps", `Alias tidak ditemukan: ${alias}, fallback ke terminal`);
 
-    const dangerous = checkDangerousCommand(alias);
-    if (dangerous) {
-      const confirmed = await rofiConfirm(
-        `${dangerous.description}`,
-        `Perintah: ${alias}\n\nTingkat Bahaya: ${dangerous.severity.toUpperCase()}`,
-        dangerous.severity
-      );
+      const dangerous = checkDangerousCommand(alias);
+      if (dangerous) {
+        const confirmed = await rofiConfirm(
+          `${dangerous.description}`,
+          `Perintah: ${alias}\n\nTingkat Bahaya: ${dangerous.severity.toUpperCase()}`,
+          dangerous.severity
+        );
 
-      if (!confirmed) {
-        logger.info("apps", `Perintah berbahaya dibatalkan pengguna`);
-        return;
+        if (!confirmed) {
+          logger.info("apps", `Perintah berbahaya dibatalkan pengguna`);
+          return;
+        }
       }
+
+      Bun.spawn(["bash", "-c", alias], { detached: true, stdio: ["ignore", "ignore", "ignore"] });
+      return;
     }
 
-    Bun.spawn(["bash", "-c", alias], { detached: true, stdio: ["ignore", "ignore", "ignore"] });
-    return;
+    logger.info("apps", `Meluncurkan: ${alias} → ${command}`);
+    Bun.spawn(["bash", "-c", command], { detached: true, stdio: ["ignore", "ignore", "ignore"] });
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error("apps", `Failed to launch ${alias}: ${err.message}`, err);
+    throw err;
   }
-
-  logger.info("apps", `Meluncurkan: ${alias} → ${command}`);
-  Bun.spawn(["bash", "-c", command], { detached: true, stdio: ["ignore", "ignore", "ignore"] });
 }
 
 /**

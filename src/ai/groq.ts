@@ -100,11 +100,22 @@ export async function* streamGroq(messages: AIMessage[]): AsyncGenerator<string>
 
   for (const model of models) {
     attemptedModels.push(model);
+    let hasYielded = false;
 
     try {
-      yield* streamWithModel(messages, model);
+      for await (const chunk of streamWithModel(messages, model)) {
+        hasYielded = true;
+        yield chunk;
+      }
       return; // Success, exit the generator
     } catch (error) {
+      // If we already yielded text, we shouldn't fallback to another model
+      // as it would duplicate the beginning of the response.
+      if (hasYielded) {
+        logger.error("groq", `Model ${model} gagal setelah menghasilkan output. Tidak dapat fallback.`);
+        throw error;
+      }
+
       if (error instanceof ModelNotFoundError) {
         logger.warn("groq", `Model ${model} tidak tersedia, mencoba fallback...`);
         lastError = error;
@@ -125,6 +136,7 @@ export async function* streamGroq(messages: AIMessage[]): AsyncGenerator<string>
   // All models failed
   throw new AllModelsFailedError(attemptedModels, lastError || new Error("Unknown error"));
 }
+
 
 /**
  * Get list of available models (primary + fallbacks)
