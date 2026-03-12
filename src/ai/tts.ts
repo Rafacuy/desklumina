@@ -1,3 +1,4 @@
+import { t } from "../utils";
 import { logger } from "../logger";
 import { settingsManager } from "../core/settings-manager";
 import { Communicate } from "edge-tts-universal";
@@ -24,7 +25,7 @@ export async function textToSpeech(text: string): Promise<void> {
     .trim();
 
   if (!cleanText || cleanText.length < 3) {
-    logger.warn("tts", "Text too short or empty, skipping TTS");
+    logger.warn("tts", t("Text too short or empty, skipping TTS"));
     return;
   }
 
@@ -41,7 +42,7 @@ export async function textToSpeech(text: string): Promise<void> {
       const audioFile = `/tmp/lumina-tts-${Date.now()}.mp3`;
       const chunks: Buffer[] = [];
 
-      logger.info("tts", "Streaming audio from Edge TTS...");
+      logger.info("tts", t("Streaming audio from Edge TTS..."));
       
       for await (const chunk of communicate.stream()) {
         if (chunk.type === "audio" && chunk.data) {
@@ -64,7 +65,7 @@ export async function textToSpeech(text: string): Promise<void> {
       logger.info("tts", `Audio file size: ${file.size} bytes`);
 
       // Try mpv first, fallback to paplay
-      logger.info("tts", "Playing audio with mpv...");
+      logger.info("tts", t("Playing audio with mpv..."));
       const mpvProc = spawn(["mpv", "--no-terminal", "--really-quiet", audioFile], {
         stdout: "ignore",
         stderr: "ignore",
@@ -74,15 +75,15 @@ export async function textToSpeech(text: string): Promise<void> {
       logger.info("tts", `mpv exited with code: ${exitCode}`);
 
       if (exitCode !== 0) {
-        logger.warn("tts", "mpv failed, trying paplay fallback...");
+        logger.warn("tts", t("mpv failed, trying paplay fallback..."));
         const paplayProc = spawn(["paplay", audioFile], {
           stdout: "ignore",
           stderr: "ignore",
         });
         await paplayProc.exited;
-        logger.info("tts", "paplay playback complete");
+        logger.info("tts", t("paplay playback complete"));
       } else {
-        logger.info("tts", "Audio playback complete");
+        logger.info("tts", t("Audio playback complete"));
       }
 
       // Cleanup after delay

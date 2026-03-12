@@ -10,6 +10,7 @@ This guide provides essential information for developers working on DeskLumina.
 - [Project Structure](#project-structure)
 - [Development Workflow](#development-workflow)
 - [Code Conventions](#code-conventions)
+- [Internationalization (i18n)](#internationalization-i18n)
 - [TypeScript Configuration](#typescript-configuration)
 - [Linting & Type Checking](#linting--type-checking)
 - [Debugging](#debugging)
@@ -269,6 +270,43 @@ export async function clipboard(action: string): Promise<string> {
   }
 }
 ```
+
+---
+
+## 🌍 Internationalization (i18n)
+
+DeskLumina uses a centralized translation system. Never hardcode user-facing strings directly in the logic.
+
+### 1. The `t()` Wrapper
+Always wrap user-facing strings (logs, console messages, UI text) with the `t()` function.
+
+```typescript
+import { t } from "./utils";
+
+// ❌ BAD
+console.log("Searching for files...");
+logger.info("apps", "Launch successful");
+
+// ✅ GOOD
+console.log(t("Searching for files..."));
+logger.info("apps", t("Launch successful"));
+```
+
+### 2. Dictionary Management
+All strings are collected in `src/locales/dictionary.json`.
+- **Key**: The original English/Source string.
+- **Value**: The translation (defaults to the same string).
+
+### 3. Automated Refactoring
+If you have many hardcoded strings, use the automated script to wrap them and collect them into the dictionary:
+
+```bash
+bun run scripts/i18n-refactor.ts
+```
+*Note: This script targets common patterns like `logger`, `console`, and `rofiConfirm` calls.*
+
+### 4. AI Response Localization
+The AI's response language is dynamically controlled via the system prompt based on the current `getLang()` setting. The AI is instructed to respond in the user's preferred language while keeping tool calls in JSON.
 
 ### TypeScript Configuration
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { t } from "./utils";
 import { Lumina, ChatManager } from "./core";
 import { rofiChatLoop } from "./ui";
 import { startLoader, stopLoader } from "./ui/loader";
@@ -9,14 +10,14 @@ const args = process.argv.slice(2);
 const mode = args[0];
 
 async function main() {
-  logger.info("main", "Lumina started");
+  logger.info("main", t("Lumina started"));
 
   const chatManager = new ChatManager();
   const lumina = new Lumina(chatManager);
 
   if (mode === "--chat") {
-    console.log("💫 Lumina Terminal Chat Mode");
-    console.log("Type 'exit' to quit, 'new' for new chat, 'list' to see chats\n");
+    console.log(t("💫 Lumina Terminal Chat Mode"));
+    console.log(t("Type 'exit' to quit, 'new' for new chat, 'list' to see chats\n"));
 
     const readline = require("readline");
     const rl = readline.createInterface({
@@ -31,14 +32,14 @@ async function main() {
         const trimmed = input.trim();
 
         if (trimmed === "exit") {
-          console.log("Goodbye! 👋");
+          console.log(t("Goodbye! 👋"));
           rl.close();
           return;
         }
 
         if (trimmed === "new") {
           chatManager.createChat();
-          console.log("Started new chat.\n");
+          console.log(t("Started new chat.\n"));
           prompt();
           return;
         }
@@ -46,13 +47,13 @@ async function main() {
         if (trimmed === "list") {
           const chats = chatManager.getAllChats();
           if (chats.length === 0) {
-            console.log("No chats yet.\n");
+            console.log(t("No chats yet.\n"));
           } else {
             chats.forEach((chat, i) => {
               const active = currentChat?.id === chat.id ? " *" : "";
               console.log(`${i + 1}. ${chat.title} (${chat.messages.length} msgs)${active}`);
             });
-            console.log("\nUse 'load <number>' to switch chats.\n");
+            console.log(t("\nUse 'load <number>' to switch chats.\n"));
           }
           prompt();
           return;
@@ -68,7 +69,7 @@ async function main() {
             chatManager.loadChat(targetChat.id);
             console.log(`Loaded: ${targetChat.title}\n`);
           } else {
-            console.log("Invalid chat number.\n");
+            console.log(t("Invalid chat number.\n"));
           }
           prompt();
           return;
@@ -98,7 +99,7 @@ async function main() {
   } else if (mode === "--exec") {
     const message = args.slice(1).join(" ");
     if (!message) {
-      console.error("Usage: lumina --exec <message>");
+      console.error(t("Usage: lumina --exec <message>"));
       process.exit(1);
     }
 
@@ -107,7 +108,7 @@ async function main() {
     const response = await lumina.chat(message);
     console.log(response);
   } else if (mode === "--version") {
-    console.log("Lumina v1.0.0");
+    console.log(t("Lumina v1.0.0"));
     console.log(`Model: ${env.MODEL_NAME}`);
   } else {
     // Default: Rofi chat mode

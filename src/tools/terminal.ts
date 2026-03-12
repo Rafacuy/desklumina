@@ -1,3 +1,4 @@
+import { t } from "../utils";
 import { logger } from "../logger";
 import { analyzeCommand, rofiConfirm } from "../security";
 import { COMMAND_TIMEOUT } from "../constants";
@@ -33,7 +34,7 @@ export async function execute(command: string): Promise<CommandResult> {
       );
 
       if (!confirmed) {
-        logger.info("terminal", "Perintah dibatalkan oleh pengguna");
+        logger.info("terminal", t("Perintah dibatalkan oleh pengguna"));
         return {
           stdout: "",
           stderr: "Operasi dibatalkan oleh pengguna",
@@ -41,7 +42,7 @@ export async function execute(command: string): Promise<CommandResult> {
         };
       }
 
-      logger.info("terminal", "Perintah berbahaya disetujui pengguna");
+      logger.info("terminal", t("Perintah berbahaya disetujui pengguna"));
     }
 
     const proc = Bun.spawn(["bash", "-c", command], {

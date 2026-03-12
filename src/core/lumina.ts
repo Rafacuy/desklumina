@@ -1,3 +1,4 @@
+import { t } from "../utils";
 import { streamGroq, textToSpeech } from "../ai";
 import { buildSystemPrompt } from "../ai/prompts";
 import { Context } from "./context";
@@ -55,9 +56,9 @@ export class Lumina {
 
       // TTS if enabled
       if (settings.features.tts) {
-        logger.debug("lumina", "TTS enabled, triggering text-to-speech");
+        logger.debug("lumina", t("TTS enabled, triggering text-to-speech"));
         textToSpeech(fullResponse).catch(err => {
-          logger.error("lumina", "TTS failed", err instanceof Error ? err : new Error(String(err)));
+          logger.error("lumina", t("TTS failed"), err instanceof Error ? err : new Error(String(err)));
         });
       }
 

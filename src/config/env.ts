@@ -1,3 +1,4 @@
+import { t } from "../utils";
 import { DEFAULT_FALLBACK_MODELS } from "../constants";
 
 const GROQ_API_KEY = Bun.env.GROQ_API_KEY;
@@ -5,12 +6,12 @@ const MODEL_NAME = Bun.env.MODEL_NAME;
 const FALLBACK_MODELS = Bun.env.FALLBACK_MODELS;
 
 if (!GROQ_API_KEY || GROQ_API_KEY.trim() === "") {
-  console.error("❌ FATAL: GROQ_API_KEY tidak ditemukan di .env");
+  console.error(t("❌ FATAL: GROQ_API_KEY tidak ditemukan di .env"));
   process.exit(1);
 }
 
 if (!MODEL_NAME || MODEL_NAME.trim() === "") {
-  console.error("❌ FATAL: MODEL_NAME tidak ditemukan di .env");
+  console.error(t("❌ FATAL: MODEL_NAME tidak ditemukan di .env"));
   process.exit(1);
 }
 

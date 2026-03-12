@@ -1,12 +1,16 @@
 import { readFileSync } from "fs";
 import { getActiveWindowInfo, formatWindowContext } from "../tools/window-info";
 import { settingsManager } from "../core/settings-manager";
+import { getLang, getLangName } from "../utils";
 
 export async function buildSystemPrompt(): Promise<string> {
   const settings = settingsManager.get();
   const windowInfo = settings.features.windowContext ? await getActiveWindowInfo() : null;
   const home = process.env.HOME || "~";
   let currentTheme = "isabel";
+  
+  const currentLang = getLang();
+  const langName = getLangName(currentLang);
   
   try {
     currentTheme = readFileSync(`${home}/.config/bspwm/.rice`, "utf-8").trim();
@@ -37,7 +41,7 @@ TOOLS (JSON format in markdown code blocks):
 • notify: Desktop notifications (title|body|urgency)
 
 RESPONSE FORMAT:
-1. Brief Indonesian response (1-2 sentences, casual, friendly, emoji)
+1. Brief ${langName} response (1-2 sentences, casual, friendly, emoji)
 2. Tool call(s) in JSON markdown block
 
 EXAMPLES:
