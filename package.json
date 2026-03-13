@@ -9,7 +9,11 @@
   "scripts": {
     "start": "bun run src/main.ts",
     "dev": "bun --watch run src/main.ts --chat",
-    "lint": "bun x tsc --noEmit"
+    "lint": "bun x tsc --noEmit",
+    "daemon": "bun run src/main.ts --daemon",
+    "daemon:start": "bun run src/main.ts --daemon &",
+    "daemon:status": "bun run src/main.ts --daemon-status",
+    "send": "bun run src/main.ts --send"
   },
   "dependencies": {
     "edge-tts-universal": "^1.4.0"

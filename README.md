@@ -85,6 +85,12 @@ bun run dev
 
 # Direct command
 bun run src/main.ts --exec "open telegram"
+
+# Daemon mode (background service)
+bun run daemon
+
+# Send command to daemon
+bun run send "open telegram"
 ```
 
 ---
@@ -98,6 +104,8 @@ bun run src/main.ts --exec "open telegram"
 | **Interactive (Rofi)** | `bun start` | Graphical interface |
 | **Terminal Chat** | `bun run dev` | CLI-based conversation |
 | **Direct** | `bun run src/main.ts --exec "command"` | Single command |
+| **Daemon** | `bun run daemon` | Background service |
+| **Send to Daemon** | `bun run send "command"` | Send to background service |
 
 ### Chat Commands
 
@@ -144,6 +152,7 @@ DeskLumina uses **JSON-based tool calls** for desktop automation.
 | [📚 API Reference](docs/API.md) | Core classes and functions |
 | [🔧 Tools Documentation](docs/TOOLS.md) | Tool system and usage |
 | [🔒 Security Documentation](docs/SECURITY.md) | Security features |
+| [⚡ Daemon Mode](docs/DAEMON.md) | Background service setup |
 
 ---
 

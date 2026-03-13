@@ -1,0 +1,19 @@
+[Unit]
+Description=DeskLumina AI Desktop Automation Daemon
+After=graphical-session.target
+Wants=graphical-session.target
+
+[Service]
+Type=simple
+User=%i
+Environment=DISPLAY=:0
+Environment=XDG_RUNTIME_DIR=/run/user/%i
+WorkingDirectory=%h/.config/bspwm/agent
+ExecStart=/usr/bin/bun run src/main.ts --daemon
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

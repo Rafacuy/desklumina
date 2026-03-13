@@ -11,6 +11,10 @@ dist
 coverage
 *.lcov
 
+# daemon
+daemon.sock
+*.sock
+
 # --- Logs & Data ---
 # logs
 logs

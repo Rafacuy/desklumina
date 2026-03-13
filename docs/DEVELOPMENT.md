@@ -61,6 +61,15 @@ bun start
 
 # Run with custom command
 bun run src/main.ts --exec "open telegram"
+
+# Daemon mode (background service)
+bun run daemon
+
+# Send command to daemon
+bun run send "your command"
+
+# Check daemon status
+bun run daemon:status
 ```
 
 ---
@@ -94,6 +103,10 @@ agent/
 │   │   ├── lumina.ts              # AI orchestration
 │   │   ├── planner.ts             # Tool planning
 │   │   └── settings-manager.ts    # Settings
+│   │
+│   ├── daemon/                    # Daemon mode
+│   │   ├── daemon.ts              # Daemon server
+│   │   └── index.ts               # Daemon client
 │   │
 │   ├── logger/                    # Logging
 │   │   ├── index.ts               # Logger instance
@@ -136,6 +149,8 @@ agent/
 │
 ├── chats/                         # Chat history
 ├── logs/                          # Log files
+├── systemd/                       # Systemd service files
+│   └── desklumina-daemon@.service # User service template
 ├── .env.example                   # Environment template
 ├── package.json                   # Dependencies
 ├── tsconfig.json                  # TypeScript config

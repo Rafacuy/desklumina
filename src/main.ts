@@ -5,6 +5,7 @@ import { rofiChatLoop } from "./ui";
 import { startLoader, stopLoader } from "./ui/loader";
 import { logger } from "./logger";
 import { env } from "./config/env";
+import { DeskLuminaDaemon, DaemonClient } from "./daemon";
 
 const args = process.argv.slice(2);
 const mode = args[0];
@@ -15,7 +16,41 @@ async function main() {
   const chatManager = new ChatManager();
   const lumina = new Lumina(chatManager);
 
-  if (mode === "--chat") {
+  if (mode === "--daemon") {
+    console.log(t("🔧 Starting DeskLumina daemon..."));
+    const daemon = new DeskLuminaDaemon();
+    await daemon.start();
+    console.log(t("✓ Daemon started successfully"));
+    console.log(t("Use 'lumina --send <command>' to send commands"));
+    
+    // Keep process alive
+    process.stdin.resume();
+  } else if (mode === "--send") {
+    const command = args.slice(1).join(" ");
+    if (!command) {
+      console.error(t("Usage: lumina --send <command>"));
+      process.exit(1);
+    }
+
+    const client = new DaemonClient();
+    try {
+      const response = await client.sendCommand(command);
+      console.log(response);
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      console.error(t(`Error: ${err.message}`));
+      process.exit(1);
+    }
+  } else if (mode === "--daemon-status") {
+    const client = new DaemonClient();
+    if (client.isDaemonRunning()) {
+      console.log(t("✓ Daemon is running"));
+      console.log(t(`Socket: ${client.getSocketPath()}`));
+    } else {
+      console.log(t("✗ Daemon is not running"));
+      console.log(t("Start with: lumina --daemon"));
+    }
+  } else if (mode === "--chat") {
     console.log(t("💫 Lumina Terminal Chat Mode"));
     console.log(t("Type 'exit' to quit, 'new' for new chat, 'list' to see chats\n"));
 
