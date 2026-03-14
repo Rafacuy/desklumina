@@ -149,6 +149,7 @@ agent/
 │
 ├── chats/                         # Chat history
 ├── logs/                          # Log files
+├── tests/                         # Test files
 ├── systemd/                       # Systemd service files
 │   └── desklumina-daemon@.service # User service template
 ├── .env.example                   # Environment template
@@ -196,16 +197,20 @@ bun run dev
 bun run src/main.ts --exec "your command"
 ```
 
+**Run tests:**
+```bash
+bun test
+bun test tests/security.test.ts  # Specific file
+bun test --coverage              # Coverage report
+```
+
 ### 4. Debug
 
 Logs are written to `~/.config/bspwm/agent/logs/`. View them with:
 
 ```bash
 # View latest logs
-tail -f ~/.config/bspwm/agent/logs/agent.log
-
-# Or use the log viewer
-bun run src/utils/log-viewer.ts
+tail -f ~/.config/bspwm/agent/logs/general.log
 ```
 
 ### 5. Commit
@@ -411,43 +416,60 @@ logger.error("groq", "API request failed", error);
 **File location:**
 ```
 ~/.config/bspwm/agent/logs/
-├── agent.log          # Main log
-├── agent-error.log    # Error-only log
-└── agent-YYYY-MM-DD.log  # Daily logs
-```
-
-**Using log viewer:**
-```bash
-bun run src/utils/log-viewer.ts
+├── general.log          # Main log
+├── error.log    # Error-only log
 ```
 
 **Manual viewing:**
 ```bash
-tail -f ~/.config/bspwm/agent/logs/agent.log
+tail -f ~/.config/bspwm/agent/logs/general.log
 ```
 
 ---
 
 ## 🧪 Testing
 
-### Manual Testing
+### Automated Tests
 
-Test individual tools:
+```bash
+# Run all tests
+bun test
 
-```typescript
-// Test file operations
-bun run src/main.ts --exec "list files in ~/Downloads"
+# Run specific test file
+bun test tests/security.test.ts
+bun test tests/tools.test.ts
 
-// Test BSPWM
-bun run src/main.ts --exec "switch to workspace 3"
+# Watch mode
+bun test --watch
 
-// Test media
-bun run src/main.ts --exec "toggle music playback"
+# Coverage report
+bun test --coverage
 ```
 
-### Error Testing
+### Test Files
 
-See `test-error-handling.ts` for error handling test patterns.
+| File | Description |
+|------|-------------|
+| `chat-manager.test.ts` | Chat management |
+| `constants.test.ts` | Constants validation |
+| `env.test.ts` | Environment config |
+| `logger.test.ts` | Logger functionality |
+| `path.test.ts` | Path utilities |
+| `security.test.ts` | Security detection |
+| `tools.test.ts` | Tool handlers |
+
+### Manual Testing
+
+```bash
+# Test file operations
+bun run src/main.ts --exec "list files in ~/Downloads"
+
+# Test BSPWM
+bun run src/main.ts --exec "switch to workspace 3"
+
+# Test media
+bun run src/main.ts --exec "toggle music playback"
+```
 
 ---
 
@@ -458,6 +480,8 @@ See `test-error-handling.ts` for error handling test patterns.
 | [API.md](./API.md) | Core API reference |
 | [TOOLS.md](./TOOLS.md) | Tool system documentation |
 | [SECURITY.md](./SECURITY.md) | Security features |
+| [DAEMON.md](./DAEMON.md) | Daemon mode |
+| [TESTING.md](./TESTING.md) | Testing guide |
 
 ---
 
@@ -465,10 +489,11 @@ See `test-error-handling.ts` for error handling test patterns.
 
 ### Before Contributing
 
-1. Ensure type checking passes: `bun run lint`
-2. Test your changes manually
-3. Update documentation if needed
-4. Write clear commit messages
+1. Type checking passes: `bun run lint`
+2. Tests pass: `bun test`
+3. Manual testing completed
+4. Documentation updated
+5. Clear commit messages
 
 ### Commit Message Format
 

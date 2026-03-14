@@ -95,13 +95,6 @@ Desktop.ini
 *.d.ts
 !src/**/*.d.ts
 
-# test files
-*.test.ts
-*.spec.ts
-__tests__
-*.test.js
-*.spec.js
-
 # --- Security ---
 # Private keys
 *.pem

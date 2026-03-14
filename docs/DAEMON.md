@@ -314,7 +314,7 @@ bun run daemon:status
 ls -la ~/.config/bspwm/agent/daemon.sock
 
 # View daemon logs
-tail -f ~/.config/bspwm/agent/logs/agent.log | grep daemon
+tail -f ~/.config/bspwm/agent/logs/genera.log | grep daemon
 
 # Restart if needed
 pkill -f "desklumina.*daemon"
@@ -359,10 +359,10 @@ DEBUG=1 bun run daemon
 watch -n 1 'ls -la ~/.config/bspwm/agent/daemon.sock'
 
 # View all logs
-tail -f ~/.config/bspwm/agent/logs/agent.log
+tail -f ~/.config/bspwm/agent/logs/general.log
 
 # Error logs only
-tail -f ~/.config/bspwm/agent/logs/agent-error.log
+tail -f ~/.config/bspwm/agent/logs/error.log
 ```
 
 ### Log Analysis
@@ -374,8 +374,6 @@ grep "daemon" ~/.config/bspwm/agent/logs/agent.log
 # View recent errors
 tail -100 ~/.config/bspwm/agent/logs/agent-error.log
 
-# Use log viewer
-bun run src/utils/log-viewer.ts
 ```
 
 ### Systemd Service Issues

@@ -819,16 +819,87 @@ class AllModelsFailedError extends Error {
 
 ---
 
+## 🧪 Testing
+
+### Bun Test API
+
+```typescript
+import { describe, test, expect, beforeEach, afterEach, mock } from "bun:test";
+```
+
+### Test Structure
+
+```typescript
+describe("ModuleName", () => {
+  beforeEach(() => {
+    // Setup before each test
+  });
+
+  test("should do something", () => {
+    const result = functionToTest();
+    expect(result).toBe(expectedValue);
+  });
+
+  test("should handle async", async () => {
+    const result = await asyncFunction();
+    expect(result).toBeDefined();
+  });
+});
+```
+
+### Common Matchers
+
+```typescript
+expect(value).toBe(expected);           // Strict equality
+expect(value).toEqual(expected);        // Deep equality
+expect(value).toBeTruthy();
+expect(value).toBeFalsy();
+expect(value).toBeDefined();
+expect(value).toBeNull();
+expect(value).toBeGreaterThan(3);
+expect(value).toBeLessThan(5);
+expect(string).toContain("substring");
+expect(array).toContain(item);
+expect(object).toHaveProperty("key");
+expect(fn).toThrow();
+expect(mockFn).toHaveBeenCalled();
+```
+
+### Mocking
+
+```typescript
+const mockFn = mock((x: number) => x * 2);
+const result = mockFn(5);
+
+expect(mockFn).toHaveBeenCalledWith(5);
+expect(mockFn).toHaveBeenCalledTimes(1);
+```
+
+### Running Tests
+
+```bash
+bun test                    # Run all tests
+bun test tests/security.test.ts  # Specific file
+bun test --watch            # Watch mode
+bun test --coverage         # Coverage report
+bun test --verbose          # Verbose output
+```
+
+---
+
 ## 🔗 Related Documentation
 
 - [Development Guide](./DEVELOPMENT.md) - Development workflow
 - [Tools Documentation](./TOOLS.md) - Detailed tool usage
 - [Security Documentation](./SECURITY.md) - Security features
+- [Testing Guide](./TESTING.md) - Testing documentation
 
 ---
 
 <div align="center">
 
-**Need more help?** Check the [Development Guide](./DEVELOPMENT.md) for setup instructions.
+**API Reference** - DeskLumina Core Modules
+
+*Last updated: March 2026*
 
 </div>

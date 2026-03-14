@@ -148,12 +148,30 @@ DeskLumina uses **JSON-based tool calls** for desktop automation.
 
 | Document | Description |
 |----------|-------------|
-| [📖 Development Guide](docs/DEVELOPMENT.md) | Setup, workflow, and conventions |
-| [📚 API Reference](docs/API.md) | Core classes and functions |
-| [🔧 Tools Documentation](docs/TOOLS.md) | Tool system and usage |
-| [🔒 Security Documentation](docs/SECURITY.md) | Security features |
-| [⚡ Daemon Mode](docs/DAEMON.md) | Background service setup |
+| [Development Guide](docs/DEVELOPMENT.md) | Setup, workflow, conventions |
+| [API Reference](docs/API.md) | Core classes and functions |
+| [Tools Documentation](docs/TOOLS.md) | Tool system and usage |
+| [Security Documentation](docs/SECURITY.md) | Security features |
+| [Daemon Mode](docs/DAEMON.md) | Background service setup |
+| [Testing Guide](docs/TESTING.md) | Testing with Bun |
 
+---
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+bun test
+
+# Run specific test
+bun test tests/security.test.ts
+
+# With coverage
+bun test --coverage
+
+# Watch mode
+bun test --watch
+```
 ---
 
 ## 🙏 Acknowledgments
