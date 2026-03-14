@@ -642,16 +642,6 @@ formatRelativeTime(new Date());  // "baru saja"
 
 ---
 
-### Log Viewer
-
-**Location:** `src/utils/log-viewer.ts`
-
-Interactive log viewer for debugging.
-
-```bash
-bun run src/utils/log-viewer.ts
-```
-
 ---
 
 ## 📦 Constants

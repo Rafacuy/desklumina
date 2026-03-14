@@ -457,6 +457,7 @@ bun test --coverage
 | `path.test.ts` | Path utilities |
 | `security.test.ts` | Security detection |
 | `tools.test.ts` | Tool handlers |
+| `daemon.test.ts`| Daemon mode |
 
 ### Manual Testing
 

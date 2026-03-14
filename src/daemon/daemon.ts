@@ -2,7 +2,7 @@ import { t } from "../utils";
 import { Lumina, ChatManager } from "../core";
 import { logger } from "../logger";
 import { env } from "../config/env";
-import { existsSync, mkdirSync } from "fs";
+import { existsSync, mkdirSync, unlinkSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 
@@ -36,7 +36,7 @@ export class DeskLuminaDaemon {
     try {
       // Clean up existing socket
       if (existsSync(this.socketPath)) {
-        await Bun.file(this.socketPath).writer().end();
+        unlinkSync(this.socketPath);
       }
 
       this.server = Bun.serve({
@@ -116,7 +116,7 @@ export class DeskLuminaDaemon {
       }
       
       if (existsSync(this.socketPath)) {
-        await Bun.file(this.socketPath).writer().end();
+        unlinkSync(this.socketPath);
       }
 
       this.isRunning = false;

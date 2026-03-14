@@ -35,6 +35,7 @@ bun test --test-name-pattern "security"
 | `path.test.ts` | Path utilities (expandTilde, normalizePath) |
 | `security.test.ts` | Dangerous command detection |
 | `tools.test.ts` | Tool handlers (fileOp, bspwm, media, clipboard, notify) |
+| `daemon.test.ts` | Daemon mode (Isolated) |
 
 ## Writing Tests
 

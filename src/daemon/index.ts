@@ -17,7 +17,9 @@ export class DaemonClient {
     }
 
     try {
-      const response = await fetch(`http://unix:${this.socketPath}?cmd=${encodeURIComponent(command)}`);
+      const response = await fetch(`http://localhost/?cmd=${encodeURIComponent(command)}`, {
+        unix: this.socketPath,
+      } as any);
       const data = await response.json() as { success?: boolean; response?: string; error?: string };
 
       if (!response.ok) {
