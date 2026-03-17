@@ -1,54 +1,41 @@
-# 🔒 Security Documentation
-
-Security features and protections in DeskLumina.
-
----
-
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Dangerous Command Detection](#dangerous-command-detection)
-- [Path Protection](#path-protection)
-- [Confirmation System](#confirmation-system)
-- [Timeout Protection](#timeout-protection)
-- [Environment Security](#environment-security)
-- [Error Handling](#error-handling)
-- [Security Architecture](#security-architecture)
-
----
-
-## 📖 Overview
+# 09 - Security
 
 DeskLumina implements multiple layers of security to protect your system from accidental or malicious operations.
+
+---
+
+## Security Overview
+
+DeskLumina executes commands on your system based on AI-generated instructions. This requires careful security measures to prevent unintended damage.
 
 ### Security Layers
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    User Input                                │
+│                        User Input                            │
 └─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
+                              │
+                              ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  Layer 1: Pattern Analysis (Dangerous Command Detection)    │
 └─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
+                              │
+                              ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  Layer 2: Path Validation (Protected Path Detection)        │
 └─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
+                              │
+                              ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  Layer 3: User Confirmation (Rofi Dialog)                   │
 └─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
+                              │
+                              ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  Layer 4: Timeout Protection (30s limit)                    │
 └─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
+                              │
+                              ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                    Command Execution                         │
 └─────────────────────────────────────────────────────────────┘
@@ -56,13 +43,9 @@ DeskLumina implements multiple layers of security to protect your system from ac
 
 ---
 
-## ⚠️ Dangerous Command Detection
-
-### How It Works
+## Dangerous Command Detection
 
 Commands are analyzed against a pattern database before execution. Matching patterns trigger security responses based on severity.
-
-**Location:** `src/constants/commands.ts`
 
 ### Severity Levels
 
@@ -75,7 +58,7 @@ Commands are analyzed against a pattern database before execution. Matching patt
 
 ---
 
-### Critical Severity Patterns
+## Critical Severity Patterns
 
 These patterns require explicit user confirmation:
 
@@ -98,7 +81,7 @@ These patterns require explicit user confirmation:
 
 ---
 
-### High Severity Patterns
+## High Severity Patterns
 
 | Pattern | Description | Example |
 |---------|-------------|---------|
@@ -115,7 +98,7 @@ These patterns require explicit user confirmation:
 
 ---
 
-### Medium Severity Patterns
+## Medium Severity Patterns
 
 | Pattern | Description | Example |
 |---------|-------------|---------|
@@ -129,46 +112,30 @@ These patterns require explicit user confirmation:
 
 ---
 
-### Safe Operations
+## Safe Operations
 
 Read-only operations that don't require confirmation:
 
-- `ls`, `dir`, `tree` - List files
-- `cat`, `head`, `tail` - Read files
-- `grep`, `find` - Search
-- `pwd`, `whoami`, `hostname` - System info
-- `df`, `du`, `free` - Disk/memory info
-- `ps`, `top`, `htop` - Process info
+- `ls`, `dir`, `tree` — List files
+- `cat`, `head`, `tail` — Read files
+- `grep`, `find` — Search
+- `pwd`, `whoami`, `hostname` — System info
+- `df`, `du`, `free` — Disk/memory info
+- `ps`, `top`, `htop` — Process info
 
 ---
 
-## 📁 Path Protection
+## Path Protection
 
 ### Protected Paths
 
 Operations on these paths always require confirmation:
 
-```typescript
-const dangerousPaths = [
-  "/", "/bin", "/boot", "/dev",
-  "/etc", "/lib", "/root",
-  "/sys", "/usr", "/var"
-];
+```
+/, /bin, /boot, /dev, /etc, /lib, /root, /sys, /usr, /var
 ```
 
-### Path Validation
-
-**Location:** `src/tools/files.ts`
-
-```typescript
-function isDangerousPath(path: string): boolean {
-  const expandedPath = expandTilde(path);
-  const dangerous = ["/", "/bin", "/boot", "/dev", "/etc", "/lib", "/root", "/sys", "/usr", "/var"];
-  return dangerous.some(d => expandedPath === d || expandedPath.startsWith(d + "/"));
-}
-```
-
-### Examples
+### Path Validation Example
 
 | Path | Status | Reason |
 |------|--------|--------|
@@ -180,26 +147,22 @@ function isDangerousPath(path: string): boolean {
 
 ---
 
-## ✅ Confirmation System
+## Confirmation System
 
 ### Rofi Confirmation Dialog
 
 Dangerous operations trigger a graphical confirmation dialog.
 
-**Location:** `src/security/confirmation.ts`
-
-### Dialog Components
-
 ```
 ┌────────────────────────────────────────────┐
-│  ⚠️  [Severity Icon] Operation Title       │
+│  ⚠️ Confirm Operation                      │
 ├────────────────────────────────────────────┤
-│                                            │
-│  Description of the operation              │
 │                                            │
 │  Command: rm -rf /tmp/cache                │
 │                                            │
-│  Danger Level: HIGH                        │
+│  This action cannot be undone.             │
+│                                            │
+│  Severity: HIGH                            │
 │                                            │
 ├────────────────────────────────────────────┤
 │  [Cancel]                          [OK]    │
@@ -215,46 +178,16 @@ Dangerous operations trigger a graphical confirmation dialog.
 | Medium | ⚡ | Yellow |
 | Safe | ✓ | Green |
 
-### Confirmation Flow
-
-```typescript
-if (dangerous) {
-  const confirmed = await rofiConfirm(
-    "Operation Title",
-    "Command details and warning",
-    "high"  // severity
-  );
-  
-  if (!confirmed) {
-    return "❌ Operation cancelled by user";
-  }
-}
-```
-
 ---
 
-## ⏱️ Timeout Protection
-
-### Command Timeout
+## Timeout Protection
 
 All shell commands have a maximum execution time.
 
-**Location:** `src/constants/commands.ts`
+**Default:** 30 seconds
 
 ```typescript
-export const COMMAND_TIMEOUT = 30000; // 30 seconds
-```
-
-### Timeout Handling
-
-```typescript
-const result = await execute(command, {
-  timeout: COMMAND_TIMEOUT
-});
-
-if (result.timedOut) {
-  return "❌ Command timed out after 30 seconds";
-}
+const COMMAND_TIMEOUT = 30000; // milliseconds
 ```
 
 ### Why 30 Seconds?
@@ -266,7 +199,7 @@ if (result.timedOut) {
 
 ---
 
-## 🔐 Environment Security
+## Environment Security
 
 ### API Key Storage
 
@@ -276,19 +209,6 @@ API keys are stored in `.env` file, never in code:
 # .env (gitignored)
 GROQ_API_KEY=gsk_xxxxxxxxxxxxx
 MODEL_NAME=openai/gpt-oss-120b
-```
-
-### Environment Validation
-
-**Location:** `src/config/env.ts`
-
-```typescript
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const MODEL_NAME = process.env.MODEL_NAME;
-
-if (!GROQ_API_KEY || !MODEL_NAME) {
-  throw new Error("Missing required environment variables");
-}
 ```
 
 ### Git Safety
@@ -302,104 +222,50 @@ The `.env` file is excluded from version control:
 
 ---
 
-## 🛡️ Error Handling
+## Disabling Security Features
 
-### Secure Error Messages
+> **Warning:** Disabling security features is not recommended.
 
-Errors are sanitized to prevent information leakage:
+To disable confirmation prompts, edit `settings.json`:
 
-```typescript
-try {
-  const result = await execute(command);
-  return result.stdout;
-} catch (error) {
-  // Sanitize error message
-  const err = error instanceof Error ? error : new Error(String(error));
-  logger.error("tool", `Failed: ${err.message}`);
-  return `❌ Error: ${err.message}`;  // Generic message to user
+```json
+{
+  "features": {
+    "dangerousCommandConfirmation": false
+  }
 }
 ```
 
-### Error Logging
-
-Detailed errors are logged securely:
-
-- Full stack traces in log files only
-- User sees sanitized messages
-- No sensitive data in logs
-
 ---
 
-## 🏗️ Security Architecture
-
-### Module Responsibilities
-
-| Module | Responsibility |
-|--------|----------------|
-| `dangerous-commands.ts` | Pattern database and analysis |
-| `confirmation.ts` | User confirmation dialogs |
-| `files.ts` | Path validation |
-| `terminal.ts` | Command execution with timeout |
-| `logger/` | Secure logging |
-
-### Security Flow Example
-
-```
-User: "Delete the system folder"
-         │
-         ▼
-┌─────────────────────────┐
-│ 1. Pattern Analysis     │
-│    - Contains "rm"      │◄── HIGH severity
-│    - Contains "system"  │
-└───────────┬─────────────┘
-            │
-            ▼
-┌─────────────────────────┐
-│ 2. Path Validation      │
-│    - Path: /usr/local   │◄── PROTECTED
-└───────────┬─────────────┘
-            │
-            ▼
-┌─────────────────────────┐
-│ 3. Confirmation Dialog  │
-│    ⚠️ Delete Operation  │
-│    Path: /usr/local     │
-│    [Cancel] [OK]        │
-└───────────┬─────────────┘
-            │
-            ▼
-        User clicks Cancel
-            │
-            ▼
-    ❌ Operation cancelled
-```
-
----
-
-## 📊 Security Checklist
+## Security Checklist
 
 Before executing any command:
 
-- [ ] Pattern analysis completed
-- [ ] Path validation passed
-- [ ] User confirmation obtained (if needed)
-- [ ] Timeout protection enabled
-- [ ] Error handling in place
-- [ ] Logging configured
+- [x] Pattern analysis completed
+- [x] Path validation passed
+- [x] User confirmation obtained (if needed)
+- [x] Timeout protection enabled
+- [x] Error handling in place
 
 ---
 
-## 🔗 Related Documentation
+## Best Practices
 
-- [API Reference](./API.md) - Security module API
-- [Development Guide](./DEVELOPMENT.md) - Secure coding practices
-- [Tools Documentation](./TOOLS.md) - Tool-specific security
+1. **Review commands** — Always check what the AI plans to do
+2. **Use confirmation** — Keep dangerous command confirmation enabled
+3. **Check paths** — Be careful with system directories
+4. **Monitor logs** — Review logs for suspicious activity
+5. **Limit scope** — Use specific commands rather than broad operations
 
 ---
 
-<div align="center">
+## Related Documentation
 
-**Security First!** Always verify commands before execution.
+- **[Configuration](04-configuration.md)** — Security settings
+- **[Troubleshooting](13-troubleshooting.md)** — Common issues
+- **[API Reference](08-api-reference.md)** — Security API
 
-</div>
+---
+
+← Previous: [API Reference](08-api-reference.md) | Next: [Development Guide](10-development.md) →

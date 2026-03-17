@@ -1,72 +1,55 @@
-<div align="center">
-
-# 🌟 DeskLumina
+# DeskLumina
 
 **AI-Powered Desktop Automation Agent for BSPWM**
 
-*Control your desktop with natural language*
+Control your Linux desktop with natural language commands.
+
+> **Base Path:** This documentation assumes DeskLumina is installed at `~/.config/bspwm/agent/`
 
 [![Bun](https://img.shields.io/badge/Runtime-Bun-f9f1e5?style=flat-square&logo=bun)](https://bun.sh)
 [![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-</div>
+---
+
+## Overview
+
+DeskLumina is an intelligent desktop automation agent that lets you control your BSPWM-based Linux desktop using natural language. Built with Bun and TypeScript, it leverages the Groq API for fast AI inference and provides seamless integration with your desktop environment.
+
+> **Note:** This application is designed specifically for the [gh0stzk dotfiles](https://github.com/gh0stzk/dotfiles) configuration.
 
 ---
 
-## ⚠️ Important Notice
+## Features
 
-> **This application is designed specifically for the [gh0stzk dotfiles](https://github.com/gh0stzk/dotfiles) configuration.**
->
-> Please ensure you have the dotfiles installed before using DeskLumina.
-
----
-
-## 📖 Table of Contents
-
-- [Features](#-features)
-- [Quick Start](#-quick-start)
-- [Usage](#-usage)
-- [Documentation](#-documentation)
-- [Acknowledgments](#-acknowledgments)
+- **Natural Language Control** — Communicate with your desktop using everyday language
+- **BSPWM Integration** — Full window and workspace management
+- **AI Streaming** — Real-time responses via Groq API with automatic model fallback
+- **Context Awareness** — Automatic detection of active window for context-aware commands
+- **Desktop Integration** — Launch apps, control media, manage files, send notifications
+- **Security First** — Dangerous command detection with confirmation prompts
+- **Multiple Modes** — Interactive Rofi UI, terminal chat, direct execution, daemon mode
+- **Chat History** — Persistent conversations with auto-generated titles
+- **Text-to-Speech** — Optional voice responses with Edge TTS
 
 ---
 
-## ✨ Features
-
-| Category | Features |
-|----------|----------|
-| **🤖 AI Integration** | Natural language control, streaming responses via Groq API, automatic model fallback |
-| **🖥️ Window Manager** | Full BSPWM integration - workspaces, windows, layouts, focus management |
-| **🪟 Context Awareness** | Automatic detection of active window/application for context-aware commands |
-| **🚀 Applications** | Launch apps with simple aliases, detached process support |
-| **📁 File Operations** | Create, move, copy, delete, search files with safety checks |
-| **🎵 Media Control** | MPD integration - play, pause, volume, playlists |
-| **📋 Clipboard** | Clipcat clipboard management |
-| **🔔 Notifications** | Dunst notifications with urgency levels |
-| **💬 Chat History** | Persistent conversations with auto-generated titles |
-| **🔊 Text-to-Speech** | Edge TTS with Indonesian voices (Gadis/Ardi) |
-| **🎨 UI** | Rofi-based graphical interface with theme support |
-| **🔒 Security** | Dangerous command detection, confirmation prompts |
-
----
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
-- **Bun** v1.3.9+
-- **BSPWM** window manager
-- **Rofi**, **Dunst**, **Clipcat**, **MPD+MPC**
-
-> 💡 This app is designed for [gh0stzk dotfiles](https://github.com/gh0stzk/dotfiles).
+- Bun v1.3.9+
+- BSPWM window manager
+- Rofi, Dunst, Clipcat, MPD+MPC
 
 ### Installation
 
 ```bash
-# Clone and install
-git clone https://github.com/Rafacuy/desklumina.git
-cd desklumina
+# Clone the repository to your BSPWM agent config directory
+git clone https://github.com/Rafacuy/desklumina.git ~/.config/bspwm/agent
+cd ~/.config/bspwm/agent
+
+# Install dependencies
 bun install
 
 # Configure environment
@@ -74,7 +57,7 @@ cp .env.example .env
 # Edit .env with your Groq API key
 ```
 
-### Run
+### Basic Usage
 
 ```bash
 # Interactive mode (Rofi UI)
@@ -83,121 +66,57 @@ bun start
 # Terminal chat mode
 bun run dev
 
-# Direct command
+# Direct command execution
 bun run src/main.ts --exec "open telegram"
 
 # Daemon mode (background service)
 bun run daemon
-
-# Send command to daemon
-bun run send "open telegram"
+bun run send "switch to workspace 3"
 ```
 
 ---
 
-## 🚀 Usage
-
-### Modes
-
-| Mode | Command | Description |
-|------|---------|-------------|
-| **Interactive (Rofi)** | `bun start` | Graphical interface |
-| **Terminal Chat** | `bun run dev` | CLI-based conversation |
-| **Direct** | `bun run src/main.ts --exec "command"` | Single command |
-| **Daemon** | `bun run daemon` | Background service |
-| **Send to Daemon** | `bun run send "command"` | Send to background service |
-
-### Chat Commands
-
-| Command | Description |
-|---------|-------------|
-| `exit` | Close the application |
-| `new` | Start a new chat session |
-| `list` | Display all saved chats |
-| `load <n>` | Load a specific chat by number |
-
----
-
-## 🔧 Tool System
-
-DeskLumina uses **JSON-based tool calls** for desktop automation.
-
-### Available Tools
-
-| Tool | Description |
-|------|-------------|
-| `app` | Launch applications by alias |
-| `terminal` | Execute shell commands |
-| `bspwm` | Window/workspace management |
-| `file` | File operations |
-| `media` | Music player control |
-| `clipboard` | Clipboard management |
-| `notify` | Desktop notifications |
-
-### Example
-
-```json
-{"tool": "app", "args": "telegram"}
-```
-
-> 📚 **See [Tools Documentation](docs/TOOLS.md) for complete tool reference.**
-
----
-
-## 📚 Documentation
+## Documentation
 
 | Document | Description |
 |----------|-------------|
-| [Development Guide](docs/DEVELOPMENT.md) | Setup, workflow, conventions |
-| [API Reference](docs/API.md) | Core classes and functions |
-| [Tools Documentation](docs/TOOLS.md) | Tool system and usage |
-| [Security Documentation](docs/SECURITY.md) | Security features |
-| [Daemon Mode](docs/DAEMON.md) | Background service setup |
-| [Testing Guide](docs/TESTING.md) | Testing with Bun |
+| [Introduction](docs/01-introduction.md) | Project overview and philosophy |
+| [Installation](docs/02-installation.md) | Detailed setup instructions |
+| [Quick Start](docs/03-quick-start.md) | First-time usage guide |
+| [Configuration](docs/04-configuration.md) | Settings and customization |
+| [Usage Guide](docs/06-usage-guide.md) | All usage modes explained |
+| [Tools Reference](docs/07-tools-reference.md) | Complete tool documentation |
+| [API Reference](docs/08-api-reference.md) | Core module documentation |
+| [Development](docs/10-development.md) | Development workflow |
 
 ---
 
-## 🧪 Testing
+## Contributing
 
-```bash
-# Run all tests
-bun test
+Contributions are welcome! Please read the [Contributing Guide](docs/15-contributing.md) for details on:
 
-# Run specific test
-bun test tests/security.test.ts
+- Code conventions
+- Development workflow
+- Testing requirements
+- Pull request process
 
-# With coverage
-bun test --coverage
-
-# Watch mode
-bun test --watch
-```
 ---
 
-## 🙏 Acknowledgments
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+
+---
+
+## Acknowledgments
 
 Built with:
 
-- [**Bun**](https://bun.sh) - Fast JavaScript runtime
-- [**Groq API**](https://groq.com) - Ultra-fast LLM inference
-- [**BSPWM**](https://github.com/baskerville/bspwm) - Tiling window manager
-- [**Rofi**](https://github.com/davatorium/rofi) - Window switcher/launcher
-- [**Dunst**](https://github.com/dunst-project/dunst) - Notification daemon
-- [**Clipcat**](https://github.com/xrelkd/clipcat) - Clipboard manager
-- [**MPD**](https://www.musicpd.org) - Music player daemon
+- [Bun](https://bun.sh) — Fast JavaScript runtime
+- [Groq API](https://groq.com) — Ultra-fast LLM inference
+- [BSPWM](https://github.com/baskerville/bspwm) — Tiling window manager
+- [Rofi](https://github.com/davatorium/rofi) — Window switcher/launcher
 
 ---
 
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
----
-
-<div align="center">
-
-**Made with ❤️ by [Rafacuy](https://github.com/Rafacuy)**
-
-[⬆ Back to Top](#-desklumina)
-
-</div>
+Made with ❤️ by [Rafacuy](https://github.com/Rafacuy)
