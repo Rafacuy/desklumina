@@ -1,5 +1,6 @@
 import { spawn } from "bun";
 import type { ChatManager, Chat } from "../core/chat-manager";
+import { t } from "../utils/i18n";
 
 const THEME_PATH = `${process.env.HOME}/.config/bspwm/agent/src/ui/themes/lumina.rasi`;
 
@@ -20,16 +21,16 @@ export async function rofiChatInput(
   }
   
   if (historyPreview) {
-    menuItems.push("── Recent Messages ──");
+    menuItems.push(`── ${t("Recent Messages")} ──`);
     menuItems.push(historyPreview);
     menuItems.push("──────────────────");
   }
   
-  menuItems.push("💬 Send message");
-  menuItems.push("📝 New Chat");
-  menuItems.push("📂 Select Chat");
-  menuItems.push("⚙️ Settings");
-  menuItems.push("✕ Close");
+  menuItems.push(`💬 ${t("Send message")}`);
+  menuItems.push(`📝 ${t("New Chat")}`);
+  menuItems.push(`📂 ${t("Select Chat")}`);
+  menuItems.push(`⚙️ ${t("Settings")}`);
+  menuItems.push(`✕ ${t("Close")}`);
 
   const input = await rofiDmenu(menuItems.join("\n"), prompt);
 
@@ -37,16 +38,16 @@ export async function rofiChatInput(
     return { action: "exit" };
   }
 
-  if (input === "💬 Send message") {
-    const message = await rofiSimpleInput("Message", "");
+  if (input === `💬 ${t("Send message")}`) {
+    const message = await rofiSimpleInput(t("Message"), "");
     if (message) {
       return { action: "send", input: message };
     }
     return { action: "exit" };
   }
 
-  if (input === "📝 New Chat") {
-    const message = await rofiSimpleInput("New Chat", "");
+  if (input === `📝 ${t("New Chat")}`) {
+    const message = await rofiSimpleInput(t("New Chat"), "");
     if (message) {
       chatManager.createChat(message);
       return { action: "send", input: message };
@@ -54,20 +55,22 @@ export async function rofiChatInput(
     return { action: "new" };
   }
 
-  if (input === "📂 Select Chat") {
+  if (input === `📂 ${t("Select Chat")}`) {
     return { action: "select" };
   }
 
-  if (input === "⚙️ Settings") {
+  const settingsLabel = t("Settings");
+  if (input === `⚙️ ${settingsLabel}` || input === "⚙️ Settings" || input === "⚙️ Pengaturan") {
     return { action: "settings" };
   }
 
-  if (input === "✕ Close") {
+  const closeLabel = t("Close");
+  if (input === `✕ ${closeLabel}` || input === "✕ Close" || input === "✕ Tutup") {
     return { action: "exit" };
   }
 
   if (input.startsWith("You: ") || input.startsWith("Lumina: ") || input.startsWith("──") || input.startsWith("───") || input.startsWith("🔧") || input.startsWith("✓")) {
-    const message = await rofiSimpleInput("Message", "");
+    const message = await rofiSimpleInput(t("Message"), "");
     if (message) {
       return { action: "send", input: message };
     }
@@ -81,7 +84,7 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
   const chats = chatManager.getAllChats();
   
   if (chats.length === 0) {
-    await rofiDisplay("No chats yet.\nStart a new conversation!");
+    await rofiDisplay(t("No chats yet.\nStart a new conversation!"));
     return null;
   }
 
@@ -90,21 +93,21 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
     const lastMsg = chat.messages[chat.messages.length - 1];
     const preview = lastMsg
       ? lastMsg.content.substring(0, 40)
-      : "Empty chat";
+      : t("Empty chat");
     return `${chat.title} | ${date} | ${chat.messages.length} msgs | "${preview}..."`;
   });
 
   items.push("─".repeat(30));
-  items.push("📝 New Chat");
-  items.push("✕ Cancel");
+  items.push(`📝 ${t("New Chat")}`);
+  items.push(`✕ ${t("Cancel")}`);
 
-  const selected = await rofiDmenu(items.join("\n"), "Select Chat");
+  const selected = await rofiDmenu(items.join("\n"), t("Select Chat"));
 
-  if (!selected || selected === "✕ Cancel") {
+  if (!selected || selected === `✕ ${t("Cancel")}`) {
     return null;
   }
 
-  if (selected === "📝 New Chat") {
+  if (selected === `📝 ${t("New Chat")}`) {
     return "__new__";
   }
 

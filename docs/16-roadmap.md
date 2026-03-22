@@ -14,6 +14,7 @@ DeskLumina is actively maintained and in stable development. The current version
 - Security features
 - Daemon mode
 - Text-to-speech support
+- Multi-language support (Indonesian & English)
 
 ---
 
@@ -23,7 +24,6 @@ DeskLumina is actively maintained and in stable development. The current version
 
 | Feature | Status | Description |
 |---------|--------|-------------|
-| Multi-language UI | Planned | Full localization for English, Indonesian |
 | Custom themes | Planned | User-definable Rofi themes |
 | Chat export | Planned | Export chats to markdown/JSON |
 | Keyboard shortcuts | Planned | In-app shortcut customization |

@@ -1,45 +1,67 @@
 import { homedir } from "os";
 import { join } from "path";
+import { existsSync, readFileSync, mkdirSync, writeFileSync } from "fs";
 import type { Settings } from "../types";
 import { DEFAULT_SETTINGS } from "../types";
 import { logger } from "../logger";
+import { setLang } from "../utils/i18n";
 
 const SETTINGS_DIR = join(homedir(), ".config/bspwm/agent");
 const SETTINGS_PATH = join(SETTINGS_DIR, "settings.json");
 
 export class SettingsManager {
   private settings: Settings = DEFAULT_SETTINGS;
-  private isLoaded = false;
 
   constructor() {
-    this.load().catch(() => {});
+    this.ensureDir();
+    this.load();
   }
 
-  private async load() {
+  private ensureDir() {
     try {
-      const file = Bun.file(SETTINGS_PATH);
-      if (file.size > 0) {
-        const data = await file.text();
-        const saved = JSON.parse(data as any);
+      if (!existsSync(SETTINGS_DIR)) {
+        mkdirSync(SETTINGS_DIR, { recursive: true });
+      }
+    } catch (error) {
+      console.error(`Failed to create settings directory: ${error}`);
+    }
+  }
+
+  private load() {
+    try {
+      if (existsSync(SETTINGS_PATH)) {
+        const data = readFileSync(SETTINGS_PATH, "utf-8");
+        const saved = JSON.parse(data);
         if (saved && typeof saved === "object") {
           this.settings = { ...DEFAULT_SETTINGS, ...saved };
-          this.isLoaded = true;
+          // Sync language with i18n IMMEDIATELY to avoid race conditions
+          if (this.settings.language) {
+            setLang(this.settings.language);
+          }
           return;
         }
       }
-      await this.save();
+      this.saveSync();
     } catch (error) {
       logger.error("settings", `Failed to load: ${error}`);
       this.settings = DEFAULT_SETTINGS;
-      await this.save();
+      this.saveSync();
+    }
+  }
+
+  private saveSync() {
+    try {
+      this.ensureDir();
+      writeFileSync(SETTINGS_PATH, JSON.stringify(this.settings, null, 2));
+    } catch (error) {
+      logger.error("settings", `Failed to saveSync: ${error}`);
     }
   }
 
   async save() {
     try {
-      const settingsFile = Bun.file(SETTINGS_PATH);
+      this.ensureDir();
       await Bun.write(SETTINGS_PATH, JSON.stringify(this.settings, null, 2));
-      this.isLoaded = true;
     } catch (error) {
       logger.error("settings", `Failed to save: ${error}`);
     }
@@ -51,7 +73,21 @@ export class SettingsManager {
 
   toggleFeature(feature: keyof Settings["features"]) {
     this.settings.features[feature] = !this.settings.features[feature];
-    this.save();
+    this.save().catch(() => {});
+  }
+  
+  setLanguage(lang: "id" | "en") {
+    this.settings.language = lang;
+    setLang(lang);
+    
+    // Auto-switch TTS voice based on language
+    if (lang === "id") {
+      this.settings.tts.voiceId = "id-ID-GadisNeural";
+    } else if (lang === "en") {
+      this.settings.tts.voiceId = "en-US-AvaNeural";
+    }
+    
+    this.save().catch(() => {});
   }
 
   setTTSVoice(voiceId: string) {

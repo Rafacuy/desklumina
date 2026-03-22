@@ -1,7 +1,9 @@
-import dictionary from "../locales/dictionary.json";
+import id from "../locales/id.json";
+import en from "../locales/en.json";
 
 const locales: Record<string, any> = {
-  id: dictionary,
+  id,
+  en,
 };
 
 // Default language

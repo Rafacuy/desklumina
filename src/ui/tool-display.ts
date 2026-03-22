@@ -1,4 +1,5 @@
 import type { ParsedToolCall } from "../types";
+import { t } from "../utils/i18n";
 
 const TOOL_ICONS: Record<string, string> = {
   app: "🚀",
@@ -8,16 +9,6 @@ const TOOL_ICONS: Record<string, string> = {
   media: "🎵",
   clipboard: "📋",
   notify: "🔔",
-};
-
-const TOOL_NAMES: Record<string, string> = {
-  app: "Application",
-  terminal: "Terminal",
-  bspwm: "Window Manager",
-  file: "File System",
-  media: "Media Player",
-  clipboard: "Clipboard",
-  notify: "Notification",
 };
 
 export function formatToolCall(call: ParsedToolCall): string {
@@ -36,7 +27,7 @@ export function formatToolCalls(calls: ParsedToolCall[]): string {
   }
 
   const formatted = calls.map((call) => formatToolCall(call)).join("\n");
-  return `⚡ Actions:\n${formatted}`;
+  return `⚡ ${t("Actions")}:\n${formatted}`;
 }
 
 export function formatToolResult(tool: string, result: string): string {
@@ -55,5 +46,5 @@ export function formatToolResults(results: Array<{ tool: string; result: string 
   }
 
   const formatted = results.map((r) => formatToolResult(r.tool, r.result)).join("\n");
-  return `✓ Results:\n${formatted}`;
+  return `✓ ${t("Results")}:\n${formatted}`;
 }

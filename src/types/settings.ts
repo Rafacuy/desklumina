@@ -7,6 +7,7 @@ export interface FeatureFlags {
 }
 
 export interface Settings {
+  language: "id" | "en";
   features: FeatureFlags;
   tts: {
     voiceId: string;
@@ -15,6 +16,7 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
+  language: "id",
   features: {
     tts: false,
     toolDisplay: true,

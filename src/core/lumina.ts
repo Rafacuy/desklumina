@@ -79,7 +79,7 @@ export class Lumina {
             toolResults.push({ tool: call.tool, result });
           } catch (error) {
             const errMsg = logger.catchError(`tool:${call.tool}`, error);
-            toolResults.push({ tool: call.tool, result: `❌ Error: ${errMsg}` });
+            toolResults.push({ tool: call.tool, result: `${t("Error")}: ${errMsg}` });
           }
         }
 
@@ -95,7 +95,7 @@ export class Lumina {
           this.chatManager.addToolResults(toolResults);
         } else {
           const toolOutput = toolResults.map(r => `[${r.tool}] ${r.result}`).join("\n");
-          this.context.add("user", `Tool execution results:\n${toolOutput}`);
+          this.context.add("user", `${t("Tool execution results")}:\n${toolOutput}`);
         }
       }
 
@@ -103,7 +103,7 @@ export class Lumina {
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error("lumina", `Chat error: ${err.message}`, err);
-      const errorMsg = `❌ Error: ${err.message}`;
+      const errorMsg = `❌ ${t("Error")}: ${err.message}`;
       onChunk?.(errorMsg);
       return errorMsg;
     }
