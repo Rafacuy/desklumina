@@ -8,7 +8,7 @@
     "dangerousCommandConfirmation": true
   },
   "tts": {
-    "voiceId": "en-GB-SoniaNeural",
+    "voiceId": "en-US-AvaNeural",
     "speed": 1
   }
 }

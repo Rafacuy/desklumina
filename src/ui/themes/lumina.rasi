@@ -8,9 +8,9 @@
     text-secondary: #6b7280;
     text-muted: #9ca3af;
     accent: #2563eb;
-    accent-light: #eff6ff;
-    accent-hover: #dbeafe;
-    shadow-color: #000000;
+    accent-light: rgba(239, 246, 255, 0.9);
+    accent-hover: rgba(219, 234, 254, 0.8);
+    shadow-color: rgba(0, 0, 0, 0.05);
     
     bg: @white;
     fg: @text-primary;
@@ -22,17 +22,17 @@
 window {
     anchor: northeast;
     location: northeast;
-    x-offset: -16;
-    y-offset: 16;
+    x-offset: -20;
+    y-offset: 20;
     width: 460px;
-    border: 1px solid;
+    border: 1px;
     border-color: @border-subtle;
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 0px;
     background-color: @bg;
     transparency: "real";
     
-    // Subtle shadow for depth
+    // Smooth children layout
     children: [mainbox];
 }
 
@@ -40,12 +40,13 @@ mainbox {
     padding: 0px;
     spacing: 0px;
     background-color: transparent;
+    children: [inputbar, listview, message];
 }
 
 inputbar {
-    padding: 16px 18px;
-    border-radius: 10px 10px 0 0;
-    spacing: 10px;
+    padding: 18px 20px;
+    border-radius: 12px 12px 0 0;
+    spacing: 12px;
     background-color: @bg;
     border: 0px;
     children: [prompt, entry];
@@ -55,6 +56,7 @@ prompt {
     text-color: @accent-color;
     font: "JetBrainsMono Nerd Font Bold 11";
     str: "Lumina";
+    vertical-align: 0.5;
 }
 
 entry {
@@ -64,61 +66,73 @@ entry {
     background-color: transparent;
     font: "JetBrainsMono Nerd Font 10";
     blink: true;
+    vertical-align: 0.5;
+    cursor: text;
 }
 
 message {
     background-color: @surface;
-    padding: 12px 18px;
+    padding: 10px 20px;
     text-color: @text-secondary;
-    font: "JetBrainsMono Nerd Font 9";
-    border-radius: 0 0 10px 10px;
-    border: 0px;
+    border-radius: 0 0 12px 12px;
+    border: 0;
+    border-top: 1px solid;
+    border-color: @border-light;
 }
 
 textbox {
     background-color: transparent;
-    text-color: @fg;
-    padding: 4px;
+    text-color: @text-muted;
+    font: "JetBrainsMono Nerd Font 9";
+    vertical-align: 0.5;
 }
 
 listview {
-    lines: 8;
+    lines: 10;
     fixed-height: false;
     scrollbar: false;
     border: 0;
-    border-top: 1px solid;
-    border-color: @border-light;
-    padding: 10px 12px 14px 12px;
-    spacing: 3px;
+    padding: 12px;
+    spacing: 4px;
     background-color: @bg;
 }
 
 element {
-    padding: 10px 14px;
-    border-radius: 6px;
-    spacing: 10px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    spacing: 12px;
+    background-color: transparent;
+    text-color: @fg;
+    cursor: pointer;
+}
+
+element normal.normal {
     background-color: transparent;
     text-color: @fg;
 }
 
-element selected {
+element selected.normal {
     background-color: @accent-light;
     text-color: @accent-color;
 }
 
-element alternate {
+element alternate.normal {
     background-color: transparent;
+    text-color: @fg;
 }
 
 element-text {
     background-color: inherit;
     text-color: inherit;
     font: "JetBrainsMono Nerd Font 10";
+    vertical-align: 0.5;
+    highlight: bold underline;
 }
 
 element-icon {
-    size: 1.1em;
+    size: 1.2em;
     background-color: transparent;
+    vertical-align: 0.5;
 }
 
 // Separator styling

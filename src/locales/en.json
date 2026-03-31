@@ -48,5 +48,16 @@
   "Actions": "Actions",
   "Results": "Results",
   "Error": "Error",
-  "Tool execution results": "Tool execution results"
+  "Tool execution results": "Tool execution results",
+  "Type to search...": "Type to search...",
+  "Search settings...": "Search settings...",
+  "Search chat...": "Search chat...",
+  "Back": "Back",
+  "Enter": "Enter",
+  "Select": "Select",
+  "Esc": "Esc",
+  "Exit": "Exit",
+  "Search": "Search",
+  "Toggle": "Toggle",
+  "Send": "Send"
 }

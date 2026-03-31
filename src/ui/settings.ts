@@ -5,35 +5,77 @@ import { t, getLang } from "../utils/i18n";
 
 const THEME_PATH = `${process.env.HOME}/.config/bspwm/agent/src/ui/themes/lumina.rasi`;
 
+import { rofiMenu } from "./rofi";
+
 export async function rofiSettings(): Promise<boolean> {
   const settings = settingsManager.get();
   const currentLang = getLang();
 
-  const menuItems = [
-    `🌐 ${t("Language")}: ${currentLang === "id" ? "Bahasa Indonesia" : "English"}`,
-    `🔊 ${t("Text-to-Speech")}: ${settings.features.tts ? `✓ ${t("ON")}` : `✗ ${t("OFF")}`}`,
-    `🔧 ${t("Tool Display")}: ${settings.features.toolDisplay ? `✓ ${t("ON")}` : `✗ ${t("OFF")}`}`,
-    `💬 ${t("Chat History")}: ${settings.features.chatHistory ? `✓ ${t("ON")}` : `✗ ${t("OFF")}`}`,
-    `🪟 ${t("Window Context")}: ${settings.features.windowContext ? `✓ ${t("ON")}` : `✗ ${t("OFF")}`}`,
-    `⚠️ ${t("Dangerous Command Confirmation")}: ${settings.features.dangerousCommandConfirmation ? `✓ ${t("ON")}` : `✗ ${t("OFF")}`}`,
-    "──────────────────",
-    `🎤 ${t("Change TTS Voice")}`,
-    `⚡ ${t("TTS Speed Settings")}`,
-    "──────────────────",
-    `💾 ${t("Save & Exit")}`,
-  ];
+  // Helper for toggle labels
+  const getToggleLabel = (feature: keyof Settings["features"], icon: string, label: string) => {
+    const isEnabled = settings.features[feature];
+    return `${icon} ${label.padEnd(25)} │ ${isEnabled ? `󰄬 ${t("ON")}` : `󰅖 ${t("OFF")}`}`;
+  };
 
-  const result = await rofiDmenu(menuItems.join("\n"), `⚙️ ${t("Settings")}`);
+  const menuItems: string[] = [];
 
-  if (!result) return false;
+  // Header
+  menuItems.push(`⚙️ ${t("Settings")}`);
+  menuItems.push("──────────────────");
+
+  // Core Features
+  menuItems.push(getToggleLabel("tts", "🔊", t("Text-to-Speech")));
+  menuItems.push(getToggleLabel("toolDisplay", "🔧", t("Tool Display")));
+  menuItems.push(getToggleLabel("chatHistory", "💬", t("Chat History")));
+  menuItems.push(getToggleLabel("windowContext", "🪟", t("Window Context")));
+  menuItems.push(getToggleLabel("dangerousCommandConfirmation", "⚠️", t("Confirmation")));
+
+  // Localization
+  menuItems.push("──────────────────");
+  menuItems.push(`🌐 ${t("Language").padEnd(25)} │ ${currentLang === "id" ? "Indonesian" : "English"}`);
+  
+  // TTS submenu
+  if (settings.features.tts) {
+    menuItems.push(`🎤 ${t("Change TTS Voice")}`);
+    menuItems.push(`⚡ ${t("TTS Speed Settings")}`);
+  }
+
+  // Actions
+  menuItems.push("──────────────────");
+  menuItems.push(`💾 ${t("Save & Exit")}`);
+  menuItems.push(`✕ ${t("Cancel")}`);
+
+  const result = await rofiMenu(
+    menuItems.join("\n"), 
+    t("Settings"), 
+    "listview { lines: 14; }",
+    t("Search settings..."),
+    `󰌑 ${t("Select")}/${t("Toggle")} │ 󱊷 ${t("Back")}/${t("Exit")} │ 󰍉 ${t("Search")}`
+  );
+
+  if (!result || result === `✕ ${t("Cancel")}` || result.includes(t("Settings"))) {
+    return false;
+  }
+
+  if (result.includes("──────────────────")) {
+    return rofiSettings();
+  }
 
   if (result.includes(t("Language"))) {
     const langs = [
       "Bahasa Indonesia (id)",
-      "English (en)"
+      "English (en)",
+      "──────────────────",
+      `✕ ${t("Back")}`
     ];
-    const langSelection = await rofiDmenu(langs.join("\n"), t("Select Language"));
-    if (langSelection) {
+    const langSelection = await rofiMenu(
+      langs.join("\n"), 
+      t("Select Language"), 
+      "", 
+      t("Type to search..."),
+      `󰌑 ${t("Select")} │ 󱊷 ${t("Back")} │ 󰍉 ${t("Search")}`
+    );
+    if (langSelection && !langSelection.includes(t("Back")) && !langSelection.includes("──")) {
       if (langSelection.includes("(id)")) settingsManager.setLanguage("id");
       if (langSelection.includes("(en)")) settingsManager.setLanguage("en");
     }
@@ -60,7 +102,7 @@ export async function rofiSettings(): Promise<boolean> {
     return rofiSettings();
   }
 
-  if (result.includes(t("Dangerous Command Confirmation"))) {
+  if (result.includes(t("Confirmation"))) {
     settingsManager.toggleFeature("dangerousCommandConfirmation");
     return rofiSettings();
   }
@@ -77,9 +119,16 @@ export async function rofiSettings(): Promise<boolean> {
           "en-US-AndrewNeural - Andrew (Male)",
           "en-GB-SoniaNeural - Sonia (Female)",
         ];
+    voices.push("──────────────────", `✕ ${t("Back")}`);
         
-    const voice = await rofiDmenu(voices.join("\n"), t("Select Voice"));
-    if (voice) {
+    const voice = await rofiMenu(
+      voices.join("\n"), 
+      t("Select Voice"), 
+      "", 
+      t("Type to search..."),
+      `󰌑 ${t("Select")} │ 󱊷 ${t("Back")} │ 󰍉 ${t("Search")}`
+    );
+    if (voice && !voice.includes(t("Back")) && !voice.includes("──")) {
       const voiceId = voice.split(" - ")[0]?.trim();
       if (voiceId) settingsManager.setTTSVoice(voiceId);
     }
@@ -87,10 +136,16 @@ export async function rofiSettings(): Promise<boolean> {
   }
 
   if (result.includes(t("TTS Speed Settings"))) {
-    const speeds = ["0.5x", "0.75x", "1.0x (Default)", "1.25x", "1.5x", "2.0x"];
-    const speed = await rofiDmenu(speeds.join("\n"), t("TTS Speed"));
-    if (speed) {
-      const value = Number(speed.replace("x", "")) || 1.0;
+    const speeds = ["0.5x", "0.75x", "1.0x (Default)", "1.25x", "1.5x", "2.0x", "──────────────────", `✕ ${t("Back")}`];
+    const speed = await rofiMenu(
+      speeds.join("\n"), 
+      t("TTS Speed"), 
+      "", 
+      t("Type to search..."),
+      `󰌑 ${t("Select")} │ 󱊷 ${t("Back")} │ 󰍉 ${t("Search")}`
+    );
+    if (speed && !speed.includes(t("Back")) && !speed.includes("──")) {
+      const value = Number(speed.replace("x", "").split(" ")[0]) || 1.0;
       settingsManager.setTTSSpeed(value);
     }
     return rofiSettings();
@@ -101,28 +156,4 @@ export async function rofiSettings(): Promise<boolean> {
   }
 
   return true;
-}
-
-async function rofiDmenu(input: string, prompt: string): Promise<string | null> {
-  const proc = spawn([
-    "rofi",
-    "-dmenu",
-    "-i",
-    "-p",
-    prompt,
-    "-theme",
-    THEME_PATH,
-    "-markup-rows",
-  ], {
-    stdin: "pipe",
-    stdout: "pipe",
-  });
-
-  proc.stdin?.write(input);
-  proc.stdin?.end();
-
-  const output = await new Response(proc.stdout).text();
-  await proc.exited;
-
-  return output.trim() || null;
 }

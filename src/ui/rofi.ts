@@ -32,7 +32,13 @@ export async function rofiChatInput(
   menuItems.push(`⚙️ ${t("Settings")}`);
   menuItems.push(`✕ ${t("Close")}`);
 
-  const input = await rofiDmenu(menuItems.join("\n"), prompt);
+  const input = await rofiMenu(
+    menuItems.join("\n"), 
+    prompt,
+    "",
+    t("Type to search..."),
+    `󰌑 ${t("Send")} │ 󱊷 ${t("Exit")} │ 󰍉 ${t("Search")}`
+  );
 
   if (!input) {
     return { action: "exit" };
@@ -88,34 +94,97 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
     return null;
   }
 
-  const items = chats.map((chat: Chat) => {
-    const date = new Date(chat.updatedAt).toLocaleDateString();
+  const items: string[] = [];
+  
+  // Clean Header
+  items.push(`󰗋 ${t("Select Chat")}`);
+  items.push("──────────────────");
+  
+  const chatItems = chats.map((chat: Chat) => {
+    const date = new Date(chat.updatedAt).toLocaleDateString(undefined, { 
+      month: 'short', 
+      day: 'numeric' 
+    });
     const lastMsg = chat.messages[chat.messages.length - 1];
     const preview = lastMsg
-      ? lastMsg.content.substring(0, 40)
+      ? lastMsg.content.substring(0, 30).replace(/\n/g, " ")
       : t("Empty chat");
-    return `${chat.title} | ${date} | ${chat.messages.length} msgs | "${preview}..."`;
+      
+    // Format: 󰭹 Title [Date] (Count) - Preview...
+    return `󰭹 ${chat.title.padEnd(20)} │ 󰃭 ${date} │ 󰅒 ${chat.messages.length} │ ${preview}...`;
   });
-
-  items.push("─".repeat(30));
+  
+  items.push(...chatItems);
+  items.push("──────────────────");
   items.push(`📝 ${t("New Chat")}`);
   items.push(`✕ ${t("Cancel")}`);
 
-  const selected = await rofiDmenu(items.join("\n"), t("Select Chat"));
+  const selected = await rofiMenu(
+    items.join("\n"), 
+    t("Select Chat"), 
+    "listview { lines: 12; }",
+    t("Search chat..."),
+    `󰌑 ${t("Select")} │ 󱊷 ${t("Cancel")} │ 󰍉 ${t("Search")}`
+  );
 
-  if (!selected || selected === `✕ ${t("Cancel")}`) {
+  if (!selected || selected === `✕ ${t("Cancel")}` || selected.includes("Select Chat")) {
     return null;
+  }
+
+  if (selected.includes("──────────────────")) {
+    return rofiSelectChat(chatManager);
   }
 
   if (selected === `📝 ${t("New Chat")}`) {
     return "__new__";
   }
 
-  const chatTitle = selected.split(" | ")[0];
+  // Extract title by getting everything before the first │
+  const chatTitle = selected.split(" │ ")[0]?.replace("󰭹 ", "").trim();
   const chat = chats.find((c: Chat) => c.title === chatTitle);
   
   if (!chat) return null;
   return chat.id;
+}
+
+/**
+ * Generic Rofi menu helper for consistent styling
+ */
+export async function rofiMenu(
+  items: string, 
+  prompt: string = "Lumina", 
+  themeOverride: string = "",
+  placeholder: string = "",
+  hints: string = ""
+): Promise<string | null> {
+  const args = ["rofi", "-dmenu", "-i", "-p", prompt, "-theme", THEME_PATH];
+  
+  if (hints) {
+    args.push("-mesg", hints);
+  }
+  
+  let finalTheme = themeOverride;
+  if (placeholder) {
+    finalTheme += ` entry { placeholder: "${placeholder}"; }`;
+  }
+
+  if (finalTheme) {
+    args.push("-theme-str", finalTheme);
+  }
+
+  const proc = spawn(args, {
+    stdin: "pipe",
+    stdout: "pipe",
+  });
+
+  proc.stdin.write(items);
+  proc.stdin.end();
+
+  const output = await new Response(proc.stdout).text();
+  const code = await proc.exited;
+  
+  if (code !== 0) return null;
+  return output.trim() || null;
 }
 
 export async function rofiSimpleInput(prompt: string, placeholder: string = ""): Promise<string> {
@@ -135,10 +204,34 @@ export async function rofiSimpleInput(prompt: string, placeholder: string = ""):
 }
 
 async function rofiDmenu(items: string, prompt: string = "Lumina"): Promise<string> {
+  const args = [
+    "rofi", "-dmenu", "-i", "-p", prompt, 
+    "-theme", THEME_PATH, 
+    "-mesg", `󰌑 ${t("Send")} │ 󱊷 ${t("Exit")} │ 󰍉 ${t("Search")}`
+  ];
+
+  const proc = spawn(args, {
+    stdin: "pipe",
+    stdout: "pipe",
+  });
+
+  proc.stdin.write(items);
+  proc.stdin.end();
+
+  const output = await new Response(proc.stdout).text();
+  await proc.exited;
+  
+  return output.trim();
+}
+
+// Rofi dmenu without prompt bar - only shows listview
+async function rofiDmenuNoPrompt(items: string): Promise<string> {
+  const themeStr = 'mainbox { children: [listview]; }';
+  
   const proc = spawn([
-    "rofi", "-dmenu", "-p", prompt,
+    "rofi", "-dmenu", "-i",
     "-theme", THEME_PATH,
-    "-i"
+    "-theme-str", themeStr
   ], {
     stdin: "pipe",
     stdout: "pipe",
@@ -154,31 +247,33 @@ async function rofiDmenu(items: string, prompt: string = "Lumina"): Promise<stri
 }
 
 export async function rofiDisplay(message: string): Promise<void> {
-  const formattedMessage = `💫 Lumina\n${"─".repeat(60)}\n\n${message}`;
+  const formattedMessage = `󱜙 Lumina\n${"─".repeat(40)}\n\n${message}`;
   
   const proc = spawn([
     "rofi", "-e", formattedMessage,
     "-theme", THEME_PATH,
     "-theme-str", `
       window {
-        width: 700px;
-        height: 500px;
+        width: 600px;
+        height: 400px;
         border-radius: 12px;
-        border: 2px solid;
-        border-color: #3b82f6;
-        background-color: #ffffff;
+        border: 1px solid;
+        border-color: @border-subtle;
+        background-color: @bg;
       }
       mainbox {
         children: [textbox];
-        padding: 24px 28px;
+        padding: 30px;
         background-color: transparent;
       }
       textbox {
         background-color: transparent;
-        text-color: #1f2937;
+        text-color: @fg;
         font: "JetBrainsMono Nerd Font 10";
         expand: true;
-        vertical-align: 0.0;
+        vertical-align: 0.5;
+        horizontal-align: 0.5;
+        padding: 10px;
       }
     `
   ], {

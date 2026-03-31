@@ -48,5 +48,16 @@
   "Actions": "Tindakan",
   "Results": "Hasil",
   "Error": "Kesalahan",
-  "Tool execution results": "Hasil eksekusi alat"
+  "Tool execution results": "Hasil eksekusi alat",
+  "Type to search...": "Ketik untuk mencari...",
+  "Search settings...": "Cari pengaturan...",
+  "Search chat...": "Cari chat...",
+  "Back": "Kembali",
+  "Enter": "Enter",
+  "Select": "Pilih",
+  "Esc": "Esc",
+  "Exit": "Keluar",
+  "Search": "Cari",
+  "Toggle": "Ganti",
+  "Send": "Kirim"
 }
