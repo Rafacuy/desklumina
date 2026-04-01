@@ -1,16 +1,13 @@
 * {
-    // Professional Color Palette
+    // Modern & Clean Color Palette
     white: #ffffff;
-    surface: #fafafa;
-    border-subtle: #e5e7eb;
-    border-light: #f3f4f6;
-    text-primary: #1f2937;
-    text-secondary: #6b7280;
-    text-muted: #9ca3af;
-    accent: #2563eb;
-    accent-light: rgba(239, 246, 255, 0.9);
-    accent-hover: rgba(219, 234, 254, 0.8);
-    shadow-color: rgba(0, 0, 0, 0.05);
+    surface: #f8fafc;
+    border-subtle: #e2e8f0;
+    text-primary: #0f172a;
+    text-secondary: #475569;
+    text-muted: #94a3b8;
+    accent: #3b82f6;
+    accent-light: #eff6ff;
     
     bg: @white;
     fg: @text-primary;
@@ -24,16 +21,13 @@ window {
     location: northeast;
     x-offset: -20;
     y-offset: 20;
-    width: 460px;
+    width: 480px;
     border: 1px;
     border-color: @border-subtle;
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 0px;
     background-color: @bg;
     transparency: "real";
-    
-    // Smooth children layout
-    children: [mainbox];
 }
 
 mainbox {
@@ -44,18 +38,15 @@ mainbox {
 }
 
 inputbar {
-    padding: 18px 20px;
-    border-radius: 12px 12px 0 0;
+    padding: 20px;
     spacing: 12px;
     background-color: @bg;
-    border: 0px;
     children: [prompt, entry];
 }
 
 prompt {
     text-color: @accent-color;
     font: "JetBrainsMono Nerd Font Bold 11";
-    str: "Lumina";
     vertical-align: 0.5;
 }
 
@@ -64,49 +55,38 @@ entry {
     placeholder: "Type your message...";
     placeholder-color: @text-muted;
     background-color: transparent;
-    font: "JetBrainsMono Nerd Font 10";
-    blink: true;
     vertical-align: 0.5;
-    cursor: text;
 }
 
 message {
     background-color: @surface;
-    padding: 10px 20px;
+    padding: 12px 20px;
     text-color: @text-secondary;
-    border-radius: 0 0 12px 12px;
-    border: 0;
     border-top: 1px solid;
-    border-color: @border-light;
+    border-color: @border-subtle;
 }
 
 textbox {
     background-color: transparent;
-    text-color: @text-muted;
+    text-color: @text-secondary;
     font: "JetBrainsMono Nerd Font 9";
     vertical-align: 0.5;
 }
 
 listview {
-    lines: 10;
+    lines: 8;
     fixed-height: false;
     scrollbar: false;
     border: 0;
-    padding: 12px;
+    padding: 8px 12px;
     spacing: 4px;
     background-color: @bg;
 }
 
 element {
-    padding: 10px 16px;
-    border-radius: 8px;
+    padding: 8px 16px;
+    border-radius: 10px;
     spacing: 12px;
-    background-color: transparent;
-    text-color: @fg;
-    cursor: pointer;
-}
-
-element normal.normal {
     background-color: transparent;
     text-color: @fg;
 }
@@ -116,28 +96,14 @@ element selected.normal {
     text-color: @accent-color;
 }
 
-element alternate.normal {
-    background-color: transparent;
-    text-color: @fg;
-}
-
 element-text {
     background-color: inherit;
     text-color: inherit;
-    font: "JetBrainsMono Nerd Font 10";
     vertical-align: 0.5;
-    highlight: bold underline;
 }
 
 element-icon {
-    size: 1.2em;
+    size: 1.1em;
     background-color: transparent;
     vertical-align: 0.5;
-}
-
-// Separator styling
-separator {
-    background-color: @border-light;
-    height: 1px;
-    margin: 4px 14px;
 }

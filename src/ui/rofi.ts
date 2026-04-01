@@ -6,81 +6,82 @@ const THEME_PATH = `${process.env.HOME}/.config/bspwm/agent/src/ui/themes/lumina
 
 export async function rofiChatInput(
   chatManager: ChatManager,
-  prompt: string = "Lumina"
-): Promise<{ action: "send" | "new" | "select" | "settings" | "exit"; input?: string }> {
+  prompt: string = "Lumina",
+  isExpanded: boolean = false
+): Promise<{ action: "send" | "new" | "select" | "settings" | "expand_toggle" | "exit"; input?: string }> {
   const currentChat = chatManager.getCurrentChat();
   const historyPreview = chatManager.getChatHistoryPreview(300);
   const toolContextPreview = chatManager.getToolContextPreview();
   
   const menuItems: string[] = [];
   
-  // Show tool context first if available
-  if (toolContextPreview) {
-    menuItems.push(toolContextPreview);
-    menuItems.push("──────────────────");
+  if (isExpanded) {
+    // Show management options in expanded mode
+    if (toolContextPreview) {
+      menuItems.push(toolContextPreview);
+      menuItems.push("──────────────────");
+    }
+    
+    if (historyPreview) {
+      menuItems.push(`── ${t("Recent Messages")} ──`);
+      menuItems.push(historyPreview);
+      menuItems.push("──────────────────");
+    }
+    
+    menuItems.push(`📂 ${t("Select Chat")}`);
+    menuItems.push(`⚙️ ${t("Settings")}`);
+    menuItems.push(`✕ ${t("Close")}`);
   }
-  
-  if (historyPreview) {
-    menuItems.push(`── ${t("Recent Messages")} ──`);
-    menuItems.push(historyPreview);
-    menuItems.push("──────────────────");
-  }
-  
-  menuItems.push(`💬 ${t("Send message")}`);
-  menuItems.push(`📝 ${t("New Chat")}`);
-  menuItems.push(`📂 ${t("Select Chat")}`);
-  menuItems.push(`⚙️ ${t("Settings")}`);
-  menuItems.push(`✕ ${t("Close")}`);
 
-  const input = await rofiMenu(
+  const themeOverride = isExpanded 
+    ? "" 
+    : "listview { enabled: false; } mainbox { children: [inputbar, message]; }";
+    
+    const hints = isExpanded
+    ? `󰌑 ${t("Send")} │ 󱊷 [ESC] ${t("Exit")} │ 󰌓 [TAB] ${t("Hide")}`
+    : `󰌑 ${t("Send")} │ 󱊷 [ESC] ${t("Exit")} │ 󰌓 [TAB] ${t("Expand")}`;
+
+  const result = await rofiMenu(
     menuItems.join("\n"), 
     prompt,
-    "",
-    t("Type to search..."),
-    `󰌑 ${t("Send")} │ 󱊷 ${t("Exit")} │ 󰍉 ${t("Search")}`
+    themeOverride,
+    t("Type your message..."),
+    hints
   );
 
-  if (!input) {
+  if (result.code === 10) { // TAB pressed
+    return { action: "expand_toggle" };
+  }
+
+  const input = result.output;
+
+  if (!input || result.code !== 0) {
     return { action: "exit" };
   }
 
-  if (input === `💬 ${t("Send message")}`) {
-    const message = await rofiSimpleInput(t("Message"), "");
-    if (message) {
-      return { action: "send", input: message };
+  if (isExpanded) {
+    if (input === `📂 ${t("Select Chat")}`) {
+      return { action: "select" };
     }
-    return { action: "exit" };
-  }
 
-  if (input === `📝 ${t("New Chat")}`) {
-    const message = await rofiSimpleInput(t("New Chat"), "");
-    if (message) {
-      chatManager.createChat(message);
-      return { action: "send", input: message };
+    const settingsLabel = t("Settings");
+    if (input === `⚙️ ${settingsLabel}` || input === "⚙️ Settings" || input === "⚙️ Pengaturan") {
+      return { action: "settings" };
     }
-    return { action: "new" };
-  }
 
-  if (input === `📂 ${t("Select Chat")}`) {
-    return { action: "select" };
-  }
-
-  const settingsLabel = t("Settings");
-  if (input === `⚙️ ${settingsLabel}` || input === "⚙️ Settings" || input === "⚙️ Pengaturan") {
-    return { action: "settings" };
-  }
-
-  const closeLabel = t("Close");
-  if (input === `✕ ${closeLabel}` || input === "✕ Close" || input === "✕ Tutup") {
-    return { action: "exit" };
-  }
-
-  if (input.startsWith("You: ") || input.startsWith("Lumina: ") || input.startsWith("──") || input.startsWith("───") || input.startsWith("🔧") || input.startsWith("✓")) {
-    const message = await rofiSimpleInput(t("Message"), "");
-    if (message) {
-      return { action: "send", input: message };
+    const closeLabel = t("Close");
+    if (input === `✕ ${closeLabel}` || input === "✕ Close" || input === "✕ Tutup") {
+      return { action: "exit" };
     }
-    return { action: "exit" };
+
+    if (input.startsWith("You: ") || input.startsWith("Lumina: ") || input.startsWith("──") || input.startsWith("───") || input.startsWith("🔧") || input.startsWith("✓")) {
+      // If user clicks a history item, treat it as wanting to send a new message
+      const message = await rofiSimpleInput(t("Message"), "");
+      if (message) {
+        return { action: "send", input: message };
+      }
+      return { action: "exit" };
+    }
   }
 
   return { action: "send", input };
@@ -119,7 +120,7 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
   items.push(`📝 ${t("New Chat")}`);
   items.push(`✕ ${t("Cancel")}`);
 
-  const selected = await rofiMenu(
+  const result = await rofiMenu(
     items.join("\n"), 
     t("Select Chat"), 
     "listview { lines: 12; }",
@@ -127,9 +128,11 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
     `󰌑 ${t("Select")} │ 󱊷 ${t("Cancel")} │ 󰍉 ${t("Search")}`
   );
 
-  if (!selected || selected === `✕ ${t("Cancel")}` || selected.includes("Select Chat")) {
+  if (!result.output || result.code !== 0 || result.output === `✕ ${t("Cancel")}` || result.output.includes("Select Chat")) {
     return null;
   }
+
+  const selected = result.output;
 
   if (selected.includes("──────────────────")) {
     return rofiSelectChat(chatManager);
@@ -156,8 +159,18 @@ export async function rofiMenu(
   themeOverride: string = "",
   placeholder: string = "",
   hints: string = ""
-): Promise<string | null> {
-  const args = ["rofi", "-dmenu", "-i", "-p", prompt, "-theme", THEME_PATH];
+): Promise<{ output: string | null; code: number }> {
+  const args = [
+    "rofi", 
+    "-dmenu", 
+    "-i", 
+    "-p", prompt, 
+    "-theme", THEME_PATH,
+    "-kb-mode-next", "",
+    "-kb-row-tab", "",
+    "-kb-element-next", "",
+    "-kb-custom-1", "Tab"
+  ];
   
   if (hints) {
     args.push("-mesg", hints);
@@ -183,8 +196,10 @@ export async function rofiMenu(
   const output = await new Response(proc.stdout).text();
   const code = await proc.exited;
   
-  if (code !== 0) return null;
-  return output.trim() || null;
+  return { 
+    output: output.trim() || null, 
+    code 
+  };
 }
 
 export async function rofiSimpleInput(prompt: string, placeholder: string = ""): Promise<string> {
@@ -287,12 +302,18 @@ export async function rofiChatLoop(
   chatManager: ChatManager,
   onMessage: (message: string) => Promise<string>
 ): Promise<void> {
+  let isExpanded = false;
+  
   while (true) {
-    const result = await rofiChatInput(chatManager);
+    const result = await rofiChatInput(chatManager, "Lumina", isExpanded);
 
     switch (result.action) {
       case "exit":
         return;
+
+      case "expand_toggle":
+        isExpanded = !isExpanded;
+        break;
 
       case "send":
         if (result.input) {

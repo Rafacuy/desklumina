@@ -59,5 +59,8 @@
   "Exit": "Exit",
   "Search": "Search",
   "Toggle": "Toggle",
-  "Send": "Send"
+  "Send": "Send",
+  "Expand": "Expand",
+  "Hide": "Hide",
+  "Type your message...": "Type your message..."
 }
