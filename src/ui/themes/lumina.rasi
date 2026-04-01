@@ -8,11 +8,11 @@
     text-muted: #94a3b8;
     accent: #3b82f6;
     accent-light: #eff6ff;
-    
+
     bg: @white;
     fg: @text-primary;
     accent-color: @accent;
-    
+
     font: "JetBrainsMono Nerd Font 10";
 }
 
@@ -38,7 +38,7 @@ mainbox {
 }
 
 inputbar {
-    padding: 20px;
+    padding: 16px 20px;
     spacing: 12px;
     background-color: @bg;
     children: [prompt, entry];
@@ -60,10 +60,11 @@ entry {
 
 message {
     background-color: @surface;
-    padding: 12px 20px;
+    padding: 10px 20px;
     text-color: @text-secondary;
     border-top: 1px solid;
     border-color: @border-subtle;
+    font: "JetBrainsMono Nerd Font 9";
 }
 
 textbox {
@@ -84,11 +85,11 @@ listview {
 }
 
 element {
-    padding: 8px 16px;
+    padding: 10px 16px;
     border-radius: 10px;
     spacing: 12px;
     background-color: transparent;
-    text-color: @fg;
+    text-color: @text-primary;
 }
 
 element selected.normal {

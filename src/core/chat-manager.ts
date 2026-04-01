@@ -3,6 +3,22 @@ import { join } from "path";
 import { homedir } from "os";
 import type { Chat, ChatMessage, ToolCall, ToolResult } from "../types";
 import { settingsManager } from "./settings-manager";
+import { t } from "../utils/i18n";
+
+// Tool label mapping for history display
+const TOOL_LABELS: Record<string, string> = {
+  app: t("Opening application"),
+  terminal: t("Running terminal command"),
+  bspwm: t("Managing windows"),
+  file: t("Managing files"),
+  media: t("Controlling media"),
+  clipboard: t("Clipboard operation"),
+  notify: t("Sending notification"),
+};
+
+function getToolLabel(tool: string): string {
+  return TOOL_LABELS[tool] || t("Executing actions");
+}
 
 export type { Chat, ChatMessage, ToolCall, ToolResult };
 
@@ -110,21 +126,6 @@ export class ChatManager {
     }
   }
 
-  getLastToolContext(): { calls: ToolCall[]; results: ToolResult[] } | null {
-    if (!this.currentChat || this.currentChat.messages.length === 0) return null;
-
-    const recentMessages = [...this.currentChat.messages].reverse();
-    for (const msg of recentMessages) {
-      if (msg.toolCalls && msg.toolCalls.length > 0) {
-        return {
-          calls: msg.toolCalls,
-          results: msg.toolResults || [],
-        };
-      }
-    }
-    return null;
-  }
-
   getAllChats(): Chat[] {
     ensureChatDir();
     const files = readdirSync(CHAT_DIR).filter(f => f.endsWith(".json"));
@@ -161,18 +162,10 @@ export class ChatManager {
 
     for (const m of this.currentChat.messages) {
       if (m.role === "system") continue; // Skip system messages
-      
-      let content = m.content;
-
-      // Append tool results to message content for context
-      if (m.toolResults && m.toolResults.length > 0) {
-        const resultsStr = m.toolResults.map((r) => `[${r.tool}]: ${r.result}`).join("\n");
-        content += `\n\n--- Tool Results ---\n${resultsStr}`;
-      }
 
       messages.push({
         role: m.role as "user" | "assistant",
-        content,
+        content: m.content,
       });
     }
 
@@ -182,7 +175,7 @@ export class ChatManager {
   getChatHistoryPreview(maxChars: number = 500): string {
     const settings = settingsManager.get();
     if (!settings.features.chatHistory) return "";
-    
+
     if (!this.currentChat || this.currentChat.messages.length === 0) {
       return "";
     }
@@ -191,55 +184,44 @@ export class ChatManager {
     let totalChars = 0;
 
     const recentMessages = [...this.currentChat.messages].reverse();
-    
+
     for (const msg of recentMessages) {
-      const prefix = msg.role === "user" ? "You: " : "Lumina: ";
-      const truncated = msg.content.length > 100 
-        ? msg.content.substring(0, 100) + "..." 
-        : msg.content;
-      const line = prefix + truncated;
+      const prefix = msg.role === "user" ? `󱜙 ${t("You")}:` : `󱜙 ${t("Lumina")}:`;
       
+      // Clean content: remove JSON blocks, tool tags, and separators
+      let cleanContent = msg.content
+        .replace(/```json\s*\n[\s\S]*?\n```/g, "")
+        .replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "")
+        .replace(/^━+$/gm, "")
+        .replace(/^\n+/, "")
+        .replace(/\n+$/, "")
+        .trim();
+      
+      // Skip if content is empty after cleaning
+      if (!cleanContent) continue;
+      
+      const truncated = cleanContent.length > 100
+        ? cleanContent.substring(0, 100) + "..."
+        : cleanContent;
+      const line = `${prefix} ${truncated}`;
+
       if (totalChars + line.length > maxChars) break;
       preview.unshift(line);
       totalChars += line.length;
-      
-      // Add tool context if available
-      if (msg.toolCalls && msg.toolCalls.length > 0) {
-        const toolLine = `  🔧 Tools: ${msg.toolCalls.map(t => t.tool).join(", ")}`;
-        if (totalChars + toolLine.length <= maxChars) {
-          preview.push(toolLine);
-          totalChars += toolLine.length;
-        }
+
+      // Add tool results if available (compact format with checkmarks)
+      if (msg.toolResults && msg.toolResults.length > 0 && settings.features.toolDisplay) {
+        const uniqueTools = [...new Set(msg.toolResults.map((r) => r.tool))];
+        uniqueTools.forEach((tool) => {
+          const toolLine = `    • ${getToolLabel(tool)} ✓`;
+          if (totalChars + toolLine.length <= maxChars) {
+            preview.unshift(toolLine);
+            totalChars += toolLine.length;
+          }
+        });
       }
     }
 
     return preview.join("\n");
-  }
-
-  getToolContextPreview(): string {
-    const settings = settingsManager.get();
-    if (!settings.features.toolDisplay) return "";
-    
-    const toolContext = this.getLastToolContext();
-    if (!toolContext) return "";
-
-    const lines: string[] = [];
-    
-    if (toolContext.calls.length > 0) {
-      lines.push("── Last Tool Calls ──");
-      for (const call of toolContext.calls) {
-        lines.push(`🔧 ${call.tool}: ${call.arg.substring(0, 50)}${call.arg.length > 50 ? "..." : ""}`);
-      }
-    }
-    
-    if (toolContext.results.length > 0) {
-      lines.push("── Results ──");
-      for (const result of toolContext.results) {
-        const truncated = result.result.substring(0, 60);
-        lines.push(`✓ ${result.tool}: ${truncated}${result.result.length > 60 ? "..." : ""}`);
-      }
-    }
-
-    return lines.join("\n");
   }
 }

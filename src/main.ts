@@ -149,13 +149,32 @@ async function main() {
     // Default: Rofi chat mode
     await rofiChatLoop(chatManager, async (message) => {
       let response = "";
-      await lumina.chat(message, (chunk) => {
-        response += chunk;
+      let toolDisplay = "";
+      
+      await lumina.chat(message, (chunk, toolOutput) => {
+        // Collect tool display separately
+        if (toolOutput) {
+          toolDisplay += toolOutput;
+        } else {
+          response += chunk;
+        }
       });
-      return response
+      
+      // Clean response: remove JSON blocks, tool tags, and any separators
+      const cleanResponse = response
         .replace(/```json\s*\n[\s\S]*?\n```/g, "")
         .replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "")
-        .trim() || "Done.";
+        .replace(/^━+$/gm, "")
+        .replace(/^\n+/, "")
+        .replace(/\n+$/, "")
+        .trim();
+      
+      // Combine clean response with tool display (below)
+      const finalOutput = toolDisplay && cleanResponse
+        ? `${cleanResponse}\n\n${toolDisplay}`
+        : (cleanResponse || toolDisplay || "Done.");
+      
+      return finalOutput;
     });
   }
 }

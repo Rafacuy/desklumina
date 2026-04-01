@@ -10,24 +10,18 @@ export async function rofiChatInput(
   isExpanded: boolean = false
 ): Promise<{ action: "send" | "new" | "select" | "settings" | "expand_toggle" | "exit"; input?: string }> {
   const currentChat = chatManager.getCurrentChat();
-  const historyPreview = chatManager.getChatHistoryPreview(300);
-  const toolContextPreview = chatManager.getToolContextPreview();
-  
+  const historyPreview = chatManager.getChatHistoryPreview(400);
+
   const menuItems: string[] = [];
-  
+
   if (isExpanded) {
     // Show management options in expanded mode
-    if (toolContextPreview) {
-      menuItems.push(toolContextPreview);
-      menuItems.push("──────────────────");
-    }
-    
     if (historyPreview) {
       menuItems.push(`── ${t("Recent Messages")} ──`);
       menuItems.push(historyPreview);
       menuItems.push("──────────────────");
     }
-    
+
     menuItems.push(`📂 ${t("Select Chat")}`);
     menuItems.push(`⚙️ ${t("Settings")}`);
     menuItems.push(`✕ ${t("Close")}`);
@@ -74,7 +68,7 @@ export async function rofiChatInput(
       return { action: "exit" };
     }
 
-    if (input.startsWith("You: ") || input.startsWith("Lumina: ") || input.startsWith("──") || input.startsWith("───") || input.startsWith("🔧") || input.startsWith("✓")) {
+    if (input.startsWith("󱜙 You:") || input.startsWith("󱜙 Lumina:") || input.startsWith("──")) {
       // If user clicks a history item, treat it as wanting to send a new message
       const message = await rofiSimpleInput(t("Message"), "");
       if (message) {
@@ -262,14 +256,21 @@ async function rofiDmenuNoPrompt(items: string): Promise<string> {
 }
 
 export async function rofiDisplay(message: string): Promise<void> {
-  const formattedMessage = `󱜙 Lumina\n${"─".repeat(40)}\n\n${message}`;
-  
+  // Clean up the message - remove any existing separators for consistent formatting
+  const cleanMessage = message
+    .replace(/^━+$/gm, "")
+    .replace(/^\n+/, "")
+    .replace(/\n+$/, "")
+    .trim();
+
+  const formattedMessage = `󱜙 ${t("Lumina")}\n${"─".repeat(40)}\n\n${cleanMessage}`;
+
   const proc = spawn([
     "rofi", "-e", formattedMessage,
     "-theme", THEME_PATH,
     "-theme-str", `
       window {
-        width: 600px;
+        width: 500px;
         height: 400px;
         border-radius: 12px;
         border: 1px solid;
@@ -278,23 +279,24 @@ export async function rofiDisplay(message: string): Promise<void> {
       }
       mainbox {
         children: [textbox];
-        padding: 30px;
+        padding: 24px;
         background-color: transparent;
       }
       textbox {
         background-color: transparent;
-        text-color: @fg;
+        text-color: @text-primary;
         font: "JetBrainsMono Nerd Font 10";
         expand: true;
         vertical-align: 0.5;
         horizontal-align: 0.5;
-        padding: 10px;
+        padding: 0;
+        margin: 0;
       }
     `
   ], {
     stdio: ["ignore", "ignore", "ignore"],
   });
-  
+
   await proc.exited;
 }
 

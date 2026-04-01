@@ -6,7 +6,7 @@ import { ChatManager } from "./chat-manager";
 import { parseToolCalls } from "./planner";
 import { dispatch } from "../tools";
 import { logger } from "../logger";
-import { formatToolCalls, formatToolResults } from "../ui";
+import { ToolDisplay } from "../ui/tool-display";
 import { settingsManager } from "./settings-manager";
 import type { ToolResult } from "../types";
 
@@ -18,7 +18,10 @@ export class Lumina {
     this.chatManager = chatManager;
   }
 
-  async chat(userMessage: string, onChunk?: (chunk: string) => void): Promise<string> {
+  async chat(
+    userMessage: string,
+    onChunk?: (chunk: string, toolOutput?: string) => void
+  ): Promise<string> {
     logger.info("lumina", `User: ${userMessage}`);
 
     const contextMessages = this.chatManager
@@ -46,10 +49,15 @@ export class Lumina {
       logger.info("lumina", `Assistant: ${fullResponse.substring(0, 100)}...`);
 
       const toolCalls = parseToolCalls(fullResponse);
-      
+
       // Save assistant message with tool calls BEFORE executing tools
       if (this.chatManager) {
-        this.chatManager.addMessage(fullResponse, "assistant", toolCalls);
+        // Clean the response before saving (remove JSON and tool tags)
+        const cleanResponse = fullResponse
+          .replace(/```json\s*\n[\s\S]*?\n```/g, "")
+          .replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "")
+          .trim();
+        this.chatManager.addMessage(cleanResponse, "assistant", toolCalls);
       } else {
         this.context.add("assistant", fullResponse);
       }
@@ -64,12 +72,6 @@ export class Lumina {
 
       if (toolCalls.length > 0) {
         logger.info("lumina", `Executing ${toolCalls.length} tool call(s)`);
-        
-        // Show formatted tool calls
-        if (settings.features.toolDisplay) {
-          const formattedCalls = formatToolCalls(toolCalls);
-          onChunk?.(formattedCalls ? `\n${formattedCalls}` : "");
-        }
 
         const toolResults: ToolResult[] = [];
 
@@ -83,10 +85,12 @@ export class Lumina {
           }
         }
 
-        // Show formatted results
+        // Show formatted tool results with checkmarks
         if (settings.features.toolDisplay) {
-          const formattedResults = formatToolResults(toolResults);
-          onChunk?.(formattedResults ? `\n${formattedResults}` : "");
+          const formattedResults = ToolDisplay.formatResultsInline(toolResults);
+          if (formattedResults) {
+            onChunk?.("", `\n${formattedResults}`);
+          }
         }
 
         logger.debug("lumina", `Tool execution completed: ${toolResults.length} results`);
