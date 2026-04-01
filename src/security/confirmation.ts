@@ -32,10 +32,10 @@ export async function rofiConfirm(
     ``,
     `${message}`,
     ``,
-    `Tingkat: <b>${severityLabel}</b>`,
+    `Level: <b>${severityLabel}</b>`,
   ].join("\n");
 
-  const options = ["✓ Lanjutkan", "✕ Batalkan"];
+  const options = ["✓ Proceed", "✕ Cancel"];
 
   const themeOverride = [
     "window { width: 420px; }",
@@ -48,7 +48,7 @@ export async function rofiConfirm(
       "rofi",
       "-dmenu",
       "-p",
-      `${severityIcon} Konfirmasi`,
+      `${severityIcon} Confirm`,
       "-mesg",
       mesg,
       "-markup-rows",
@@ -74,9 +74,9 @@ export async function rofiConfirm(
 
   const result = output.trim();
 
-  logger.info("security", `Konfirmasi: "${title}" → Respon: "${result}"`);
+  logger.info("security", `Confirmation: "${title}" → Response: "${result}"`);
 
-  return result === "✓ Lanjutkan";
+  return result === "✓ Proceed";
 }
 
 /**

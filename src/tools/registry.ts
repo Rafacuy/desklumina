@@ -11,11 +11,11 @@ import type { ToolHandler, ToolRegistry } from "../types";
 const tools: ToolRegistry = {
   terminal: async (cmd) => {
     const result = await execute(cmd);
-    return result.stdout || result.stderr || "Selesai";
+    return result.stdout || result.stderr || "Done";
   },
   app: async (alias) => {
     await launch(alias);
-    return `${alias} diluncurkan`;
+    return `${alias} launched`;
   },
   bspwm: (action) => bspwm(action),
   file: (op) => fileOp(op),
@@ -30,8 +30,8 @@ const tools: ToolRegistry = {
 export async function dispatch(toolName: string, arg: string): Promise<string> {
   const handler = tools[toolName];
   if (!handler) {
-    logger.warn("tools", `Tool tidak ditemukan: ${toolName}`);
-    return `⚠️ Tool '${toolName}' tidak ditemukan`;
+    logger.warn("tools", `Tool not found: ${toolName}`);
+    return `⚠️ Tool '${toolName}' not found`;
   }
 
   try {
@@ -58,8 +58,8 @@ export function getRegisteredTools(): string[] {
  */
 export function registerTool(name: string, handler: ToolHandler): void {
   if (tools[name]) {
-    logger.warn("tools", `Tool ${name} sudah terdaftar, menimpa...`);
+    logger.warn("tools", `Tool ${name} already registered, overwriting...`);
   }
   tools[name] = handler;
-  logger.info("tools", `Tool ${name} terdaftar`);
+  logger.info("tools", `Tool ${name} registered`);
 }

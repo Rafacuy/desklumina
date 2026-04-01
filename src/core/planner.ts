@@ -35,10 +35,10 @@ export function parseToolCalls(text: string): ParsedToolCall[] {
         }
       }
     } catch (e) {
-      logger.warn("planner", `Gagal parse JSON tool call: ${e}`);
+      logger.warn("planner", `Failed to parse JSON tool call: ${e}`);
     }
   }
 
-  logger.debug("planner", `Ditemukan ${calls.length} tool calls`);
+  logger.debug("planner", `Found ${calls.length} tool calls`);
   return calls;
 }

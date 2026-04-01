@@ -48,7 +48,7 @@ function parseArgs(input: string): string[] {
 }
 
 export async function fileOp(operation: string): Promise<string> {
-  logger.info("files", `Operasi: ${operation}`);
+  logger.info("files", `Operation: ${operation}`);
 
   try {
     const allArgs = parseArgs(operation.trim());
@@ -57,97 +57,97 @@ export async function fileOp(operation: string): Promise<string> {
 
     const ops: Record<string, () => Promise<string>> = {
       create_dir: async () => {
-        if (!args[0]) return "❌ Path tidak ditemukan";
+        if (!args[0]) return "❌ Path not found";
         const result = await execute(`mkdir -p "${args[0]}"`);
-        if (result.exitCode !== 0) return `❌ Gagal: ${result.stderr}`;
-        return `✓ Folder "${args[0]}" dibuat`;
+        if (result.exitCode !== 0) return `❌ Failed: ${result.stderr}`;
+        return `✓ Folder "${args[0]}" created`;
       },
       delete: async () => {
-        if (!args[0]) return "❌ Path tidak ditemukan";
+        if (!args[0]) return "❌ Path not found";
         if (args[0] === "/" || args[0] === expandPath("~")) {
-          return "❌ Operasi berbahaya dibatalkan (root atau home)";
+          return "❌ Dangerous operation cancelled (root or home)";
         }
 
         if (isDangerousPath(args[0])) {
           const confirmed = await rofiConfirm(
-            "Operasi Penghapusan",
-            `Path: ${args[0]}\n\nIni adalah path sistem yang kritis!`,
+            "Delete Operation",
+            `Path: ${args[0]}\n\nThis is a critical system path!`,
             "critical"
           );
 
           if (!confirmed) {
-            return "❌ Operasi dibatalkan pengguna";
+            return "❌ Operation cancelled by user";
           }
         }
 
         const result = await execute(`rm -rf "${args[0]}"`);
-        if (result.exitCode !== 0) return `❌ Gagal: ${result.stderr}`;
-        return `✓ "${args[0]}" dihapus`;
+        if (result.exitCode !== 0) return `❌ Failed: ${result.stderr}`;
+        return `✓ "${args[0]}" deleted`;
       },
       move: async () => {
-        if (args.length < 2) return "❌ Perlu asal dan tujuan";
+        if (args.length < 2) return "❌ Source and destination required";
         const src = args[0];
         const dest = args[1];
-        if (!src || !dest) return "❌ Path tidak lengkap";
+        if (!src || !dest) return "❌ Incomplete path";
         if (isDangerousPath(src) || isDangerousPath(dest)) {
           const confirmed = await rofiConfirm(
-            "Operasi Pemindahan",
-            `Dari: ${src}\nKe: ${dest}\n\nMelibatkan path sistem kritis!`,
+            "Move Operation",
+            `From: ${src}\nTo: ${dest}\n\nInvolves critical system path!`,
             "high"
           );
 
           if (!confirmed) {
-            return "❌ Operasi dibatalkan pengguna";
+            return "❌ Operation cancelled by user";
           }
         }
 
         const result = await execute(`mv "${src}" "${dest}"`);
-        if (result.exitCode !== 0) return `❌ Gagal: ${result.stderr}`;
-        return `✓ Dipindah ke "${dest}"`;
+        if (result.exitCode !== 0) return `❌ Failed: ${result.stderr}`;
+        return `✓ Moved to "${dest}"`;
       },
       copy: async () => {
-        if (args.length < 2) return "❌ Perlu asal dan tujuan";
+        if (args.length < 2) return "❌ Source and destination required";
         const result = await execute(`cp -r "${args[0]}" "${args[1]}"`);
-        if (result.exitCode !== 0) return `❌ Gagal: ${result.stderr}`;
-        return `✓ Disalin ke "${args[1]}"`;
+        if (result.exitCode !== 0) return `❌ Failed: ${result.stderr}`;
+        return `✓ Copied to "${args[1]}"`;
       },
       list: async () => {
         const path = args[0] || ".";
         const result = await execute(`ls -la "${path}"`);
-        if (result.exitCode !== 0) return `❌ Gagal: ${result.stderr}`;
+        if (result.exitCode !== 0) return `❌ Failed: ${result.stderr}`;
         return result.stdout;
       },
       read: async () => {
-        if (!args[0]) return "❌ Path tidak ditemukan";
+        if (!args[0]) return "❌ Path not found";
         try {
           const file = Bun.file(args[0]);
-          if (!(await file.exists())) return "❌ File tidak ada";
+          if (!(await file.exists())) return "❌ File not found";
           return await file.text();
         } catch (e) {
           const err = e instanceof Error ? e : new Error(String(e));
           logger.error("files", `Read failed: ${err.message}`, err);
-          return `❌ Gagal membaca: ${err.message}`;
+          return `❌ Failed to read: ${err.message}`;
         }
       },
       write: async () => {
-        if (args.length < 2) return "❌ Perlu path dan konten";
+        if (args.length < 2) return "❌ Path and content required";
         const path = args[0];
-        if (!path) return "❌ Path tidak ditemukan";
+        if (!path) return "❌ Path not found";
         const content = allArgs.slice(2).join(" ");
         try {
           await Bun.write(path as string, content);
-          return `✓ File "${path}" ditulis`;
+          return `✓ File "${path}" written`;
         } catch (e) {
           const err = e instanceof Error ? e : new Error(String(e));
           logger.error("files", `Write failed: ${err.message}`, err);
-          return `❌ Gagal menulis: ${err.message}`;
+          return `❌ Failed to write: ${err.message}`;
         }
       },
       find: async () => {
-        if (args.length < 2) return "❌ Perlu path dan pattern";
+        if (args.length < 2) return "❌ Path and pattern required";
         const result = await execute(`find "${args[0]}" -name "*${allArgs[2]}*"`);
-        if (result.exitCode !== 0) return `❌ Gagal: ${result.stderr}`;
-        return result.stdout || "Tidak ada hasil";
+        if (result.exitCode !== 0) return `❌ Failed: ${result.stderr}`;
+        return result.stdout || "No results";
       },
     };
 
@@ -157,7 +157,7 @@ export async function fileOp(operation: string): Promise<string> {
     }
     
     const result = await execute(operation);
-    return result.stdout || result.stderr || "Selesai";
+    return result.stdout || result.stderr || "Done";
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error("files", `File operation failed: ${err.message}`, err);

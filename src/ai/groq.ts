@@ -24,7 +24,7 @@ export class ModelNotFoundError extends GroqAPIError {
 
 export class AllModelsFailedError extends Error {
   constructor(public attemptedModels: string[], public lastError: Error) {
-    super(`Semua model gagal. Model yang dicoba: ${attemptedModels.join(", ")}`);
+    super(`All models failed. Models attempted: ${attemptedModels.join(", ")}`);
     this.name = "AllModelsFailedError";
   }
 }
@@ -55,7 +55,7 @@ async function* streamWithModel(
   messages: AIMessage[],
   model: string
 ): AsyncGenerator<string> {
-  logger.info("groq", `Mengirim request ke Groq dengan model ${model}`);
+  logger.info("groq", `Sending request to Groq with model ${model}`);
 
   const response = await fetch(GROQ_API_ENDPOINT, {
     method: "POST",
@@ -112,18 +112,18 @@ export async function* streamGroq(messages: AIMessage[]): AsyncGenerator<string>
       // If we already yielded text, we shouldn't fallback to another model
       // as it would duplicate the beginning of the response.
       if (hasYielded) {
-        logger.error("groq", `Model ${model} gagal setelah menghasilkan output. Tidak dapat fallback.`);
+        logger.error("groq", `Model ${model} failed after producing output. Cannot fallback.`);
         throw error;
       }
 
       if (error instanceof ModelNotFoundError) {
-        logger.warn("groq", `Model ${model} tidak tersedia, mencoba fallback...`);
+        logger.warn("groq", `Model ${model} is unavailable, trying fallback...`);
         lastError = error;
         continue; // Try next model
       }
 
       if (error instanceof GroqAPIError) {
-        logger.warn("groq", `Model ${model} gagal dengan error ${error.statusCode}, mencoba fallback...`);
+        logger.warn("groq", `Model ${model} failed with error ${error.statusCode}, trying fallback...`);
         lastError = error;
         continue;
       }

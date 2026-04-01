@@ -2,7 +2,7 @@ import { execute } from "./terminal";
 import { logger } from "../logger";
 
 export async function notify(args: string): Promise<string> {
-  logger.info("notify", `Notifikasi: ${args}`);
+  logger.info("notify", `Notification: ${args}`);
 
   try {
     const parts = args.split("|");
@@ -14,10 +14,10 @@ export async function notify(args: string): Promise<string> {
     
     if (result.exitCode !== 0) {
       logger.warn("notify", `Notification failed: ${result.stderr}`);
-      return `❌ Error: ${result.stderr || "Gagal mengirim notifikasi"}`;
+      return `❌ Error: ${result.stderr || "Failed to send notification"}`;
     }
     
-    return "✓ Notifikasi dikirim";
+    return "✓ Notification sent";
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error("notify", `Notification failed: ${err.message}`, err);

@@ -13,10 +13,10 @@ export interface CommandResult {
  * Execute a shell command with timeout and security checks
  */
 export async function execute(command: string): Promise<CommandResult> {
-  logger.info("terminal", `Eksekusi: ${command}`);
+  logger.info("terminal", `Executing: ${command}`);
 
   try {
-    // Analisis keamanan perintah
+    // Security analysis of command
     const analysis = analyzeCommand(command);
 
     if (analysis.isDangerous) {
@@ -24,25 +24,25 @@ export async function execute(command: string): Promise<CommandResult> {
 
       logger.warn(
         "terminal",
-        `Perintah berbahaya terdeteksi [${severity}]: ${analysis.summary}`
+        `Dangerous command detected [${severity}]: ${analysis.summary}`
       );
 
       const confirmed = await rofiConfirm(
-        "Perintah Berbahaya Terdeteksi",
-        `Perintah: ${command}\n\nAlasan: ${analysis.summary}`,
+        "Dangerous Command Detected",
+        `Command: ${command}\n\nReason: ${analysis.summary}`,
         severity
       );
 
       if (!confirmed) {
-        logger.info("terminal", t("Perintah dibatalkan oleh pengguna"));
+        logger.info("terminal", t("Command cancelled by user"));
         return {
           stdout: "",
-          stderr: "Operasi dibatalkan oleh pengguna",
+          stderr: "Operation cancelled by user",
           exitCode: 1,
         };
       }
 
-      logger.info("terminal", t("Perintah berbahaya disetujui pengguna"));
+      logger.info("terminal", t("Dangerous command approved by user"));
     }
 
     const proc = Bun.spawn(["bash", "-c", command], {

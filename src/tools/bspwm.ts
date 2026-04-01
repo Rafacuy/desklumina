@@ -44,7 +44,7 @@ async function waitForWindow(className: string, timeoutMs: number = 5000): Promi
  * Execute BSPWM action
  */
 export async function bspwm(action: string): Promise<string> {
-  logger.info("bspwm", `Aksi: ${action}`);
+  logger.info("bspwm", `Action: ${action}`);
 
   try {
     const parts = action.trim().split(/\s+/);
@@ -55,18 +55,18 @@ export async function bspwm(action: string): Promise<string> {
     if (cmd === "wait_and_move" && args.length >= 2) {
       const [className, targetWorkspace] = args;
       if (!className || !targetWorkspace) {
-        return "❌ Parameter tidak lengkap untuk wait_and_move";
+        return "❌ Incomplete parameters for wait_and_move";
       }
       const wid = await waitForWindow(className);
-      if (!wid) return `❌ Gagal: Window "${className}" tidak muncul dalam 5 detik`;
+      if (!wid) return `❌ Failed: Window "${className}" did not appear within 5 seconds`;
 
       const workspaceSelector = /^\d+$/.test(targetWorkspace) ? `^${targetWorkspace}` : targetWorkspace;
       const moveCmd = `bspc node ${wid} -d ${workspaceSelector}`;
       const result = await execute(moveCmd);
       if (result.exitCode !== 0) {
-        return `❌ Gagal memindahkan window: ${result.stderr}`;
+        return `❌ Failed to move window: ${result.stderr}`;
       }
-      return `✓ ${className} dipindah ke workspace ${targetWorkspace}`;
+      return `✓ ${className} moved to workspace ${targetWorkspace}`;
     }
 
     const baseCommand = cmd ? BSPWM_ACTIONS[cmd] : undefined;
@@ -77,7 +77,7 @@ export async function bspwm(action: string): Promise<string> {
         const workspace = args[args.length - 1];
         const selector = args.length > 1 ? args[0] : null;
         if (!workspace) {
-          return "❌ Workspace tidak ditentukan";
+          return "❌ Workspace not specified";
         }
         const workspaceSelector = /^\d+$/.test(workspace) ? `^${workspace}` : workspace;
         
@@ -92,7 +92,7 @@ export async function bspwm(action: string): Promise<string> {
       } else if (cmd === "focus_workspace" && args.length >= 1) {
         const workspace = args[0];
         if (!workspace) {
-          return "❌ Workspace tidak ditentukan";
+          return "❌ Workspace not specified";
         }
         const workspaceSelector = /^\d+$/.test(workspace) ? `^${workspace}` : workspace;
         command = `bspc desktop -f ${workspaceSelector}`;
@@ -109,23 +109,23 @@ export async function bspwm(action: string): Promise<string> {
     if (dangerous) {
       const confirmed = await rofiConfirm(
         `${dangerous.description}`,
-        `Perintah: ${command}\n\nTingkat Bahaya: ${dangerous.severity.toUpperCase()}`,
+        `Command: ${command}\n\nDanger Level: ${dangerous.severity.toUpperCase()}`,
         dangerous.severity
       );
 
       if (!confirmed) {
-        logger.info("bspwm", `Perintah berbahaya dibatalkan pengguna`);
-        return "Operasi dibatalkan pengguna";
+        logger.info("bspwm", `Dangerous command cancelled by user`);
+        return "Operation cancelled by user";
       }
     }
 
     const result = await execute(command);
     if (result.exitCode !== 0) {
       logger.warn("bspwm", `Command failed: ${result.stderr}`);
-      return `❌ Error: ${result.stderr || "Perintah gagal"}`;
+      return `❌ Error: ${result.stderr || "Command failed"}`;
     }
     
-    return result.stdout || "✓ Selesai";
+    return result.stdout || "✓ Done";
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error("bspwm", `BSPWM operation failed: ${err.message}`, err);

@@ -27,10 +27,10 @@ export async function media(action: string): Promise<string> {
     
     if (result.exitCode !== 0) {
       logger.warn("media", `Command failed: ${result.stderr}`);
-      return `❌ Error: ${result.stderr || "Perintah gagal"}`;
+      return `❌ Error: ${result.stderr || "Command failed"}`;
     }
     
-    return result.stdout || "✓ Selesai";
+    return result.stdout || "✓ Done";
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error("media", `Media operation failed: ${err.message}`, err);

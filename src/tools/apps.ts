@@ -20,18 +20,18 @@ export async function launch(alias: string): Promise<void> {
     const command = lookup(alias);
 
     if (!command) {
-      logger.warn("apps", `Alias tidak ditemukan: ${alias}, fallback ke terminal`);
+      logger.warn("apps", `Alias not found: ${alias}, falling back to terminal`);
 
       const dangerous = checkDangerousCommand(alias);
       if (dangerous) {
         const confirmed = await rofiConfirm(
           `${dangerous.description}`,
-          `Perintah: ${alias}\n\nTingkat Bahaya: ${dangerous.severity.toUpperCase()}`,
+          `Command: ${alias}\n\nDanger Level: ${dangerous.severity.toUpperCase()}`,
           dangerous.severity
         );
 
         if (!confirmed) {
-          logger.info("apps", `Perintah berbahaya dibatalkan pengguna`);
+          logger.info("apps", `Dangerous command cancelled by user`);
           return;
         }
       }
@@ -40,7 +40,7 @@ export async function launch(alias: string): Promise<void> {
       return;
     }
 
-    logger.info("apps", `Meluncurkan: ${alias} → ${command}`);
+    logger.info("apps", `Launching: ${alias} → ${command}`);
     Bun.spawn(["bash", "-c", command], { detached: true, stdio: ["ignore", "ignore", "ignore"] });
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
