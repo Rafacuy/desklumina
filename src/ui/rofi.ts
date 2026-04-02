@@ -122,7 +122,7 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
     `󰌑 ${t("Select")} │ 󱊷 ${t("Cancel")} │ 󰍉 ${t("Search")}`
   );
 
-  if (!result.output || result.code !== 0 || result.output === `✕ ${t("Cancel")}` || result.output.includes("Select Chat")) {
+  if (!result.output || result.code !== 0 || result.output === `✕ ${t("Cancel")}` || result.output.includes(t("Select Chat"))) {
     return null;
   }
 

@@ -1,5 +1,5 @@
 {
-  "language": "id",
+  "language": "en",
   "features": {
     "tts": false,
     "toolDisplay": true,
@@ -8,7 +8,7 @@
     "dangerousCommandConfirmation": true
   },
   "tts": {
-    "voiceId": "id-ID-GadisNeural",
+    "voiceId": "en-US-AvaNeural",
     "speed": 1
   }
 }

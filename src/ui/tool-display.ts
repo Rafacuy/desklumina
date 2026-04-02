@@ -5,27 +5,29 @@ import { t } from "../utils/i18n";
  * Tool category mapping 
  */
 const TOOL_CATEGORIES: Record<string, { icon: string; label: string; resultLabel: string }> = {
-  app: { icon: "🚀", label: t("Opening application"), resultLabel: t("Application opened") },
-  terminal: { icon: "⚡", label: t("Running terminal command"), resultLabel: t("Command executed") },
-  bspwm: { icon: "🪟", label: t("Managing windows"), resultLabel: t("Window managed") },
-  file: { icon: "📁", label: t("Managing files"), resultLabel: t("File operation complete") },
-  media: { icon: "🎵", label: t("Controlling media"), resultLabel: t("Media controlled") },
-  clipboard: { icon: "📋", label: t("Clipboard operation"), resultLabel: t("Clipboard updated") },
-  notify: { icon: "🔔", label: t("Sending notification"), resultLabel: t("Notification sent") },
+  app: { icon: "🚀", label: "Opening application", resultLabel: "Application opened" },
+  terminal: { icon: "⚡", label: "Running terminal command", resultLabel: "Command executed" },
+  bspwm: { icon: "🪟", label: "Managing windows", resultLabel: "Window managed" },
+  file: { icon: "📁", label: "Managing files", resultLabel: "File operation complete" },
+  media: { icon: "🎵", label: "Controlling media", resultLabel: "Media controlled" },
+  clipboard: { icon: "📋", label: "Clipboard operation", resultLabel: "Clipboard updated" },
+  notify: { icon: "🔔", label: "Sending notification", resultLabel: "Notification sent" },
 };
 
 /**
  * Getlabel for a tool
  */
 function getToolLabel(tool: string): string {
-  return TOOL_CATEGORIES[tool]?.label || t("Executing actions");
+  const label = TOOL_CATEGORIES[tool]?.label || "Executing actions";
+  return t(label);
 }
 
 /**
  * Get result label for a tool
  */
 function getToolResultLabel(tool: string): string {
-  return TOOL_CATEGORIES[tool]?.resultLabel || t("Action complete");
+  const label = TOOL_CATEGORIES[tool]?.resultLabel || "Action complete";
+  return t(label);
 }
 
 /**

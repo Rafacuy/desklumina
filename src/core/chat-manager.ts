@@ -7,17 +7,18 @@ import { t } from "../utils/i18n";
 
 // Tool label mapping for history display
 const TOOL_LABELS: Record<string, string> = {
-  app: t("Opening application"),
-  terminal: t("Running terminal command"),
-  bspwm: t("Managing windows"),
-  file: t("Managing files"),
-  media: t("Controlling media"),
-  clipboard: t("Clipboard operation"),
-  notify: t("Sending notification"),
+  app: "Opening application",
+  terminal: "Running terminal command",
+  bspwm: "Managing windows",
+  file: "Managing files",
+  media: "Controlling media",
+  clipboard: "Clipboard operation",
+  notify: "Sending notification",
 };
 
 function getToolLabel(tool: string): string {
-  return TOOL_LABELS[tool] || t("Executing actions");
+  const label = TOOL_LABELS[tool] || "Executing actions";
+  return t(label);
 }
 
 export type { Chat, ChatMessage, ToolCall, ToolResult };
