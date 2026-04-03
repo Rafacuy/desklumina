@@ -1,6 +1,8 @@
 import { spawn } from "bun";
 import { logger } from "../logger";
 import { settingsManager } from "../core/settings-manager";
+import { t } from "../utils/i18n";
+import { CancellationError } from "../types";
 
 const THEME_PATH = `${process.env.HOME}/.config/bspwm/agent/src/ui/themes/lumina.rasi`;
 
@@ -24,23 +26,28 @@ export async function rofiConfirm(
   }
   
   const severityIcon =
-    severity === "critical" ? "⛔" : severity === "high" ? "⚠️" : "⚡";
-  const severityLabel = severity.toUpperCase();
+    severity === "critical" ? "󰀦" : severity === "high" ? "󱈸" : "󱐌";
+  const iconColor = 
+    severity === "critical" ? "#ef4444" : severity === "high" ? "#f59e0b" : "#3b82f6";
+  const bgColor = 
+    severity === "critical" ? "#fee2e2" : severity === "high" ? "#fef3c7" : "#dbeafe";
 
-  const mesg = [
-    `${severityIcon} <b>${title}</b>`,
-    ``,
-    `${message}`,
-    ``,
-    `Level: <b>${severityLabel}</b>`,
-  ].join("\n");
+  const hints = `<span size='small' foreground='#94a3b8'>\n\n󰌑   ${t("Select")}  │  󱊷   ${t("Cancel")}</span>`;
+  const mesg = `<span foreground='${iconColor}' size='xx-large'>${severityIcon}</span>\n<span weight='bold' size='large'>${t(title)}</span>\n\n${message}${hints}`;
 
-  const options = ["✓ Proceed", "✕ Cancel"];
-
+  const proceedLabel = `󰄬 ${t("Proceed")}`;
+  const cancelLabel = `󰅖 ${t("Cancel")}`;
+  const options = [proceedLabel, cancelLabel];
+ 
   const themeOverride = [
-    "window { width: 420px; }",
-    "listview { lines: 2; }",
-    'message { padding: 10px 14px; background-color: #ffffff; font: "JetBrainsMono Nerd Font 9"; }',
+    `window { width: 500px; border: 2px; border-radius: 24px; border-color: ${iconColor}; background-color: @bg; }`,
+    "mainbox { children: [message, listview]; padding: 10px; }",
+    `message { padding: 40px 40px 20px 40px; background-color: ${bgColor}44; border: 0; border-radius: 16px; margin: 10px; }`,
+    "textbox { horizontal-align: 0.5; text-color: @text-primary; font: 'JetBrainsMono Nerd Font 11'; }",
+    "listview { lines: 2; spacing: 16px; padding: 20px 40px 30px 40px; fixed-height: true; background-color: transparent; }",
+    "element { padding: 16px; border-radius: 14px; background-color: @surface; border: 1px solid; border-color: @border-subtle; }",
+    `element selected { background-color: ${iconColor}; text-color: @white; border-color: ${iconColor}; }`,
+    "element-text { horizontal-align: 0.5; font: 'JetBrainsMono Nerd Font Bold 11'; text-color: inherit; }",
   ].join(" ");
 
   const proc = spawn(
@@ -48,7 +55,7 @@ export async function rofiConfirm(
       "rofi",
       "-dmenu",
       "-p",
-      `${severityIcon} Confirm`,
+      `${severityIcon} ${t("Confirm")}`,
       "-mesg",
       mesg,
       "-markup-rows",
@@ -62,7 +69,6 @@ export async function rofiConfirm(
     {
       stdin: "pipe",
       stdout: "pipe",
-      stderr: "pipe",
     }
   );
 
@@ -76,7 +82,11 @@ export async function rofiConfirm(
 
   logger.info("security", `Confirmation: "${title}" → Response: "${result}"`);
 
-  return result === "✓ Proceed";
+  if (result !== proceedLabel) {
+    throw new CancellationError(`${t("Operation cancelled by user")}: ${title}`);
+  }
+
+  return true;
 }
 
 /**
@@ -92,6 +102,13 @@ export async function rofiAlert(
 
   const fullMessage = `${severityIcon} ${title}\n\n${message}`;
 
+  const themeOverride = [
+    "window { width: 440px; border: 1px; border-radius: 16px; border-color: @accent-color; }",
+    "mainbox { children: [message]; }",
+    "message { padding: 24px; }",
+    "textbox { horizontal-align: 0.5; }",
+  ].join(" ");
+
   const proc = spawn(
     [
       "rofi",
@@ -100,7 +117,7 @@ export async function rofiAlert(
       "-theme",
       THEME_PATH,
       "-theme-str",
-      "window { width: 400px; }",
+      themeOverride,
     ],
     {
       stdin: "ignore",

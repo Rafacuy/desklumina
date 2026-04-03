@@ -156,6 +156,16 @@ export class ChatManager {
     this.currentChat = null;
   }
 
+  /**
+   * Remove the last message from the current chat
+   */
+  removeLastMessage(): void {
+    if (!this.currentChat || this.currentChat.messages.length === 0) return;
+    this.currentChat.messages.pop();
+    this.currentChat.updatedAt = Date.now();
+    this.saveChat(this.currentChat);
+  }
+
   getMessagesForAPI(): { role: "user" | "assistant"; content: string }[] {
     if (!this.currentChat) return [];
 

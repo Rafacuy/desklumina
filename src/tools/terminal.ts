@@ -2,6 +2,7 @@ import { t } from "../utils";
 import { logger } from "../logger";
 import { analyzeCommand, rofiConfirm } from "../security";
 import { COMMAND_TIMEOUT } from "../constants";
+import { CancellationError } from "../types";
 
 export interface CommandResult {
   stdout: string;
@@ -27,20 +28,11 @@ export async function execute(command: string): Promise<CommandResult> {
         `Dangerous command detected [${severity}]: ${analysis.summary}`
       );
 
-      const confirmed = await rofiConfirm(
+      await rofiConfirm(
         "Dangerous Command Detected",
         `Command: ${command}\n\nReason: ${analysis.summary}`,
         severity
       );
-
-      if (!confirmed) {
-        logger.info("terminal", t("Command cancelled by user"));
-        return {
-          stdout: "",
-          stderr: "Operation cancelled by user",
-          exitCode: 1,
-        };
-      }
 
       logger.info("terminal", t("Dangerous command approved by user"));
     }
@@ -69,6 +61,9 @@ export async function execute(command: string): Promise<CommandResult> {
 
     return { stdout, stderr, exitCode };
   } catch (error) {
+    if (error instanceof CancellationError) {
+      throw error;
+    }
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error("terminal", `Command execution failed: ${err.message}`, err);
     return {

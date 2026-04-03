@@ -1,6 +1,7 @@
 import { execute } from "./terminal";
 import { logger } from "../logger";
 import { rofiConfirm, rofiAlert } from "../security/confirmation";
+import { CancellationError } from "../types";
 
 function expandPath(path: string): string {
   return path.replace(/^~/, process.env.HOME || "");
@@ -69,15 +70,11 @@ export async function fileOp(operation: string): Promise<string> {
         }
 
         if (isDangerousPath(args[0])) {
-          const confirmed = await rofiConfirm(
+          await rofiConfirm(
             "Delete Operation",
             `Path: ${args[0]}\n\nThis is a critical system path!`,
             "critical"
           );
-
-          if (!confirmed) {
-            return "❌ Operation cancelled by user";
-          }
         }
 
         const result = await execute(`rm -rf "${args[0]}"`);
@@ -90,15 +87,11 @@ export async function fileOp(operation: string): Promise<string> {
         const dest = args[1];
         if (!src || !dest) return "❌ Incomplete path";
         if (isDangerousPath(src) || isDangerousPath(dest)) {
-          const confirmed = await rofiConfirm(
+          await rofiConfirm(
             "Move Operation",
             `From: ${src}\nTo: ${dest}\n\nInvolves critical system path!`,
             "high"
           );
-
-          if (!confirmed) {
-            return "❌ Operation cancelled by user";
-          }
         }
 
         const result = await execute(`mv "${src}" "${dest}"`);
@@ -159,6 +152,9 @@ export async function fileOp(operation: string): Promise<string> {
     const result = await execute(operation);
     return result.stdout || result.stderr || "Done";
   } catch (error) {
+    if (error instanceof CancellationError) {
+      throw error;
+    }
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error("files", `File operation failed: ${err.message}`, err);
     return `❌ Error: ${err.message}`;

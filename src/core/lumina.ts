@@ -8,6 +8,7 @@ import { dispatch } from "../tools";
 import { logger } from "../logger";
 import { ToolDisplay } from "../ui/tool-display";
 import { settingsManager } from "./settings-manager";
+import { CancellationError } from "../types";
 import type { ToolResult } from "../types";
 
 export class Lumina {
@@ -80,6 +81,9 @@ export class Lumina {
             const result = await dispatch(call.tool, call.arg);
             toolResults.push({ tool: call.tool, result });
           } catch (error) {
+            if (error instanceof CancellationError) {
+              throw error; // Re-throw for UI interceptor
+            }
             const errMsg = logger.catchError(`tool:${call.tool}`, error);
             toolResults.push({ tool: call.tool, result: `${t("Error")}: ${errMsg}` });
           }
@@ -105,6 +109,9 @@ export class Lumina {
 
       return fullResponse;
     } catch (error) {
+      if (error instanceof CancellationError) {
+        throw error;
+      }
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error("lumina", `Chat error: ${err.message}`, err);
       const errorMsg = `❌ ${t("Error")}: ${err.message}`;

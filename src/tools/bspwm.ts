@@ -2,6 +2,7 @@ import { execute } from "./terminal";
 import { logger } from "../logger";
 import { checkDangerousCommand } from "../security/dangerous-commands";
 import { rofiConfirm } from "../security/confirmation";
+import { CancellationError } from "../types";
 
 const BSPWM_ACTIONS: Record<string, string> = {
   focus_workspace: "bspc desktop -f",
@@ -107,16 +108,11 @@ export async function bspwm(action: string): Promise<string> {
 
     const dangerous = checkDangerousCommand(command);
     if (dangerous) {
-      const confirmed = await rofiConfirm(
+      await rofiConfirm(
         `${dangerous.description}`,
         `Command: ${command}\n\nDanger Level: ${dangerous.severity.toUpperCase()}`,
         dangerous.severity
       );
-
-      if (!confirmed) {
-        logger.info("bspwm", `Dangerous command cancelled by user`);
-        return "Operation cancelled by user";
-      }
     }
 
     const result = await execute(command);
@@ -127,6 +123,9 @@ export async function bspwm(action: string): Promise<string> {
     
     return result.stdout || "✓ Done";
   } catch (error) {
+    if (error instanceof CancellationError) {
+      throw error;
+    }
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error("bspwm", `BSPWM operation failed: ${err.message}`, err);
     return `❌ Error: ${err.message}`;

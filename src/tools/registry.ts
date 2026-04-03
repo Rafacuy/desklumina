@@ -6,6 +6,7 @@ import { media } from "./media";
 import { clipboard } from "./clipboard";
 import { notify } from "./notify";
 import { logger } from "../logger";
+import { CancellationError } from "../types";
 import type { ToolHandler, ToolRegistry } from "../types";
 
 const tools: ToolRegistry = {
@@ -40,6 +41,9 @@ export async function dispatch(toolName: string, arg: string): Promise<string> {
     logger.debug("tools", `${toolName} completed successfully`);
     return result;
   } catch (error) {
+    if (error instanceof CancellationError) {
+      throw error;
+    }
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error("tools", `Error in ${toolName}: ${err.message}`, err);
     return `❌ ${toolName} error: ${err.message}`;

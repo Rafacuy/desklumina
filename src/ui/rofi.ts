@@ -1,6 +1,8 @@
 import { spawn } from "bun";
 import type { ChatManager, Chat } from "../core/chat-manager";
 import { t } from "../utils/i18n";
+import { CancellationError } from "../types";
+import { logger } from "../logger";
 
 const THEME_PATH = `${process.env.HOME}/.config/bspwm/agent/src/ui/themes/lumina.rasi`;
 
@@ -319,12 +321,38 @@ export async function rofiChatLoop(
 
       case "send":
         if (result.input) {
+          const userMessageIndex = chatManager.getCurrentChat()?.messages.length || 0;
           chatManager.addMessage(result.input, "user");
-          const response = await onMessage(result.input);
-          
-          // Show response in Rofi window
-          if (response && response !== "Done.") {
-            await rofiDisplay(response);
+          try {
+            const response = await onMessage(result.input);
+            
+            // Show response in Rofi window
+            if (response && response !== "Done.") {
+              await rofiDisplay(response);
+            }
+          } catch (error) {
+            const isCancellation = 
+              error instanceof CancellationError || 
+              (error && typeof error === 'object' && 'name' in error && error.name === "CancellationError") ||
+              (error instanceof Error && error.message.includes("cancelled by user"));
+
+            if (isCancellation) {
+              logger.info("ui", "Cancellation detected, intercepting and hiding response panel");
+              
+              // Interceptor: Hide AI response and remove cancelled interaction from history
+              // Remove everything from the user message onwards
+              const currentChat = chatManager.getCurrentChat();
+              if (currentChat) {
+                const messagesToRemove = currentChat.messages.length - userMessageIndex;
+                logger.debug("ui", `Removing ${messagesToRemove} messages from history (undo)`);
+                for (let i = 0; i < messagesToRemove; i++) {
+                  chatManager.removeLastMessage();
+                }
+              }
+              break;
+            }
+            logger.error("ui", `Error in onMessage: ${error instanceof Error ? error.message : String(error)}`);
+            throw error;
           }
         }
         break;
