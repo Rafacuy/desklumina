@@ -4,9 +4,21 @@ Complete documentation for all available tools in DeskLumina's automation system
 
 ---
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Application Tool (app)](#application-tool-app)
+- [File Tool (file)](#file-tool-file)
+- [Media Tool (media)](#media-tool-media)
+- [Clipboard Tool (clipboard)](#clipboard-tool-clipboard)
+- [Terminal Tool (terminal)](#terminal-tool-terminal)
+- [Notification Tool (notify)](#notification-tool-notify)
+
+---
+
 ## Overview
 
-DeskLumina uses a tool-based architecture for desktop automation. The AI generates tool calls in JSON format, which are then executed to perform actions on your system.
+DeskLumina uses a modular tool-based architecture. The AI agent generates structured JSON tool calls, which are then executed by specialized handlers.
 
 ### Tool Call Format
 
@@ -14,499 +26,135 @@ DeskLumina uses a tool-based architecture for desktop automation. The AI generat
 {"tool": "tool_name", "args": "arguments"}
 ```
 
-### Multiple Tool Calls
-
-```json
-[
-  {"tool": "app", "args": "telegram"},
-  {"tool": "bspwm", "args": "focus_workspace 3"}
-]
-```
+Tool calls are parsed from markdown ```json code fences in the model output. The only registered tools are: `app`, `terminal`, `file`, `media`, `clipboard`, `notify` (see `src/tools/registry.ts`).
 
 ---
 
-## Available Tools
+## Application Tool (`app`)
 
-| Tool | Handler | Description |
-|------|---------|-------------|
-| `app` | `src/tools/apps.ts` | Launch applications |
-| `terminal` | `src/tools/terminal.ts` | Execute shell commands |
-| `bspwm` | `src/tools/bspwm.ts` | Window/workspace management |
-| `file` | `src/tools/files.ts` | File operations |
-| `media` | `src/tools/media.ts` | Music player control |
-| `clipboard` | `src/tools/clipboard.ts` | Clipboard management |
-| `notify` | `src/tools/notify.ts` | Desktop notifications |
+Launch an application by alias. Aliases are defined in `src/config/apps.json`. If an alias is not found, the tool treats the input as a shell command and executes it via `bash -c` (with dangerous-command confirmation when matched by the analyzer).
 
----
+**Path**: `src/tools/apps.ts`  
+**Aliases Configuration**: `src/config/apps.json`
 
-## Application Tool
+### Usage Examples:
+- "open browser" -> `{"tool": "app", "args": "browser"}`
+- "start telegram" -> `{"tool": "app", "args": "telegram"}`
 
-Launch applications by alias or command name.
+### Default Aliases (Partial List):
 
-### Usage
-
-```json
-{"tool": "app", "args": "alias"}
-```
-
-### Default Aliases
-
-#### Terminal Emulators
-
-| Alias | Application | Command |
-|-------|-------------|---------|
-| `terminal`, `term` | Alacritty | `alacritty` |
-| `kitty` | Kitty Terminal | `kitty` |
-
-#### Browsers
-
-| Alias | Application | Command |
-|-------|-------------|---------|
-| `browser` | Default Browser | `xdg-open https://` |
-| `chrome` | Google Chrome | `google-chrome-stable` |
-
-#### File Managers
-
-| Alias | Application | Command |
-|-------|-------------|---------|
-| `files`, `thunar` | Thunar | `thunar` |
-| `yazi` | Yazi TUI | `alacritty -e yazi` |
-
-#### Editors
-
-| Alias | Application | Command |
-|-------|-------------|---------|
-| `editor`, `geany` | Geany | `geany` |
-| `neovim`, `nvim` | Neovim | `alacritty -e nvim` |
-
-#### Communication
-
-| Alias | Application | Command |
-|-------|-------------|---------|
+| Alias | Description | System Command |
+|-------|-------------|----------------|
+| `browser` | Web Browser | `xdg-open https://` |
 | `telegram`, `tg` | Telegram | `telegram-desktop` |
-| `whatsapp`, `wa` | WhatsApp Web | `xdg-open https://web.whatsapp.com` |
-
-#### Web Services
-
-| Alias | Application | Command |
-|-------|-------------|---------|
-| `youtube`, `yt` | YouTube | `xdg-open https://youtube.com` |
-| `github` | GitHub | `xdg-open https://github.com` |
-| `spotify` | Spotify Web | `xdg-open https://open.spotify.com` |
-
-#### System Tools
-
-| Alias | Application | Command |
-|-------|-------------|---------|
-| `music`, `ncmpcpp` | NCMPCPP | `alacritty -e ncmpcpp` |
-| `pavucontrol`, `volume` | PulseAudio Control | `pavucontrol` |
-| `bluetooth` | Bluetooth Manager | `blueman-manager` |
-| `btop` | BTop Monitor | `alacritty -e btop` |
-| `htop` | HTop Monitor | `alacritty -e htop` |
-
-### Examples
-
-```json
-{"tool": "app", "args": "telegram"}
-{"tool": "app", "args": "browser"}
-{"tool": "app", "args": "nvim"}
-```
+| `term`, `terminal` | Terminal | `alacritty` (Default) |
+| `neovim`, `nvim` | Text Editor | `alacritty -e nvim` |
+| `files`, `thunar` | File Manager | `thunar` |
+| `yazi` | TUI File Manager | `alacritty -e yazi` |
+| `music` | Music Player | `alacritty -e ncmpcpp` |
+| `btop`, `htop` | System Monitor | `alacritty -e btop` |
 
 ---
 
-## BSPWM Tool
+## File Tool (`file`)
 
-Control window management and workspaces.
+Perform file and directory operations safely.
 
-### Workspace Actions
+**Path**: `src/tools/files.ts`
 
-| Action | Description |
-|--------|-------------|
-| `focus_workspace <n>` | Switch to workspace n |
-| `move_window_to <n>` | Move active window to workspace n |
-| `list_workspaces` | List all workspaces |
+### Supported Operations:
 
-### Window Actions
+| Operation | Arguments | Example |
+|-----------|-----------|---------|
+| `list` | `<path>` | `list ~/Documents` |
+| `create_dir`| `<path>` | `create_dir ~/Projects/NewApp` |
+| `move` | `<src> <dest>` | `move file.txt backup/` |
+| `copy` | `<src> <dest>` | `copy notes.md notes_bkp.md` |
+| `delete` | `<path>` | `delete temporary.log` |
+| `read` | `<path>` | `read config.json` |
+| `write` | `<path> <text>`| `write log.txt "Entry updated"` |
+| `find` | `<dir> <name>` | `find ~/Downloads report.pdf` |
 
-| Action | Description |
-|--------|-------------|
-| `close_focused` | Close focused window |
-| `kill_focused` | Kill focused window |
-| `toggle_fullscreen` | Toggle fullscreen mode |
-| `toggle_floating` | Toggle floating mode |
-| `toggle_monocle` | Toggle monocle layout |
-| `get_focused_window` | Get focused window ID |
-| `list_windows` | List all windows |
+### Notes
 
-### Focus Navigation
-
-| Action | Description |
-|--------|-------------|
-| `focus_north` | Focus window above |
-| `focus_south` | Focus window below |
-| `focus_east` | Focus window right |
-| `focus_west` | Focus window left |
-
-### Desktop Actions
-
-| Action | Description |
-|--------|-------------|
-| `rotate_desktop` | Rotate tree 90° |
-| `reload_sxhkd` | Reload keybindings |
-| `reload_bspwm` | Reload window manager |
-
-### Special Actions
-
-#### `wait_and_move <class> <workspace>`
-
-Wait for a window to appear and move it to a workspace.
-
-```json
-{"tool": "bspwm", "args": "wait_and_move firefox 2"}
-```
-
-Behavior:
-- Waits up to 5 seconds for window with class `<class>`
-- Moves window to workspace `<workspace>`
-- Returns success or timeout message
-
-### Examples
-
-```json
-{"tool": "bspwm", "args": "focus_workspace 3"}
-{"tool": "bspwm", "args": "move_window_to 2"}
-{"tool": "bspwm", "args": "toggle_fullscreen"}
-{"tool": "bspwm", "args": "wait_and_move Telegram 3"}
-```
+- Paths starting with `~` are expanded to `$HOME`.
+- Some operations trigger a Rofi confirmation when they involve critical system paths (see `src/tools/files.ts`).
+- If the first token is not a supported operation, `file` falls back to executing the full string as a shell command (via `terminal.execute()`).
 
 ---
 
-## File Tool
+## Media Tool (`media`)
 
-Perform file system operations with safety checks.
+Control MPD via `mpc` (the tool shells out to `mpc ...`).
 
-### Operations
+**Path**: `src/tools/media.ts`
 
-#### `create_dir <path>`
-
-Create a directory.
-
-```json
-{"tool": "file", "args": "create_dir ~/Projects/NewProject"}
-```
-
-Returns: `✓ Folder "/home/user/Projects/NewProject" dibuat`
+### Supported Actions:
+- `play`, `pause`, `toggle`, `stop`
+- `next`, `prev`
+- `volume <level>` (e.g., `volume 50`, `volume +10`, `volume -10`)
+- `current` (Shows currently playing track info)
+- `search <query>` (Search within your music library)
+- `queue` (Print playlist via `mpc playlist`)
 
 ---
 
-#### `delete <path>`
+## Clipboard Tool (`clipboard`)
 
-Delete a file or folder.
+Manage your clipboard via `clipcatctl`.
 
-```json
-{"tool": "file", "args": "delete ~/temp.txt"}
-```
+**Path**: `src/tools/clipboard.ts`
 
-Safety:
-- Blocks deletion of protected paths
-- Requires confirmation for dangerous paths
-
-Returns: `✓ "/home/user/temp.txt" dihapus`
+### Supported Actions:
+- `get`: `clipcatctl get`
+- `list`: `clipcatctl list`
+- `set <text>`: `clipcatctl insert` (piped from `echo`)
+- `clear`: `clipcatctl clear`
 
 ---
 
-#### `move <src> <dest>`
+## Terminal Tool (`terminal`)
 
-Move or rename a file.
+Execute a shell command via `bash -c <command>`. Commands are analyzed for dangerous patterns; when matched, DeskLumina shows a Rofi confirmation prompt before execution.
 
-```json
-{"tool": "file", "args": "move file.txt newfile.txt"}
-```
+**Path**: `src/tools/terminal.ts`
 
-Returns: `✓ Dipindah ke "newfile.txt"`
+### Usage:
+- `{"tool": "terminal", "args": "ls -la"}`
+- `{"tool": "terminal", "args": "free -m"}`
 
----
-
-#### `copy <src> <dest>`
-
-Copy a file or folder.
-
-```json
-{"tool": "file", "args": "copy document.txt ~/backup/"}
-```
-
-Returns: `✓ Disalin ke "/home/user/backup/"`
+### Security:
+- **Command analysis**: `src/security/dangerous-commands.ts`
+- **Confirmation UI**: `src/security/confirmation.ts`
+- **Timeout**: 30 seconds (`COMMAND_TIMEOUT = 30000` in `src/constants/commands.ts`)
 
 ---
 
-#### `list <path>`
+## Notification Tool (`notify`)
 
-List directory contents.
+Send desktop notifications to the user.
 
-```json
-{"tool": "file", "args": "list ~/Downloads"}
-```
+**Path**: `src/tools/notify.ts`
 
-Returns: Directory listing (like `ls -la`)
+### Format:
+`<title>|<message>|<urgency>`
 
----
+### Urgency Levels:
+- `low`
+- `normal`
+- `critical`
 
-#### `read <path>`
-
-Read file content.
-
-```json
-{"tool": "file", "args": "read config.json"}
-```
-
-Returns: File contents
+### Example:
+`"Task Complete|Project successfully built!|normal"`
 
 ---
 
-#### `write <path> <content>`
+## Next Steps
 
-Write content to a file.
-
-```json
-{"tool": "file", "args": "write notes.txt Hello World"}
-```
-
-Returns: `✓ File "notes.txt" ditulis`
+- 🛡️ **[Security Guide](09-security.md)** — Learn more about safe execution.
+- 🤖 **[Daemon Mode](11-daemon-mode.md)** — Optimize tool performance.
+- 🛠️ **[Development Guide](10-development.md)** — Learn how to create your own tools.
 
 ---
 
-#### `find <path> <pattern>`
-
-Find files by name pattern.
-
-```json
-{"tool": "file", "args": "find ~/Documents *.pdf"}
-```
-
-Returns: Matching file paths
-
-### Protected Paths
-
-Operations on these paths require confirmation:
-
-```
-/, /bin, /boot, /dev, /etc, /lib, /root, /sys, /usr, /var
-```
-
-### Path Handling
-
-Tilde expansion is supported:
-
-```
-"~/Documents" → "/home/user/Documents"
-```
-
----
-
-## Media Tool
-
-Control MPD (Music Player Daemon).
-
-### Playback Control
-
-| Action | Description |
-|--------|-------------|
-| `play` | Start playback |
-| `pause` | Pause playback |
-| `toggle` | Toggle play/pause |
-| `stop` | Stop playback |
-| `next` | Next track |
-| `prev` | Previous track |
-
-### Volume Control
-
-| Action | Description |
-|--------|-------------|
-| `volume <level>` | Set volume (-100 to 100) |
-
-```json
-{"tool": "media", "args": "volume 50"}
-{"tool": "media", "args": "volume -10"}
-```
-
-### Information
-
-| Action | Description |
-|--------|-------------|
-| `current` | Show current track |
-| `queue` | Show playlist |
-
-### Search
-
-```json
-{"tool": "media", "args": "search artist \"Radiohead\""}
-```
-
-### Examples
-
-```json
-{"tool": "media", "args": "toggle"}
-{"tool": "media", "args": "next"}
-{"tool": "media", "args": "volume 50"}
-{"tool": "media", "args": "current"}
-```
-
----
-
-## Clipboard Tool
-
-Manage clipboard via Clipcat.
-
-### Operations
-
-| Action | Description |
-|--------|-------------|
-| `get` | Get clipboard content |
-| `list` | List clipboard history |
-| `set <text>` | Set clipboard content |
-| `clear` | Clear clipboard history |
-
-### Examples
-
-```json
-{"tool": "clipboard", "args": "get"}
-{"tool": "clipboard", "args": "list"}
-{"tool": "clipboard", "args": "set Copy this text"}
-{"tool": "clipboard", "args": "clear"}
-```
-
----
-
-## Notify Tool
-
-Send desktop notifications via Dunst.
-
-### Format
-
-```
-title|body|urgency
-```
-
-### Urgency Levels
-
-| Level | Description | Color |
-|-------|-------------|-------|
-| `low` | Low priority | Yellow |
-| `normal` | Standard | Blue |
-| `critical` | Urgent | Red |
-
-### Examples
-
-```json
-{"tool": "notify", "args": "Task Complete|File processed|normal"}
-{"tool": "notify", "args": "Error|Operation failed|critical"}
-{"tool": "notify", "args": "Reminder|Meeting in 5 minutes|low"}
-```
-
----
-
-## Terminal Tool
-
-Execute shell commands with security checks.
-
-### Usage
-
-```json
-{"tool": "terminal", "args": "ls -la ~/Documents"}
-```
-
-### Security
-
-- Commands are analyzed for dangerous patterns
-- Dangerous commands require confirmation
-- 30-second timeout protection
-
-### Examples
-
-```json
-{"tool": "terminal", "args": "ls -la ~/Downloads"}
-{"tool": "terminal", "args": "echo 'Hello World'"}
-{"tool": "terminal", "args": "df -h"}
-```
-
----
-
-## Creating Custom Tools
-
-### Step 1: Create Handler
-
-Create a new file in `src/tools/`:
-
-```typescript
-// src/tools/custom.ts
-import { logger } from "../logger";
-
-export async function custom(action: string): Promise<string> {
-  logger.info("custom", `Action: ${action}`);
-  
-  try {
-    // Your implementation
-    return "✓ Success";
-  } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
-    logger.error("custom", `Failed: ${err.message}`, err);
-    return `❌ Error: ${err.message}`;
-  }
-}
-```
-
-### Step 2: Export from Index
-
-Add to `src/tools/index.ts`:
-
-```typescript
-export { custom } from "./custom";
-```
-
-### Step 3: Register Tool
-
-Add to `src/tools/registry.ts`:
-
-```typescript
-import { custom } from "./custom";
-registerTool("custom", custom);
-```
-
-### Step 4: Update System Prompt
-
-Add tool description to `src/ai/prompts.ts`.
-
----
-
-## Tool Execution Flow
-
-```
-User Input: "open telegram"
-        │
-        ▼
-AI generates: {"tool": "app", "args": "telegram"}
-        │
-        ▼
-Planner.parseToolCalls() extracts JSON
-        │
-        ▼
-dispatchTool("app", "telegram")
-        │
-        ▼
-app("telegram") executes
-        │
-        ▼
-Returns: "✓ Telegram launched"
-```
-
----
-
-## Related Documentation
-
-- **[API Reference](08-api-reference.md)** — Tool API documentation
-- **[Security](09-security.md)** — Security features
-- **[Development Guide](10-development.md)** — Creating tools
-
----
-
-← Previous: [Usage Guide](06-usage-guide.md) | Next: [API Reference](08-api-reference.md) →
+[← Usage Guide](06-usage-guide.md) | [Security →](09-security.md)

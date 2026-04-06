@@ -1,71 +1,40 @@
 # 04 - Configuration
 
-DeskLumina offers several configuration options to customize behavior. This guide covers all available settings and how to modify them.
+Fine-tune DeskLumina's behavior to match your workflow. This guide covers environment variables, settings JSON, and UI customization.
 
 ---
 
-## Configuration Files
+## Table of Contents
 
-| File | Purpose |
-|------|---------|
-| `.env` | API credentials and model selection |
-| `settings.json` | Feature flags and TTS settings |
-| `src/config/apps.json` | Application aliases |
+- [Environment Variables (.env)](#environment-variables-env)
+- [Settings JSON (settings.json)](#settings-json-settingsjson)
+- [Interactive Settings (Rofi)](#interactive-settings-rofi)
+- [UI & Themes](#ui--themes)
+- [Application Aliases (apps.json)](#application-aliases-appsjson)
 
 ---
 
-## Environment Variables
+## Environment Variables (.env)
 
-The `.env` file contains sensitive configuration that should not be committed to version control.
-
-### Location
-
-```
-~/.config/bspwm/agent/.env
-```
-
-### Variables
+The `.env` file in the project root is used for sensitive credentials and core service configuration.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `GROQ_API_KEY` | Yes | Your Groq API key |
-| `MODEL_NAME` | Yes | Primary AI model |
-| `FALLBACK_MODELS` | No | Comma-separated fallback models |
-
-### Example
-
-```bash
-# .env
-GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-MODEL_NAME=openai/gpt-oss-120b
-FALLBACK_MODELS=llama-3.3-70b-versatile,llama-3.1-8b-instant,openai/gpt-oss-20b
-```
-
-### Available Models
-
-| Model | Speed | Quality | Best For |
-|-------|-------|---------|----------|
-| `openai/gpt-oss-120b` | Medium | High | Complex operations |
-| `llama-3.3-70b-versatile` | Fast | Good | General use |
-| `llama-3.1-8b-instant` | Very Fast | Basic | Simple commands |
-| `openai/gpt-oss-20b` | Fast | Good | Fallback |
+| `GROQ_API_KEY` | **Yes** | Your API key from [Groq Console](https://console.groq.com/). |
+| `MODEL_NAME` | **Yes** | Primary Groq model name (read by `src/config/env.ts`). |
+| `FALLBACK_MODELS` | No | Comma-separated model list used when the primary model is unavailable. If unset, defaults are used (see `.env.example`). |
 
 ---
 
-## Feature Settings
+## Settings JSON (settings.json)
 
-The `settings.json` file controls feature toggles.
+DeskLumina stores user preferences in `~/.config/desklumina/settings.json`. You can edit this file directly or use the interactive settings menu.
 
-### Location
-
-```
-~/.config/bspwm/agent/settings.json
-```
-
-### Structure
+### Core Settings
 
 ```json
 {
+  "language": "id",
   "features": {
     "tts": false,
     "toolDisplay": true,
@@ -75,277 +44,71 @@ The `settings.json` file controls feature toggles.
   },
   "tts": {
     "voiceId": "id-ID-GadisNeural",
-    "speed": 1
+    "speed": 1.0
   }
 }
 ```
 
-### Feature Flags
-
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `tts` | boolean | `false` | Enable text-to-speech responses |
-| `toolDisplay` | boolean | `true` | Show tool execution in UI |
-| `chatHistory` | boolean | `true` | Save conversations to disk |
-| `windowContext` | boolean | `true` | Include active window info in context |
-| `dangerousCommandConfirmation` | boolean | `true` | Require confirmation for dangerous commands |
-
-### TTS Settings
-
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `voiceId` | string | `id-ID-GadisNeural` | Voice identifier |
-| `speed` | number | `1` | Speech speed multiplier |
-
-### Available Voices
-
-| Voice ID | Language | Gender |
-|----------|----------|--------|
-| `id-ID-GadisNeural` | Indonesian | Female |
-| `id-ID-ArdiNeural` | Indonesian | Male |
-| `en-US-JennyNeural` | English (US) | Female |
-| `en-US-GuyNeural` | English (US) | Male |
-
-### Speed Options
-
-Valid speed values: `0.5`, `0.75`, `1.0`, `1.25`, `1.5`, `2.0`
+- **`language`**: Primary language for the UI and AI. Supported: `"en"`, `"id"`.
+- **`features.tts`**: Enable/disable text-to-speech output.
+- **`features.toolDisplay`**: Show/hide tool execution details in the UI.
+- **`features.windowContext`**: Placeholder feature flag. Currently toggleable in settings but has no functional effect.
+- **`features.dangerousCommandConfirmation`**: Require confirmation for critical commands.
+- **`tts.voiceId`**: The Edge TTS voice ID to use.
+- **`tts.speed`**: Voice playback speed (0.5 to 2.0).
 
 ---
 
-## Application Aliases
+## Interactive Settings (Rofi)
 
-Application aliases are defined in `src/config/apps.json`.
+You can adjust most settings without leaving the Rofi interface.
 
-### Structure
+1. Launch DeskLumina: `bun run start`.
+2. Press `Tab` to expand the menu.
+3. Select **Settings**.
+4. Navigate the menu to toggle features or change languages.
+5. Select **Save & Exit** to apply changes.
+
+---
+
+## UI & Themes
+
+DeskLumina uses **Rofi** for its graphical interface. You can customize the appearance by modifying the CSS-like `.rasi` files.
+
+- **Main Theme**: `src/ui/themes/lumina.rasi`
+- **Colors & Styles**: Edit the variables at the top of the `.rasi` file to change background colors, fonts, and borders.
+
+---
+
+## Application Aliases (apps.json)
+
+The `src/config/apps.json` file contains a mapping of natural names (aliases) to system commands.
 
 ```json
 {
-  "terminal": {
-    "aliases": ["terminal", "term"],
-    "command": "alacritty"
-  },
-  "browser": {
-    "aliases": ["browser", "web"],
-    "command": "xdg-open https://"
-  }
+  "browser": "xdg-open https://",
+  "telegram": "telegram-desktop",
+  "term": "alacritty",
+  "neovim": "alacritty -e nvim"
 }
 ```
 
-### Adding Custom Aliases
-
-Edit `src/config/apps.json` to add new application shortcuts:
-
-```json
-{
-  "myapp": {
-    "aliases": ["myapp", "ma"],
-    "command": "my-app-command"
-  }
-}
-```
-
-### Default Aliases
-
-| Alias | Application |
-|-------|-------------|
-| `terminal`, `term` | Alacritty |
-| `kitty` | Kitty Terminal |
-| `browser` | Default Browser |
-| `chrome` | Google Chrome |
-| `files`, `thunar` | Thunar File Manager |
-| `yazi` | Yazi TUI |
-| `editor`, `geany` | Geany |
-| `neovim`, `nvim` | Neovim |
-| `telegram`, `tg` | Telegram |
-| `whatsapp`, `wa` | WhatsApp Web |
-| `youtube`, `yt` | YouTube |
-| `github` | GitHub |
-| `spotify` | Spotify Web |
-| `music`, `ncmpcpp` | NCMPCPP |
-| `btop` | BTop Monitor |
-| `htop` | HTop Monitor |
-| `bluetooth` | Bluetooth Manager |
-
----
-
-## Daemon Configuration
-
-The daemon mode uses a Unix socket for communication.
-
-### Default Settings
-
-| Setting | Value |
-|---------|-------|
-| Socket Path | `~/.config/bspwm/agent/daemon.sock` |
-| Protocol | HTTP over Unix Domain Socket |
-| Timeout | 30 seconds |
-
-### Custom Socket Path
-
-The socket path is derived from the application directory. To change it, modify `src/daemon/daemon.ts`:
-
-```typescript
-const SOCKET_PATH = path.join(process.cwd(), "daemon.sock");
-```
-
----
-
-## Logging Configuration
-
-Logs are stored in the application directory.
-
-### Log Files
-
-| File | Content |
-|------|---------|
-| `logs/general.log` | All log messages |
-| `logs/error.log` | Error messages only |
-
-### Log Levels
-
-- `info` — General information
-- `warn` — Warnings
-- `error` — Errors
-- `success` — Successful operations
-
-### Viewing Logs
-
-```bash
-# View all logs
-tail -f ~/.config/bspwm/agent/logs/general.log
-
-# View errors only
-tail -f ~/.config/bspwm/agent/logs/error.log
-```
-
----
-
-## Security Configuration
-
-### Protected Paths
-
-Operations on these paths require confirmation:
-
-```
-/, /bin, /boot, /dev, /etc, /lib, /root, /sys, /usr, /var
-```
-
-To modify protected paths, edit `src/security/dangerous-commands.ts`.
-
-### Command Timeout
-
-Default timeout: 30 seconds
-
-To change, edit `src/constants/commands.ts`:
-
-```typescript
-export const COMMAND_TIMEOUT = 30000; // milliseconds
-```
-
-### Dangerous Command Patterns
-
-Commands matching these patterns trigger security warnings:
-
-- `rm -rf` — Recursive deletion
-- `sudo` — Privilege escalation
-- `shutdown`, `reboot`, `poweroff` — System power
-- `mkfs`, `fdisk` — Disk operations
-- `dd` — Low-level copy
-
-See [Security Guide](09-security.md) for complete details.
-
----
-
-## Language Settings
-
-DeskLumina supports localization via the dictionary system.
-
-### Dictionary Location
-
-```
-src/locales/dictionary.json
-```
-
-### Changing Language
-
-Edit `src/locales/dictionary.json` to translate strings:
-
-```json
-{
-  "Hello": "Halo",
-  "Goodbye": "Selamat tinggal"
-}
-```
-
----
-
-## Example Configurations
-
-### Minimal Configuration
-
-```json
-// settings.json
-{
-  "features": {
-    "tts": false,
-    "toolDisplay": true,
-    "chatHistory": true,
-    "windowContext": true,
-    "dangerousCommandConfirmation": true
-  }
-}
-```
-
-### Full Features Enabled
-
-```json
-// settings.json
-{
-  "features": {
-    "tts": true,
-    "toolDisplay": true,
-    "chatHistory": true,
-    "windowContext": true,
-    "dangerousCommandConfirmation": true
-  },
-  "tts": {
-    "voiceId": "id-ID-GadisNeural",
-    "speed": 1
-  }
-}
-```
-
----
-
-## Troubleshooting
-
-### Settings Not Applied
-
-Ensure `settings.json` is valid JSON:
-
-```bash
-# Validate JSON
-cat settings.json | jq .
-```
-
-### API Key Issues
-
-```bash
-# Verify key is set
-echo $GROQ_API_KEY
-
-# Test API
-curl -H "Authorization: Bearer $GROQ_API_KEY" https://api.groq.com/openai/v1/models
-```
+### Adding a Custom Alias
+1. Open `src/config/apps.json`.
+2. Add your alias and the corresponding command:
+   ```json
+   "my-app": "command --arguments"
+   ```
+3. Save the file. DeskLumina will immediately recognize the new alias.
 
 ---
 
 ## Next Steps
 
-- **[Architecture](05-architecture.md)** — Understand the system design
-- **[Usage Guide](06-usage-guide.md)** — Learn all interaction modes
-- **[Security](09-security.md)** — Security features in detail
+- 🔧 **[Tools Reference](07-tools-reference.md)** — Learn about all built-in tools.
+- 🧠 **[Architecture](05-architecture.md)** — Understand the internal design.
+- 🤖 **[Daemon Mode](11-daemon-mode.md)** — Optimize performance with background persistence.
 
 ---
 
-← Previous: [Quick Start](03-quick-start.md) | Next: [Architecture](05-architecture.md) →
+[← Quick Start](03-quick-start.md) | [Architecture →](05-architecture.md)

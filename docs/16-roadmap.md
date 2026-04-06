@@ -1,177 +1,56 @@
 # 16 - Roadmap
 
-Future plans, known limitations, and development direction for DeskLumina.
+The future of DeskLumina. This document outlines our planned features and vision for the project.
 
 ---
 
-## Current Status
+## Table of Contents
 
-DeskLumina is actively maintained and in stable development. The current version (v1.0.0) provides:
-
-- Natural language desktop control
-- BSPWM integration
-- Multiple interaction modes
-- Security features
-- Daemon mode
-- Text-to-speech support
-- Multi-language support (Indonesian & English)
+- [Vision](#vision)
+- [Short-Term (v1.x)](#short-term-v1x)
+- [Mid-Term (v2.x)](#mid-term-v2x)
+- [Long-Term (Visionary)](#long-term-visionary)
 
 ---
 
-## Planned Features
+## Vision
 
-### Short Term (Next Release)
-
-| Feature | Status | Description |
-|---------|--------|-------------|
-| Custom themes | Planned | User-definable Rofi themes |
-| Chat export | Planned | Export chats to markdown/JSON |
-| Keyboard shortcuts | Planned | In-app shortcut customization |
-
-### Medium Term
-
-| Feature | Status | Description |
-|---------|--------|-------------|
-| Additional AI providers | Planned | OpenAI, Anthropic support |
-| Voice input | Planned | Speech-to-text commands |
-| Plugin system | Planned | Third-party tool extensions |
-| Web UI | Planned | Browser-based interface |
-| Configuration GUI | Planned | Settings editor via Rofi |
-
-### Long Term
-
-| Feature | Status | Description |
-|---------|--------|-------------|
-| Multi-monitor support | Planned | Enhanced monitor awareness |
-| Remote control | Planned | Control from other devices |
-| Scripting API | Planned | Programmable automation |
-| Machine learning | Planned | Learn from user patterns |
+This file describes **non-implemented** ideas. Do not treat any item below as available functionality unless it is verified elsewhere in the repository.
 
 ---
 
-## Known Limitations
+## Short-Term (v1.x)
 
-### Platform
-
-- **BSPWM Only** — Currently only supports BSPWM window manager
-- **Linux Only** — No macOS or Windows support planned
-
-### AI
-
-- **Single Provider** — Only Groq API is supported currently
-- **Rate Limits** — API rate limits may affect heavy usage
-- **Latency** — Network-dependent response times
-
-### Features
-
-- **No Voice Input** — TTS output only, no speech recognition
-- **No Multi-Session** — One active chat at a time
-- **No Sync** — Chat history is local only
+- [ ] **Advanced File Management**: Support for deep file searching using `locate` or `fzf`.
+- [ ] **Wayland Support**: Improve compatibility with Wayland-specific tools (e.g., `wofi`, `waybar`).
+- [ ] **Local LLM Integration**: Support for Ollama or Llama.cpp for privacy-conscious users.
+- [ ] **Enhanced TTS**: Add support for more natural voices and offline TTS engines (e.g., Piper).
+- [ ] **Remove Settings Manager Placeholder**: Remove the `feature.windowContext` placeholder from the Settings manager and update its documentation.
+- [ ] **Enhanced Callback System**: Implement a callback system that displays structured results like an AI agent, supporting multi-step responses: initial response text, tool execution display, and result response text (where tool output is sent back to the API to provide contextual data such as time, date, and other information).
+- [ ] **Long-Term Memory (LTM)**: Implement persistent memory using SQLite3 with robust storage and automatic cleaning. Capabilities include storing schedules, time checks, reminders, and related contextual data.
 
 ---
 
-## Areas for Contribution
+## Mid-Term (v2.x)
 
-### High Priority
-
-- Additional AI provider support
-- Test coverage improvements
-- Documentation translations
-- Bug fixes and stability
-
-### Medium Priority
-
-- Additional tool handlers
-- UI/UX improvements
-- Performance optimizations
-- Example scripts
-
-### Welcome Contributions
-
-- Bug reports and fixes
-- Documentation improvements
-- Feature suggestions
-- Code review
+- [ ] **Custom Plugin System**: Allow users to load custom JavaScript/TypeScript plugins without modifying the core.
+- [ ] **Workflow Recording**: Record a series of desktop actions and replay them using a natural language command.
+- [ ] **Screen Awareness**: Allow the AI to "see" your screen and describe its contents or interact with visual elements.
 
 ---
 
-## Version History
+## Long-Term (Visionary)
 
-### v1.0.0 (Current)
-
-- Initial stable release
-- BSPWM integration
-- Groq API support
-- Daemon mode
-- Security features
-- TTS support
+- [ ] **Proactive Assistance**: DeskLumina should suggest actions based on your current workflow or calendar events.
+- [ ] **Native Mobile App**: Send commands to your desktop via a secure mobile interface.
+- [ ] **Full Home Automation**: Integrate with Home Assistant to control your physical environment from your desktop.
 
 ---
 
-## Development Philosophy
+## Get Involved
 
-### Core Principles
-
-1. **Simplicity** — Keep the codebase clean and maintainable
-2. **Security** — Safety features enabled by default
-3. **Performance** — Fast, responsive execution
-4. **Accuracy** — Documentation matches implementation
-
-### Not Planned
-
-Some features are explicitly not on the roadmap:
-
-- Windows/macOS support
-- GUI application (beyond Rofi)
-- Built-in AI model (offline)
-- Real-time collaboration
+We are always looking for contributors to help us achieve this vision. If any of these features excite you, check out our **[Contributing Guide](15-contributing.md)**.
 
 ---
 
-## How to Influence the Roadmap
-
-### Feature Requests
-
-1. Check existing [GitHub Issues](https://github.com/Rafacuy/desklumina/issues)
-2. Open a new issue with the "enhancement" label
-3. Describe the use case and benefit
-4. Discuss with maintainers
-
-### Contributing
-
-See the [Contributing Guide](15-contributing.md) for:
-- Code contributions
-- Documentation improvements
-- Testing and QA
-
----
-
-## Stay Updated
-
-- **GitHub Releases:** Watch the repository for release notifications
-- **Issues:** Follow issue discussions for development progress
-- **Changelog:** Check `CHANGELOG.md` (if available) for updates
-
----
-
-## Feedback
-
-Your feedback helps shape the roadmap:
-
-- What features do you need most?
-- What pain points exist in your workflow?
-- What would make DeskLumina more useful?
-
-Share feedback via [GitHub Issues](https://github.com/Rafacuy/desklumina/issues).
-
----
-
-## Related Documentation
-
-- **[Contributing](15-contributing.md)** — How to contribute
-- **[FAQ](14-faq.md)** — Common questions
-- **[Development Guide](10-development.md)** — Development setup
-
----
-
-← Previous: [Contributing](15-contributing.md) | [Back to README](../README.md)
+[← Contributing](15-contributing.md) | [Back to Introduction →](01-introduction.md)

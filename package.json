@@ -1,11 +1,11 @@
 {
   "name": "desklumina",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "devDependencies": {
     "@types/bun": "latest",
     "typescript": "latest"
   },
-  "description": "AI automation agent for BSPWM",
+  "description": "AI automation agent for Linux desktops",
   "scripts": {
     "start": "bun run src/main.ts",
     "dev": "bun --watch run src/main.ts --chat",

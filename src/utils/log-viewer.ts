@@ -6,7 +6,7 @@ import { readFileSync, existsSync, statSync, unlinkSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 
-const LOG_DIR = join(homedir(), ".config/bspwm/agent/logs");
+const LOG_DIR = join(homedir(), ".config/desklumina/logs");
 const ERROR_LOG = join(LOG_DIR, "error.log");
 const GENERAL_LOG = join(LOG_DIR, "general.log");
 

@@ -1,348 +1,115 @@
 # 11 - Daemon Mode
 
-DeskLumina daemon mode runs the AI agent as a background service, providing instant responses to commands without startup overhead.
+Optimize DeskLumina for instant response times with persistent background execution.
 
 ---
 
-## Overview
+## Table of Contents
 
-### What is Daemon Mode?
+- [Introduction](#introduction)
+- [Why Daemon Mode?](#why-daemon-mode)
+- [Quick Start](#quick-start)
+- [Systemd User Service](#systemd-user-service)
+- [Advanced Integration (sxhkd)](#advanced-integration-sxhkd)
+- [Troubleshooting](#troubleshooting)
 
-Daemon mode starts DeskLumina once and keeps it running in the background. The daemon:
+---
 
-- Listens on a Unix socket for incoming commands
-- Maintains AI context in memory (no cold starts)
-- Provides sub-200ms response times
-- Integrates with sxhkd, shell scripts, and desktop widgets
+## Introduction
 
-### Benefits
+Daemon mode runs DeskLumina as a persistent background process. The daemon stays active and listens for incoming commands over a **Unix Domain Socket** at `~/.config/desklumina/daemon.sock`.
 
-| Feature | Regular Mode | Daemon Mode |
-|---------|--------------|-------------|
-| **Startup Time** | ~2-3 seconds | <100ms |
-| **Memory** | Per-command | Persistent (~45MB) |
-| **Response Time** | Cold start | Hot execution |
-| **Integration** | Limited | Full sxhkd support |
+---
+
+## Why Daemon Mode?
+
+- Avoids starting a new Bun process for every command.\n+- Provides a stable socket endpoint for hotkeys and scripts.\n+- Each request is handled independently by the daemon (a new chat is created per command in the daemon handler).
 
 ---
 
 ## Quick Start
 
-### Start Daemon
-
+### 1. Start the Daemon
 ```bash
-# Foreground mode (blocks terminal)
+# Start in the foreground (blocks terminal)
 bun run daemon
 
-# Background mode (non-blocking)
-bun run daemon:start &
+# Start in the background (non-blocking, the script already includes &)
+bun run daemon:start
 ```
 
-### Check Status
-
+### 2. Check Daemon Status
 ```bash
 bun run daemon:status
 ```
 
-Output:
-```
-✓ Daemon is running
-Socket: /home/user/.config/bspwm/agent/daemon.sock
-```
-
-### Send Commands
-
+### 3. Send a Command
+Once the daemon is running, use the `send` command to interact with it:
 ```bash
 bun run send "open telegram"
-bun run send "switch to workspace 3"
-bun run send "toggle music"
+bun run send "what's the current volume?"
 ```
 
 ---
 
-## Architecture
+## Systemd User Service
 
-### Communication Flow
+Automate DeskLumina's startup with the provided service file: `systemd/desklumina-daemon@.service`.
 
-```
-┌─────────────────┐         ┌─────────────────┐
-│    Client       │         │    Daemon       │
-│  (bun run send) │         │  (Background)   │
-└────────┬────────┘         └────────┬────────┘
-         │                           │
-         │   HTTP over Unix Socket   │
-         │◄─────────────────────────►│
-         │                           │
-         │  GET /?cmd=open%20tg      │
-         │──────────────────────────►│
-         │                           │
-         │  {"success": true, ...}   │
-         │◄──────────────────────────│
-         │                           │
-```
+1.  **Verify Bun path**: the service file uses `/usr/bin/bun`. If your Bun lives elsewhere, update `ExecStart` accordingly.
+2.  **Install the Service**:
+    ```bash
+    # 1. Copy service file
+    cp systemd/desklumina-daemon@.service ~/.config/systemd/user/
 
-### Socket Details
+    # 2. Reload systemd
+    systemctl --user daemon-reload
 
-- **Location:** `~/.config/bspwm/agent/daemon.sock`
-- **Protocol:** HTTP over Unix Domain Socket
-- **Request Format:** `GET /?cmd=<url_encoded_command>`
-- **Response Format:** JSON
-
-### Request/Response Example
-
-**Request:**
-```http
-GET /?cmd=open%20telegram HTTP/1.1
-Host: unix
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "response": "✓ Telegram launched successfully"
-}
-```
+    # 3. Enable and start
+    systemctl --user enable --now desklumina-daemon@$(id -u).service
+    ```
+4.  **Manage Service**:
+    - `systemctl --user status desklumina-daemon@$(id -u).service`
+    - `systemctl --user restart desklumina-daemon@$(id -u).service`
 
 ---
 
-## Performance
+## Advanced Integration (sxhkd)
 
-### Benchmarks
+For power users, daemon mode allows for instant "hotkey-driven" AI commands.
 
-| Operation | Regular Mode | Daemon Mode | Improvement |
-|-----------|--------------|-------------|-------------|
-| **Cold Start** | 2.8s | 0.1s | 28x faster |
-| **App Launch** | 3.2s | 0.2s | 16x faster |
-| **File Op** | 2.5s | 0.15s | 17x faster |
-| **BSPWM Action** | 2.1s | 0.08s | 26x faster |
-
-### Resource Usage
-
-- **Daemon Process:** ~45MB RAM
-- **Per Request:** ~2MB additional
-- **Socket Overhead:** Negligible
-
----
-
-## Systemd Service
-
-### Installation
-
-DeskLumina includes a systemd user service for automatic daemon startup.
-
-### Step 1: Find Your Bun Path
+Add these to your `~/.config/sxhkd/sxhkdrc`:
 
 ```bash
-which bun
-```
+# Instant AI Command
+super + t
+    bun run ~/.config/desklumina/src/main.ts --send "what's on my schedule?"
 
-Common paths:
-- `/usr/bin/bun` — System package installation
-- `~/.bun/bin/bun` — Bun installer script
-- `/usr/local/bin/bun` — Global installation
+# Media Toggle
+super + space
+    bun run ~/.config/desklumina/src/main.ts --send "toggle music"
 
-### Step 2: Update the Service File
-
-Edit `systemd/desklumina-daemon@.service`:
-
-```ini
-ExecStart=/path/to/your/bun run src/main.ts --daemon
-```
-
-### Step 3: Install the Service
-
-```bash
-# Copy service file
-cp systemd/desklumina-daemon@.service ~/.config/systemd/user/
-
-# Reload systemd
-systemctl --user daemon-reload
-
-# Enable and start
-systemctl --user enable --now desklumina-daemon@$(id -u).service
-```
-
-### Service Management
-
-```bash
-# Check status
-systemctl --user status desklumina-daemon@$(id -u).service
-
-# Stop daemon
-systemctl --user stop desklumina-daemon@$(id -u).service
-
-# Restart daemon
-systemctl --user restart desklumina-daemon@$(id -u).service
-
-# View logs
-journalctl --user -u desklumina-daemon@$(id -u).service -f
-```
-
----
-
-## sxhkd Integration
-
-### Configuration
-
-Add to `~/.config/sxhkd/sxhkdrc`:
-
-```
-# DeskLumina daemon commands
-super + shift + t
-    bun run ~/.config/bspwm/agent/src/main.ts --send "open telegram"
-
-super + shift + b
-    bun run ~/.config/bspwm/agent/src/main.ts --send "open browser"
-
-super + shift + m
-    bun run ~/.config/bspwm/agent/src/main.ts --send "toggle music"
-
-super + shift + w
-    bun run ~/.config/bspwm/agent/src/main.ts --send "switch to workspace 2"
-```
-
-### Shell Aliases
-
-Add to `~/.bashrc` or `~/.zshrc`:
-
-```bash
-alias ai='bun run ~/.config/bspwm/agent/src/main.ts --send'
-alias lumina='bun run ~/.config/bspwm/agent/src/main.ts --send'
-```
-
-Usage:
-```bash
-ai "open telegram"
-lumina "switch to workspace 3"
-```
-
----
-
-## Command Examples
-
-### Application Launching
-
-```bash
-bun run send "open telegram"
-bun run send "launch browser"
-bun run send "open files"
-```
-
-### Window Management
-
-```bash
-bun run send "move window to workspace 2"
-bun run send "toggle fullscreen"
-bun run send "focus workspace 1"
-```
-
-### File Operations
-
-```bash
-bun run send "create folder Projects/NewApp"
-bun run send "list files in Documents"
-```
-
-### Media Control
-
-```bash
-bun run send "play next song"
-bun run send "set volume to 50"
-bun run send "toggle music"
-```
-
-### System Queries
-
-```bash
-bun run send "show current time"
-bun run send "check disk space"
+# Quick Browser
+super + b
+    bun run ~/.config/desklumina/src/main.ts --send "open chrome"
 ```
 
 ---
 
 ## Troubleshooting
 
-### Daemon Won't Start
-
-```bash
-# Check if socket already exists
-ls -la ~/.config/bspwm/agent/daemon.sock
-
-# Remove stale socket file
-rm ~/.config/bspwm/agent/daemon.sock
-
-# Check for existing process
-ps aux | grep "main.ts.*daemon"
-
-# Kill existing process
-pkill -f "main.ts.*daemon"
-
-# Restart daemon
-bun run daemon
-```
-
-### Connection Refused
-
-```bash
-# Verify daemon is running
-bun run daemon:status
-
-# Check socket permissions
-ls -la ~/.config/bspwm/agent/daemon.sock
-
-# View logs
-tail -f ~/.config/bspwm/agent/logs/general.log
-```
-
-### Slow Responses
-
-```bash
-# Check system resources
-htop
-
-# Verify GROQ_API_KEY is set
-echo $GROQ_API_KEY
-
-# Test API status
-curl -H "Authorization: Bearer $GROQ_API_KEY" https://api.groq.com/openai/v1/models
-```
-
-### Socket Permission Issues
-
-```bash
-# Check socket permissions
-ls -la ~/.config/bspwm/agent/daemon.sock
-
-# Remove and restart
-rm ~/.config/bspwm/agent/daemon.sock
-bun run daemon
-```
-
-### Systemd Service Issues
-
-```bash
-# Check service status
-systemctl --user status desklumina-daemon@$(id -u).service
-
-# View service logs
-journalctl --user -u desklumina-daemon@$(id -u).service -n 50
-
-# Reload systemd
-systemctl --user daemon-reload
-
-# Re-enable service
-systemctl --user enable --now desklumina-daemon@$(id -u).service
-```
+- **Socket Already in Use**: If the daemon crashes, the socket file might remain. Run `rm ~/.config/desklumina/daemon.sock` and restart.
+- **Connection Refused**: Ensure the daemon is actually running with `bun run daemon:status`.
+- **Logs**: Check `~/.config/desklumina/logs/general.log` and `~/.config/desklumina/logs/error.log`.
 
 ---
 
-## Related Documentation
+## Next Steps
 
-- **[Usage Guide](06-usage-guide.md)** — All interaction modes
-- **[Troubleshooting](13-troubleshooting.md)** — Common issues
-- **[Configuration](04-configuration.md)** — Daemon settings
+- ⚙️ **[Configuration](04-configuration.md)** — Customizing daemon behavior.
+- 🧪 **[Testing](12-testing.md)** — Verifying socket communication.
+- 🏁 **[Back to Introduction](01-introduction.md)**
 
 ---
 
-← Previous: [Development Guide](10-development.md) | Next: [Testing Guide](12-testing.md) →
+[← Development Guide](10-development.md) | [Testing →](12-testing.md)

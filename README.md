@@ -1,122 +1,63 @@
 # DeskLumina
 
-**AI-Powered Desktop Automation Agent for BSPWM**
+Linux desktop automation agent built with Bun + TypeScript. DeskLumina sends your messages to the Groq Chat Completions API, streams the model output, parses JSON tool calls from markdown code fences, and executes a fixed set of local tools.
 
-Control your Linux desktop with natural language commands.
+## Requirements
 
-> **Base Path:** This documentation assumes DeskLumina is installed at `~/.config/bspwm/agent/`
+### Required
 
-[![Bun](https://img.shields.io/badge/Runtime-Bun-f9f1e5?style=flat-square&logo=bun)](https://bun.sh)
-[![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+- **Bun**: used to run `src/main.ts` (`bun run start`).
+- **Groq API credentials**: `.env` must define `GROQ_API_KEY` and `MODEL_NAME`.
+- **Rofi**: used for the default interactive UI and security confirmations.
 
----
+### Optional (feature-dependent)
 
-## Overview
+- **MPD/MPC**: `media` tool shells out to `mpc` (e.g. `mpc play`, `mpc toggle`).
+- **clipcat**: `clipboard` tool shells out to `clipcatctl`.
+- **dunst**: `notify` tool shells out to `dunstify`.
 
-DeskLumina is an intelligent desktop automation agent that lets you control your BSPWM-based Linux desktop using natural language. Built with Bun and TypeScript, it leverages the Groq API for fast AI inference and provides seamless integration with your desktop environment.
-
-> **Note:** This application is designed specifically for the [gh0stzk dotfiles](https://github.com/gh0stzk/dotfiles) configuration.
-
----
-
-## Features
-
-- **Natural Language Control** — Communicate with your desktop using everyday language
-- **BSPWM Integration** — Full window and workspace management
-- **AI Streaming** — Real-time responses via Groq API with automatic model fallback
-- **Context Awareness** — Automatic detection of active window for context-aware commands
-- **Desktop Integration** — Launch apps, control media, manage files, send notifications
-- **Security First** — Dangerous command detection with confirmation prompts
-- **Multiple Modes** — Interactive Rofi UI, terminal chat, direct execution, daemon mode
-- **Chat History** — Persistent conversations with auto-generated titles
-- **Text-to-Speech** — Optional voice responses with Edge TTS
-
----
-
-## Quick Start
-
-### Prerequisites
-
-- Bun v1.3.9+
-- BSPWM window manager
-- Rofi, Dunst, Clipcat, MPD+MPC
-
-### Installation
+## Install
 
 ```bash
-# Clone the repository to your BSPWM agent config directory
-git clone https://github.com/Rafacuy/desklumina.git ~/.config/bspwm/agent
-cd ~/.config/bspwm/agent
+git clone https://github.com/Rafacuy/desklumina.git ~/.config/desklumina
+cd ~/.config/desklumina
 
-# Install dependencies
 bun install
-
-# Configure environment
 cp .env.example .env
-# Edit .env with your Groq API key
 ```
 
-### Basic Usage
+## Run
 
-```bash
-# Interactive mode (Rofi UI)
-bun start
+All modes are implemented in `src/main.ts` and selected by the first CLI argument.
 
-# Terminal chat mode
-bun run dev
-
-# Direct command execution
-bun run src/main.ts --exec "open telegram"
-
-# Daemon mode (background service)
-bun run daemon
-bun run send "switch to workspace 3"
-```
-
----
+| Mode | Command | Notes |
+|------|---------|------|
+| Rofi UI (default) | `bun run start` | Starts the Rofi chat loop. |
+| Terminal chat loop | `bun run dev` | Runs `src/main.ts --chat`. |
+| One-off execution | `bun run start -- --exec "open telegram"` | Runs a single message and prints the assistant text. |
+| Daemon | `bun run daemon` | Serves `~/.config/desklumina/daemon.sock` (HTTP over Unix socket). |
+| Daemon status | `bun run daemon:status` | Checks whether the socket file exists. |
+| Send to daemon | `bun run send "open telegram"` | Sends `cmd=...` to the daemon over the Unix socket. |
 
 ## Documentation
 
-| Document | Description |
-|----------|-------------|
-| [Introduction](docs/01-introduction.md) | Project overview and philosophy |
-| [Installation](docs/02-installation.md) | Detailed setup instructions |
-| [Quick Start](docs/03-quick-start.md) | First-time usage guide |
-| [Configuration](docs/04-configuration.md) | Settings and customization |
-| [Usage Guide](docs/06-usage-guide.md) | All usage modes explained |
-| [Tools Reference](docs/07-tools-reference.md) | Complete tool documentation |
-| [API Reference](docs/08-api-reference.md) | Core module documentation |
-| [Development](docs/10-development.md) | Development workflow |
-
----
-
-## Contributing
-
-Contributions are welcome! Please read the [Contributing Guide](docs/15-contributing.md) for details on:
-
-- Code conventions
-- Development workflow
-- Testing requirements
-- Pull request process
-
----
+- `docs/01-introduction.md`
+- `docs/02-installation.md`
+- `docs/03-quick-start.md`
+- `docs/04-configuration.md`
+- `docs/05-architecture.md`
+- `docs/06-usage-guide.md`
+- `docs/07-tools-reference.md`
+- `docs/08-api-reference.md`
+- `docs/09-security.md`
+- `docs/10-development.md`
+- `docs/11-daemon-mode.md`
+- `docs/12-testing.md`
+- `docs/13-troubleshooting.md`
+- `docs/14-faq.md`
+- `docs/15-contributing.md`
+- `docs/16-roadmap.md`
 
 ## License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
-
----
-
-## Acknowledgments
-
-Built with:
-
-- [Bun](https://bun.sh) — Fast JavaScript runtime
-- [Groq API](https://groq.com) — Ultra-fast LLM inference
-- [BSPWM](https://github.com/baskerville/bspwm) — Tiling window manager
-- [Rofi](https://github.com/davatorium/rofi) — Window switcher/launcher
-
----
-
-Made with ❤️ by [Rafacuy](https://github.com/Rafacuy)
+MIT (see `LICENSE`).

@@ -1,176 +1,99 @@
 # 01 - Introduction
 
-DeskLumina is an AI-powered desktop automation agent designed for BSPWM-based Linux systems. It enables natural language control of your desktop environment, making complex operations as simple as describing what you want to do.
+DeskLumina is an intelligent, high-performance desktop automation agent designed specifically for Linux desktop environments. It enables natural language control of your system, making complex operations as simple as describing your intent.
+
+---
+
+## Table of Contents
+
+- [What is DeskLumina?](#what-is-desklumina)
+- [Core Philosophy](#core-philosophy)
+- [Example Interactions](#example-interactions)
+- [Key Features](#key-features)
+- [Why DeskLumina?](#why-desklumina)
+- [How It Works](#how-it-works)
+- [Technology Stack](#technology-stack)
 
 ---
 
 ## What is DeskLumina?
 
-DeskLumina bridges the gap between human intent and desktop automation. Instead of memorizing keyboard shortcuts, command-line arguments, and configuration files, you simply tell DeskLumina what you want to accomplish in plain language.
-
-### Example Interactions
-
-```
-You: "Open Telegram and move it to workspace 3"
-DeskLumina: Launches Telegram, waits for the window, moves it to workspace 3
-
-You: "Create a new project folder called MyApp in ~/Projects"
-DeskLumina: Creates the directory with proper path expansion
-
-You: "Play some music and set volume to 50"
-DeskLumina: Starts MPD playback and sets volume level
-```
-
----
+DeskLumina bridges the gap between human intent and system execution. Built as a native Linux integration, it leverages the speed of **Bun** and the intelligence of the **Groq API** to provide an assistant that feels like a natural extension of your desktop environment.
 
 ## Core Philosophy
 
 ### Natural Language First
+Instead of memorizing keyboard shortcuts, CLI arguments, or configuration syntax, you simply tell DeskLumina what you want to accomplish in plain language.
 
-DeskLumina prioritizes natural language understanding over command memorization. The AI interprets your intent and translates it into appropriate desktop actions.
+### Performance & Responsiveness
+DeskLumina streams model output from the Groq API and can optionally run text-to-speech for the assistant response.
 
-### Security Aware
-
-All commands pass through a security layer that:
-- Detects potentially dangerous operations
-- Requires confirmation for destructive actions
-- Blocks operations on protected system paths
-- Implements timeout protection
-
-### Desktop Integration
-
-Built specifically for BSPWM and related tools, DeskLumina provides deep integration with:
-- **BSPWM** — Window and workspace management
-- **Rofi** — Graphical interface for interactions
-- **Dunst** — Desktop notifications
-- **Clipcat** — Clipboard management
-- **MPD/MPC** — Music player control
+### Secure by Design
+Every command is analyzed for safety. Destructive or sensitive operations require explicit user confirmation through a Rofi-based dialog, ensuring you remain in full control.
 
 ---
 
-## Use Cases
+## Example Interactions
 
-### Window Management
+> **User:** "open telegram"
+> **DeskLumina:** (executes tool call `app` with `telegram`)
 
-- Switch between workspaces
-- Move windows across workspaces
-- Toggle fullscreen, floating, or monocle modes
-- Focus windows by direction
+> **User:** "create a folder on Desktop"
+> **DeskLumina:** (executes tool call `file` with `create_dir ~/Desktop/...`)
 
-### Application Launching
+> **User:** "play music"
+> **DeskLumina:** (executes tool call `media` with `play`)
 
-- Launch applications by natural names or aliases
-- Open websites and web services
-- Start terminal applications
+---
 
-### File Operations
+## Key Features
 
-- Create, move, copy, and delete files
-- Search for files by pattern
-- Read and write file contents
+- **🪟 Rofi Integration**: A lightweight, keyboard-friendly UI that fits perfectly into tiling window managers (i3, bspwm, sway, etc.).
+- **🔊 Low-Latency TTS**: Near-instant voice responses using the `AdaptiveChunker` and Edge TTS.
+- **🤖 Smart Daemon**: A persistent background service that eliminates startup overhead.
+- **🛡️ Security Layer**: Automatic detection of dangerous commands with interactive confirmation.
+- **🔧 Extensible Tools**: A modular system for controlling applications, files, media, and more.
+- **🌐 Bilingual**: Native support for English and Indonesian.
 
-### Media Control
+---
 
-- Play, pause, skip tracks
-- Adjust volume
-- View current track information
+## Why DeskLumina?
 
-### System Integration
-
-- Send desktop notifications
-- Manage clipboard content
-- Execute shell commands safely
+Modern desktops are powerful but often complex. DeskLumina was created for users who:
+- Want to automate repetitive tasks without writing scripts.
+- Prefer natural language over complex keyboard shortcuts.
+- Need a lightweight, customizable assistant that doesn't bloat the system.
 
 ---
 
 ## How It Works
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        User Input                            │
-│                  "Open Telegram on workspace 3"             │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      AI Processing                           │
-│           Groq API interprets natural language              │
-│           Generates structured tool calls                   │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Security Layer                            │
-│           Analyzes commands for dangerous patterns          │
-│           Requests confirmation when needed                 │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Tool Execution                            │
-│           app("telegram")                                   │
-│           bspwm("wait_and_move Telegram 3")                 │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      Desktop Action                          │
-│           Telegram launches and moves to workspace 3        │
-└─────────────────────────────────────────────────────────────┘
-```
+1.  **Input**: Receives your command via Rofi, the terminal, or a daemon socket.
+2.  **Intent Parsing**: Sends the input to the Groq API (LLM) to determine required actions.
+3.  **Tool Selection**: The LLM generates structured "tool calls" (JSON blocks).
+4.  **Security Check**: The system analyzes the tools for dangerous patterns.
+5.  **Execution**: DeskLumina executes the tools (e.g., launching an app or running a script).
+6.  **Response**: The result is streamed back to the UI and spoken via TTS.
 
 ---
 
 ## Technology Stack
 
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Runtime | Bun | Fast JavaScript/TypeScript execution |
-| Language | TypeScript | Type-safe development |
-| AI Backend | Groq API | Low-latency LLM inference |
-| UI | Rofi | Graphical interaction |
-| Window Manager | BSPWM | Tiling window management |
-
----
-
-## Requirements
-
-### Essential
-
-- **Bun** v1.3.9 or higher
-- **BSPWM** window manager
-- **Groq API key** for AI functionality
-
-### Optional (for full features)
-
-- **Rofi** — For interactive mode
-- **Dunst** — For notifications
-- **Clipcat** — For clipboard management
-- **MPD/MPC** — For media control
-
-### Recommended
-
-- [gh0stzk dotfiles](https://github.com/gh0stzk/dotfiles) — The configuration this tool is designed for
-
----
-
-## Project Origin
-
-DeskLumina was created to simplify desktop interaction for BSPWM users who prefer natural language over keyboard shortcuts. It's particularly useful for:
-
-- Users who frequently switch between many workspaces
-- Those who manage many windows across different applications
-- Anyone who wants to automate repetitive desktop tasks
-- People who prefer conversational interaction with their system
+- **Runtime**: [Bun](https://bun.sh/) (Fast JS/TS runtime)
+- **Language**: TypeScript
+- **AI Inference**: [Groq API](https://groq.com/) (model configured via `MODEL_NAME`)
+- **UI Architecture**: [Rofi](https://github.com/davatorium/rofi)
+- **TTS Engine**: [Edge TTS](https://github.com/rany2/edge-tts) (Universal)
+- **Automation**: shell commands via `bash`, plus optional `dunstify` (notifications), `clipcatctl` (clipboard), and `mpc` (media).
 
 ---
 
 ## Next Steps
 
-- **[Installation Guide](02-installation.md)** — Set up DeskLumina on your system
-- **[Quick Start](03-quick-start.md)** — Get started with basic commands
-- **[Usage Guide](06-usage-guide.md)** — Learn all interaction modes
+- 🏁 **[Installation Guide](02-installation.md)** — Set up DeskLumina on your system.
+- 🚀 **[Quick Start](03-quick-start.md)** — Learn basic commands and workflows.
+- 🧠 **[Architecture](05-architecture.md)** — Understand the internal design.
 
 ---
 
-← [Back to README](../README.md) | Next: [Installation](02-installation.md) →
+[← Back to README](../README.md) | [Installation Guide →](02-installation.md)

@@ -4,7 +4,7 @@ import { settingsManager } from "../core/settings-manager";
 import { t } from "../utils/i18n";
 import { CancellationError } from "../types";
 
-const THEME_PATH = `${process.env.HOME}/.config/bspwm/agent/src/ui/themes/lumina.rasi`;
+const THEME_PATH = `${process.env.HOME}/.config/desklumina/src/ui/themes/lumina.rasi`;
 
 type Severity = "critical" | "high" | "medium";
 type AlertSeverity = "info" | "warning" | "error";

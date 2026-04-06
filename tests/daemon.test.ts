@@ -35,7 +35,7 @@ import { DeskLuminaDaemon } from "../src/daemon/daemon";
 // ---------------------------------------------------------------------------
 
 describe("DeskLuminaDaemon", () => {
-  const socketPath = join(homedir(), ".config/bspwm/agent/daemon.sock");
+  const socketPath = join(homedir(), ".config/desklumina/daemon.sock");
 
   let daemon: DeskLuminaDaemon;
   let serveSpy: ReturnType<typeof spyOn>;

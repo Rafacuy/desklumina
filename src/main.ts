@@ -143,7 +143,7 @@ async function main() {
     const response = await lumina.chat(message);
     console.log(response);
   } else if (mode === "--version") {
-    console.log(t("Lumina v1.0.0"));
+    console.log(t("Lumina v1.1.0"));
     console.log(`Model: ${env.MODEL_NAME}`);
   } else {
     // Default: Rofi chat mode

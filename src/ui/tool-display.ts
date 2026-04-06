@@ -1,13 +1,18 @@
 import type { ParsedToolCall, ToolResult } from "../types";
 import { t } from "../utils/i18n";
 
+interface ToolConfig {
+  icon: string;
+  label: string;
+  resultLabel: string;
+}
+
 /**
  * Tool category mapping 
  */
-const TOOL_CATEGORIES: Record<string, { icon: string; label: string; resultLabel: string }> = {
+const TOOL_CONFIG: Record<string, ToolConfig> = {
   app: { icon: "🚀", label: "Opening application", resultLabel: "Application opened" },
-  terminal: { icon: "⚡", label: "Running terminal command", resultLabel: "Command executed" },
-  bspwm: { icon: "🪟", label: "Managing windows", resultLabel: "Window managed" },
+  terminal: { icon: "💻", label: "Running terminal command", resultLabel: "Command executed" },
   file: { icon: "📁", label: "Managing files", resultLabel: "File operation complete" },
   media: { icon: "🎵", label: "Controlling media", resultLabel: "Media controlled" },
   clipboard: { icon: "📋", label: "Clipboard operation", resultLabel: "Clipboard updated" },
@@ -15,10 +20,10 @@ const TOOL_CATEGORIES: Record<string, { icon: string; label: string; resultLabel
 };
 
 /**
- * Getlabel for a tool
+ * Get label for a tool
  */
 function getToolLabel(tool: string): string {
-  const label = TOOL_CATEGORIES[tool]?.label || "Executing actions";
+  const label = TOOL_CONFIG[tool]?.label || "Executing actions";
   return t(label);
 }
 
@@ -26,7 +31,7 @@ function getToolLabel(tool: string): string {
  * Get result label for a tool
  */
 function getToolResultLabel(tool: string): string {
-  const label = TOOL_CATEGORIES[tool]?.resultLabel || "Action complete";
+  const label = TOOL_CONFIG[tool]?.resultLabel || "Action complete";
   return t(label);
 }
 
@@ -34,7 +39,7 @@ function getToolResultLabel(tool: string): string {
  * Get icon for a tool
  */
 function getToolIcon(tool: string): string {
-  return TOOL_CATEGORIES[tool]?.icon || "🔧";
+  return TOOL_CONFIG[tool]?.icon || "🔧";
 }
 
 export class ToolDisplay {
@@ -52,7 +57,6 @@ export class ToolDisplay {
     let output = `${this.SEPARATOR}\n`;
     
     uniqueTools.forEach((tool) => {
-      const icon = getToolIcon(tool);
       const label = getToolLabel(tool);
       output += `  • ${label}\n`;
     });

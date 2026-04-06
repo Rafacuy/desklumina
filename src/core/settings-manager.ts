@@ -6,7 +6,7 @@ import { DEFAULT_SETTINGS } from "../types";
 import { logger } from "../logger";
 import { setLang } from "../utils/i18n";
 
-const SETTINGS_DIR = join(homedir(), ".config/bspwm/agent");
+const SETTINGS_DIR = join(homedir(), ".config/desklumina");
 const SETTINGS_PATH = join(SETTINGS_DIR, "settings.json");
 
 export class SettingsManager {

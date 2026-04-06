@@ -19,20 +19,6 @@ describe("File Tool", () => {
   });
 });
 
-describe("BSPWM Tool", () => {
-  const { bspwm } = require("../src/tools/bspwm");
-
-  test("bspwm is defined", () => {
-    expect(bspwm).toBeDefined();
-    expect(typeof bspwm).toBe("function");
-  });
-
-  test("bspwm returns string result", async () => {
-    const result = await bspwm("list_workspaces");
-    expect(typeof result).toBe("string");
-  });
-});
-
 describe("Media Tool", () => {
   const { media } = require("../src/tools/media");
 

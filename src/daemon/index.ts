@@ -8,7 +8,7 @@ export class DaemonClient {
   private socketPath: string;
 
   constructor() {
-    this.socketPath = join(homedir(), ".config/bspwm/agent/daemon.sock");
+    this.socketPath = join(homedir(), ".config/desklumina/daemon.sock");
   }
 
   async sendCommand(command: string): Promise<string> {

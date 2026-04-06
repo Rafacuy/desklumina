@@ -9,7 +9,6 @@ import { t } from "../utils/i18n";
 const TOOL_LABELS: Record<string, string> = {
   app: "Opening application",
   terminal: "Running terminal command",
-  bspwm: "Managing windows",
   file: "Managing files",
   media: "Controlling media",
   clipboard: "Clipboard operation",
@@ -29,7 +28,7 @@ type InternalMessage = ChatMessage & {
   toolResults?: ToolResult[];
 };
 
-const CHAT_DIR = join(homedir(), ".config/bspwm/agent/chats");
+const CHAT_DIR = join(homedir(), ".config/desklumina/chats");
 
 function ensureChatDir() {
   if (!existsSync(CHAT_DIR)) {

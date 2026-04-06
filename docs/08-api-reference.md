@@ -1,534 +1,91 @@
 # 08 - API Reference
 
-Complete API reference for DeskLumina's core modules, classes, and functions.
+A detailed reference for DeskLumina's internal APIs and tool signatures.
 
 ---
 
-## Core Module
+## Table of Contents
 
-### Lumina
-
-Main AI agent orchestrator that handles conversation flow, tool execution, and TTS.
-
-**Location:** `src/core/lumina.ts`
-
-```typescript
-import { Lumina } from "./core";
-```
-
-#### Constructor
-
-```typescript
-constructor(chatManager: ChatManager)
-```
-
-#### Methods
-
-##### `chat(prompt: string, onChunk?: (chunk: string) => void): Promise<void>`
-
-Process a user prompt and stream AI response.
-
-**Parameters:**
-- `prompt: string` — User's input message
-- `onChunk?: (chunk: string) => void` — Optional callback for streaming response
-
-**Example:**
-```typescript
-const lumina = new Lumina(chatManager);
-await lumina.chat("open telegram", (chunk) => {
-  process.stdout.write(chunk);
-});
-```
+- [Core API (Lumina)](#core-api-lumina)
+- [Tool Handler Signature](#tool-handler-signature)
+- [Chat State API](#chat-state-api)
+- [Security Analysis API](#security-analysis-api)
+- [Daemon Socket Protocol](#daemon-socket-protocol)
 
 ---
 
-### ChatManager
+## Core API (Lumina)
 
-Manages chat persistence, history, and session management.
+**File**: `src/core/lumina.ts`
 
-**Location:** `src/core/chat-manager.ts`
+The `Lumina` class is the main orchestrator.
 
-```typescript
-import { ChatManager } from "./core";
-```
+### `chat(userMessage: string, onChunk?: (chunk: string, toolOutput?: string) => void): Promise<string>`
+Processes user input, streams the AI response, executes tools, and returns the final assistant message.
 
-#### Methods
-
-##### `createChat(firstMessage: string): Chat`
-
-Create a new chat session with auto-generated title.
-
-##### `addMessage(role: "user" | "assistant", content: string): void`
-
-Add a message to the current chat.
-
-##### `getCurrentChat(): Chat | null`
-
-Get the current active chat.
-
-##### `getAllChats(): Chat[]`
-
-Get all saved chats sorted by date.
-
-##### `loadChat(index: number): boolean`
-
-Load a specific chat by index.
-
-##### `newChat(): void`
-
-Start a new chat session.
+- **`userMessage`**: The user's natural language input.
+- **`onChunk`**: Optional callback invoked while streaming text. Receives `chunk` (text content) and optionally `toolOutput` (formatted tool execution results). When `toolOutput` is provided, `chunk` will be empty.
+- **Returns**: The complete text response.
 
 ---
 
-### ContextTracker
+## Tool Handler Signature
 
-Tracks conversation context including active window.
-
-**Location:** `src/core/context.ts`
+All desktop automation tools must implement the following signature:
 
 ```typescript
-import { ContextTracker } from "./core";
+type ToolHandler = (arg: string) => Promise<string> | string;
 ```
 
-#### Methods
+### Return Values
 
-##### `getContext(): Promise<WindowContext>`
-
-Get current window context.
-
-##### `formatContext(): string`
-
-Format context for system prompt.
+Tool handlers return a string result. DeskLumina does not enforce a prefix convention; handlers in this repository commonly return `✓ ...` on success and `❌ ...` on errors.
 
 ---
 
-### Planner
+## Chat State API
 
-Parses and plans tool calls from AI responses.
+**File**: `src/core/chat-manager.ts`
 
-**Location:** `src/core/planner.ts`
+### Storage location
 
-```typescript
-import { Planner } from "./core";
-```
-
-#### Methods
-
-##### `parseToolCalls(content: string): ParsedToolCall[]`
-
-Extract tool calls from AI response markdown.
+Chats are saved under `~/.config/desklumina/chats/` as JSON files (see `src/core/chat-manager.ts`).
 
 ---
 
-## AI Module
+## Security Analysis API
 
-### streamGroq
+**File**: `src/security/dangerous-commands.ts`
 
-Stream AI response from Groq API with automatic model fallback.
+### `analyzeCommand(command: string): CommandAnalysis`
 
-**Location:** `src/ai/groq.ts`
-
-```typescript
-import { streamGroq } from "./ai";
-
-for await (const chunk of streamGroq(messages)) {
-  process.stdout.write(chunk);
-}
-```
-
-**Fallback Behavior:**
-- Tries primary model first
-- Falls back to `FALLBACK_MODELS` on failure
-- Throws `AllModelsFailedError` if all models fail
+See `src/security/dangerous-commands.ts` for the exact structure (`CommandAnalysis`) and severity selection (`highestSeverity`).
 
 ---
 
-### buildSystemPrompt
-
-Build system prompt with environment context.
-
-**Location:** `src/ai/prompts.ts`
-
-```typescript
-import { buildSystemPrompt } from "./ai";
-
-const prompt = await buildSystemPrompt();
-```
-
-**Includes:**
-- Tool definitions
-- Window context
-- Environment info
-- Response format instructions
-
----
-
-### TextToSpeech
-
-Text-to-speech using Edge TTS.
-
-**Location:** `src/ai/tts.ts`
-
-```typescript
-import { TextToSpeech } from "./ai";
-
-const tts = new TextToSpeech("id-ID-GadisNeural", 1.0);
-await tts.speak("Hello World");
-```
-
-**Available Voices:**
-- `id-ID-GadisNeural` — Female voice
-- `id-ID-ArdiNeural` — Male voice
-
-**Speed Options:** `0.5`, `0.75`, `1.0`, `1.25`, `1.5`, `2.0`
-
----
-
-## Tools Module
-
-### Tool Handler Signature
-
-All tool handlers follow this signature:
-
-```typescript
-type ToolHandler = (args: string) => Promise<string>;
-```
-
-### App Tool
-
-**Location:** `src/tools/apps.ts`
-
-```typescript
-import { app } from "./tools";
-await app("telegram");  // → "✓ Telegram launched"
-```
-
-### BSPWM Tool
-
-**Location:** `src/tools/bspwm.ts`
-
-```typescript
-import { bspwm } from "./tools";
-await bspwm("focus_workspace 3");
-```
-
-### File Tool
-
-**Location:** `src/tools/files.ts`
-
-```typescript
-import { fileOp } from "./tools";
-await fileOp("create_dir ~/Test");
-```
-
-### Media Tool
-
-**Location:** `src/tools/media.ts`
-
-```typescript
-import { media } from "./tools";
-await media("toggle");
-```
-
-### Clipboard Tool
-
-**Location:** `src/tools/clipboard.ts`
-
-```typescript
-import { clipboard } from "./tools";
-await clipboard("get");
-```
-
-### Notify Tool
-
-**Location:** `src/tools/notify.ts`
-
-```typescript
-import { notify } from "./tools";
-await notify("Title|Message|normal");
-```
-
----
-
-### Tool Registry
-
-**Location:** `src/tools/registry.ts`
-
-```typescript
-import { registerTool, dispatchTool, getRegisteredTools } from "./tools";
-
-// Register a custom tool
-registerTool("custom", async (args) => {
-  return `Result: ${args}`;
-});
-
-// Dispatch a tool call
-const result = await dispatchTool("app", "telegram");
-
-// Get all registered tools
-const tools = getRegisteredTools();
-```
-
----
-
-## Security Module
-
-### isDangerousCommand
-
-Check if a command matches dangerous patterns.
-
-**Location:** `src/security/dangerous-commands.ts`
-
-```typescript
-import { isDangerousCommand } from "./security";
-
-if (isDangerousCommand("rm -rf /")) {
-  // Handle dangerous command
-}
-```
-
-### analyzeCommand
-
-Analyze command for security risks.
-
-```typescript
-import { analyzeCommand } from "./security";
-
-const analysis = analyzeCommand("rm file.txt");
-// {
-//   isDangerous: true,
-//   highestSeverity: "high",
-//   summary: "File deletion command"
-// }
-```
-
-### rofiConfirm
-
-Show confirmation dialog.
-
-**Location:** `src/security/confirmation.ts`
-
-```typescript
-import { rofiConfirm } from "./security";
-
-const confirmed = await rofiConfirm(
-  "Delete File",
-  "Are you sure you want to delete?",
-  "high"
-);
-```
-
----
-
-## UI Module
-
-### Rofi Integration
-
-**Location:** `src/ui/rofi.ts`
-
-```typescript
-import { rofiSelect, rofiInput, rofiConfirm } from "./ui";
-
-// Selection menu
-const choice = await rofiSelect(["Option 1", "Option 2"], "Select:");
-
-// Input field
-const text = await rofiInput("Enter text:");
-
-// Confirmation
-const confirmed = await rofiConfirm("Title", "Message", "high");
-```
-
-### Loader
-
-**Location:** `src/ui/loader.ts`
-
-```typescript
-import { showLoader, stopLoader } from "./ui";
-
-showLoader("Processing...");
-// ... do work
-stopLoader();
-```
-
-### Tool Display
-
-**Location:** `src/ui/tool-display.ts`
-
-```typescript
-import { formatToolCall, formatToolResult } from "./ui";
-
-const callDisplay = formatToolCall("app", "telegram");
-const resultDisplay = formatToolResult("✓ Success");
-```
-
----
-
-## Utilities
-
-### Path Utilities
-
-**Location:** `src/utils/path.ts`
-
-```typescript
-import { expandTilde, normalizePath } from "./utils";
-
-expandTilde("~/Documents");  // → "/home/user/Documents"
-normalizePath("path\\to\\file");  // → "path/to/file"
-```
-
-### Format Utilities
-
-**Location:** `src/utils/format.ts`
-
-```typescript
-import { formatFileSize, truncate, formatRelativeTime } from "./utils";
-
-formatFileSize(1536000);  // → "1.5 MB"
-truncate("Long text...", 10);  // → "Long te..."
-```
-
----
-
-## Constants
-
-### Command Constants
-
-**Location:** `src/constants/commands.ts`
-
-```typescript
-import { DANGEROUS_COMMAND_PATTERNS, COMMAND_TIMEOUT } from "./constants";
-
-// COMMAND_TIMEOUT = 30000 (ms)
-// DANGEROUS_COMMAND_PATTERNS = { ... }
-```
-
-### Model Constants
-
-**Location:** `src/constants/models.ts`
-
-```typescript
-import { DEFAULT_FALLBACK_MODELS, GROQ_API_ENDPOINT } from "./constants";
-
-// GROQ_API_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions"
-// DEFAULT_FALLBACK_MODELS = ["llama-3.3-70b-versatile", ...]
-```
-
----
-
-## Types
-
-### AI Types
-
-**Location:** `src/types/ai.ts`
-
-```typescript
-interface AIMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
-}
-
-interface ModelConfig {
-  name: string;
-  temperature: number;
-  maxTokens: number;
-}
-```
-
-### Chat Types
-
-**Location:** `src/types/chat.ts`
-
-```typescript
-interface Chat {
-  id: string;
-  title: string;
-  messages: ChatMessage[];
-  toolCalls: ToolCall[];
-  toolResults: ToolResult[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-}
-
-interface ToolCall {
-  tool: string;
-  args: string;
-  timestamp: Date;
-}
-
-interface ToolResult {
-  tool: string;
-  result: string;
-  timestamp: Date;
-}
-```
-
-### Tool Types
-
-**Location:** `src/types/tool.ts`
-
-```typescript
-type ToolHandler = (args: string) => Promise<string>;
-
-interface ParsedToolCall {
-  tool: string;
-  args: string;
-  raw: string;
-}
-
-interface ToolRegistry {
-  [name: string]: ToolHandler;
-}
-```
-
-### Settings Types
-
-**Location:** `src/types/settings.ts`
-
-```typescript
-interface Settings {
-  features: FeatureFlags;
-}
-
-interface FeatureFlags {
-  tts: boolean;
-  toolDisplay: boolean;
-  chatHistory: boolean;
-  windowContext: boolean;
-  dangerousCommandConfirmation: boolean;
+## Daemon Socket Protocol
+
+**Transport**: HTTP over Unix Domain Socket  
+**Path**: `~/.config/desklumina/daemon.sock`
+
+### GET Request
+`GET /?cmd=<url_encoded_command> HTTP/1.1`
+
+### JSON Response
+```json
+{
+  "success": true,
+  "response": "The assistant's text response"
 }
 ```
 
 ---
 
-## Error Types
+## Next Steps
 
-**Location:** `src/types/index.ts`
-
-```typescript
-class ModelNotFoundError extends Error {
-  constructor(model: string);
-}
-
-class AllModelsFailedError extends Error {
-  constructor(models: string[], lastError: Error);
-}
-```
+- 🛠️ **[Development Guide](10-development.md)** — Learn how to use these APIs.
+- 🧪 **[Testing Guide](12-testing.md)** — Verify API behavior with unit tests.
 
 ---
 
-## Related Documentation
-
-- **[Tools Reference](07-tools-reference.md)** — Tool usage documentation
-- **[Development Guide](10-development.md)** — Development workflow
-- **[Architecture](05-architecture.md)** — System design
-
----
-
-← Previous: [Tools Reference](07-tools-reference.md) | Next: [Security](09-security.md) →
+[← Tools Reference](07-tools-reference.md) | [Security →](09-security.md)

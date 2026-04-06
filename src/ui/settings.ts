@@ -3,7 +3,7 @@ import { settingsManager } from "../core/settings-manager";
 import type { Settings } from "../types";
 import { t, getLang } from "../utils/i18n";
 
-const THEME_PATH = `${process.env.HOME}/.config/bspwm/agent/src/ui/themes/lumina.rasi`;
+const THEME_PATH = `${process.env.HOME}/.config/desklumina/src/ui/themes/lumina.rasi`;
 
 import { rofiMenu } from "./rofi";
 

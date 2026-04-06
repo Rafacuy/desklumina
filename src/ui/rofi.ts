@@ -4,7 +4,7 @@ import { t } from "../utils/i18n";
 import { CancellationError } from "../types";
 import { logger } from "../logger";
 
-const THEME_PATH = `${process.env.HOME}/.config/bspwm/agent/src/ui/themes/lumina.rasi`;
+const THEME_PATH = `${process.env.HOME}/.config/desklumina/src/ui/themes/lumina.rasi`;
 
 export async function rofiChatInput(
   chatManager: ChatManager,

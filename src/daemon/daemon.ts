@@ -16,12 +16,12 @@ export class DeskLuminaDaemon {
   constructor() {
     this.chatManager = new ChatManager();
     this.lumina = new Lumina(this.chatManager);
-    this.socketPath = join(homedir(), ".config/bspwm/agent/daemon.sock");
+    this.socketPath = join(homedir(), ".config/desklumina/daemon.sock");
     this.ensureSocketDir();
   }
 
   private ensureSocketDir(): void {
-    const socketDir = join(homedir(), ".config/bspwm/agent");
+    const socketDir = join(homedir(), ".config/desklumina");
     if (!existsSync(socketDir)) {
       mkdirSync(socketDir, { recursive: true });
     }

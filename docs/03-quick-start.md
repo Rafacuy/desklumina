@@ -1,273 +1,102 @@
 # 03 - Quick Start
 
-Get up and running with DeskLumina in minutes. This guide covers the essential commands and workflows.
+Get started with DeskLumina and run your first commands. This guide covers basic interactions and interaction modes.
 
 ---
 
-## First Run
+## Table of Contents
 
-After completing the [Installation](02-installation.md), test DeskLumina with terminal chat mode:
-
-```bash
-bun run dev
-```
-
-You'll see:
-
-```
-💫 Lumina Terminal Chat Mode
-Type 'exit' to quit, 'new' for new chat, 'list' to see chats
-
-You:
-```
-
-Try your first command:
-
-```
-You: what time is it
-```
+- [First Flight](#first-flight)
+- [Interaction Modes](#interaction-modes)
+  - [Interactive Mode (Rofi)](#interactive-mode-rofi)
+  - [Terminal Mode](#terminal-mode)
+  - [One-Off Commands](#one-off-commands)
+- [Common Commands](#common-commands)
+- [Getting Help](#getting-help)
 
 ---
 
-## Basic Commands
+## First Flight
 
-Here are some common commands to get started:
+1. Ensure your `.env` file contains `GROQ_API_KEY` and `MODEL_NAME` (see `.env.example`).
+2. Open your terminal and run:
+   ```bash
+   bun run start
+   ```
+3. A Rofi input box will appear. Type:
+   ```text
+   open telegram
+   ```
+4. Press `Enter`. DeskLumina will launch Telegram.
 
-### Application Launching
+---
 
-```
-open telegram
-open browser
-open files
-launch neovim
-```
+## Interaction Modes
 
-### Window Management
+### Interactive Mode (Rofi)
 
-```
-switch to workspace 3
-move window to workspace 2
-toggle fullscreen
-close this window
-```
+This is the recommended way to use DeskLumina for daily tasks. It provides a visual chat history, settings access, and a keyboard-friendly interface.
+
+- **Launch**: `bun run start`
+- **Controls**:
+  - `Enter`: submit message.
+  - `Tab`: toggle expanded menu (shows recent messages, chat selection, settings).
+  - `Esc`: exit.
+
+### Terminal Mode
+
+Perfect for developers and power users who are already in the terminal.
+
+- **Launch**: `bun run dev`
+- This mode starts a chat loop directly in your terminal with live streaming responses.
+
+### One-Off Commands
+
+Execute a single message without entering a chat loop.
+
+- **Command**: `bun run start -- --exec "your message here"`
+- **Example**: `bun run start -- --exec "open telegram"`
+
+---
+
+## Common Commands
+
+Try these commands to explore DeskLumina's capabilities:
+
+### Application Management
+- `open browser`
+- `launch kitty`
 
 ### File Operations
+- `list files in ~/Downloads`
+- `create a directory called 'Work' on the Desktop`
+- `move 'notes.txt' to '~/Documents/'`
 
-```
-list files in Downloads
-create folder called Test in ~/Documents
-read the file ~/.bashrc
-```
+### System Controls
+- `media volume 50`
+- `media next`
 
-### Media Control
-
-```
-play music
-pause
-next song
-set volume to 50
-```
-
-### System Queries
-
-```
-what time is it
-show current window info
-list all workspaces
-```
+### Information & Utility
+- `terminal date`
+- `terminal uname -a`
 
 ---
 
-## Interactive Mode (Rofi)
+## Getting Help
 
-For a graphical interface, use Rofi mode:
-
-```bash
-bun start
-```
-
-This opens a Rofi dialog where you can:
-1. Type your command
-2. See the AI response
-3. Continue the conversation
-
-### Rofi Interface Flow
-
-```
-┌─────────────────────────────────────┐
-│  Enter your command:                │
-│  _________________________________  │
-│                                     │
-└─────────────────────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────┐
-│  AI Response:                       │
-│  ✓ Telegram launched successfully   │
-│                                     │
-│  [Continue] [New Chat] [Settings]   │
-└─────────────────────────────────────┘
-```
-
----
-
-## Direct Execution
-
-For quick, one-off commands without conversation:
-
-```bash
-bun run src/main.ts --exec "open telegram"
-```
-
-This is useful for:
-- Shell scripts
-- Keyboard shortcuts (sxhkd)
-- Automation pipelines
-
----
-
-## Terminal Chat Commands
-
-While in terminal chat mode (`bun run dev`), these special commands are available:
-
-| Command | Description |
-|---------|-------------|
-| `exit` | Close the application |
-| `new` | Start a new chat session |
-| `list` | Display all saved chats |
-| `load <n>` | Load a specific chat by number |
-
-### Example Session
-
-```
-You: list
-
-1. Desktop Setup (5 msgs)
-2. File Organization (3 msgs)
-3. Music Control (8 msgs)
-
-Use 'load <number>' to switch chats.
-
-You: load 1
-Loaded: Desktop Setup
-
-You [Desktop Setup]: continue from where we left off
-```
-
----
-
-## Understanding Responses
-
-When you issue a command, DeskLumina:
-
-1. **Interprets** your natural language
-2. **Plans** the necessary actions
-3. **Executes** tools in sequence
-4. **Reports** the results
-
-### Example Response
-
-```
-You: open telegram and move it to workspace 3
-
-DeskLumina: I'll launch Telegram and move it to workspace 3 for you.
-
-[Executing: app("telegram")]
-[Executing: bspwm("wait_and_move Telegram 3")]
-
-✓ Telegram launched and moved to workspace 3
-```
-
----
-
-## Tips for Best Results
-
-### Be Natural
-
-Write commands as you would speak them:
-
-```
-✓ "open telegram"
-✓ "can you open telegram please"
-✓ "I need telegram"
-```
-
-### Be Specific for Complex Operations
-
-```
-✓ "move the active window to workspace 2"
-✓ "create a folder called Projects in my home directory"
-✓ "delete the file test.txt in Downloads folder"
-```
-
-### Chain Related Actions
-
-```
-✓ "open browser and switch to workspace 1"
-✓ "play music and set volume to 30"
-✓ "create folder MyApp and open it in terminal"
-```
-
----
-
-## What's Happening
-
-Behind the scenes, DeskLumina:
-
-1. Sends your input to the Groq API
-2. The AI generates tool calls in JSON format
-3. Tools are parsed and executed
-4. Results are returned to you
-
-### Tool Call Example
-
-Your input:
-```
-open telegram
-```
-
-AI generates:
-```json
-{"tool": "app", "args": "telegram"}
-```
-
-Tool executes:
-```typescript
-await app("telegram")  // → "✓ Telegram launched"
-```
-
----
-
-## Security Prompts
-
-Some commands may trigger security confirmations:
-
-```
-⚠️ Confirm Operation
-
-Command: rm -rf ~/test
-Risk Level: HIGH
-
-This action cannot be undone.
-
-[Cancel]  [Confirm]
-```
-
-This protects against:
-- Accidental file deletion
-- System modification
-- Potentially dangerous commands
+DeskLumina is designed to understand natural language. If it doesn't understand a command:
+- Try rephrasing (e.g., instead of "kill browser", try "close chrome").
+- Use the **[Tools Reference](07-tools-reference.md)** to see precisely what's supported.
+- Check the **[Troubleshooting Guide](13-troubleshooting.md)** for common issues.
 
 ---
 
 ## Next Steps
 
-Now that you're familiar with the basics:
-
-- **[Configuration](04-configuration.md)** — Customize settings and features
-- **[Usage Guide](06-usage-guide.md)** — Explore all modes in detail
-- **[Tools Reference](07-tools-reference.md)** — Learn all available tools
+- ⚙️ **[Configuration Guide](04-configuration.md)** — Fine-tune your setup.
+- 🔧 **[Tools Reference](07-tools-reference.md)** — Detailed list of all capabilities.
+- 🧠 **[Architecture](05-architecture.md)** — Learn about the internal design.
 
 ---
 
-← Previous: [Installation](02-installation.md) | Next: [Configuration](04-configuration.md) →
+[← Installation](02-installation.md) | [Configuration →](04-configuration.md)

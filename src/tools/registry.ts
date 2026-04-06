@@ -1,6 +1,5 @@
 import { execute } from "./terminal";
 import { launch } from "./apps";
-import { bspwm } from "./bspwm";
 import { fileOp } from "./files";
 import { media } from "./media";
 import { clipboard } from "./clipboard";
@@ -18,7 +17,6 @@ const tools: ToolRegistry = {
     await launch(alias);
     return `${alias} launched`;
   },
-  bspwm: (action) => bspwm(action),
   file: (op) => fileOp(op),
   media: (action) => media(action),
   clipboard: (action) => clipboard(action),
