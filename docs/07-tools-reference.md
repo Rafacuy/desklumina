@@ -26,7 +26,7 @@ DeskLumina uses a modular tool-based architecture. The AI agent generates struct
 {"tool": "tool_name", "args": "arguments"}
 ```
 
-Tool calls are parsed from markdown ```json code fences in the model output. The only registered tools are: `app`, `terminal`, `file`, `media`, `clipboard`, `notify` (see `src/tools/registry.ts`).
+Tool calls are parsed from markdown code fences in the model output. The only registered tools are: `app`, `terminal`, `file`, `media`, `clipboard`, `notify` (see `src/tools/registry.ts`).
 
 ---
 
