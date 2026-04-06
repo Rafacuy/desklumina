@@ -34,7 +34,7 @@ DeskLumina stores user preferences in `~/.config/desklumina/settings.json`. You 
 
 ```json
 {
-  "language": "id",
+  "language": "en",
   "features": {
     "tts": false,
     "toolDisplay": true,
@@ -43,8 +43,8 @@ DeskLumina stores user preferences in `~/.config/desklumina/settings.json`. You 
     "dangerousCommandConfirmation": true
   },
   "tts": {
-    "voiceId": "id-ID-GadisNeural",
-    "speed": 1.0
+    "voiceId": "en-US-AvaNeural",
+    "speed": 1
   }
 }
 ```
