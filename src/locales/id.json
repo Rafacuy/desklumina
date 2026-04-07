@@ -21,6 +21,7 @@
   "Invalid chat number.\\n": "Nomor chat tidak valid.\\n",
   "Usage: lumina --exec <message>": "Penggunaan: lumina --exec <pesan>",
   "Lumina v1.0.0": "Lumina v1.0.0",
+  "Lumina v{version}": "Lumina v{version}",
   "Language": "Bahasa",
   "Text-to-Speech": "Text-to-Speech",
   "Tool Display": "Tampilan Alat",

@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { t } from "./utils";
+import { t, tf, getAppVersion } from "./utils";
 import { Lumina, ChatManager } from "./core";
 import { rofiChatLoop } from "./ui";
 import { startLoader, stopLoader } from "./ui/loader";
@@ -143,7 +143,8 @@ async function main() {
     const response = await lumina.chat(message);
     console.log(response);
   } else if (mode === "--version") {
-    console.log(t("Lumina v1.1.0"));
+    const version = await getAppVersion();
+    console.log(tf("Lumina v{version}", { version }));
     console.log(`Model: ${env.MODEL_NAME}`);
   } else {
     // Default: Rofi chat mode

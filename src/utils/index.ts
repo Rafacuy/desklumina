@@ -7,3 +7,4 @@ export * from "./format";
 export * from "./log-viewer";
 export * from "./i18n";
 export * from "./lang-map";
+export * from "./version";

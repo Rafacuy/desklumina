@@ -72,6 +72,50 @@ Update the **TOOLS** section so the model knows the tool name and expected `args
 
 ---
 
+## Version Management (Developer)
+
+DeskLumina uses **`package.json`** as the **single source of truth** for the app version.
+
+### Show the current version
+
+```bash
+bun run start -- --version
+```
+
+### Sync the README badge to `package.json`
+
+The README version badge is generated from `package.json` and can be synced automatically:
+
+```bash
+bun run version:sync
+```
+
+### Set/bump the version (recommended)
+
+This updates `package.json` and the README version badge in one go:
+
+```bash
+bun run version:set 1.2.3
+```
+
+Accepted formats include prerelease/build metadata (semver), for example:
+
+```bash
+bun run version:set 1.2.3-beta.1
+bun run version:set 1.2.3+build.5
+```
+
+### Implementation notes
+
+- **Runtime version**: `src/utils/version.ts` (`getAppVersion()` reads + caches `package.json` and falls back to `dev`).
+- **CLI output**: `src/main.ts` (`--version` prints `Lumina v{version}`).
+- **i18n template**: `src/utils/i18n.ts` provides `tf()` for `{var}` interpolation; locales define `Lumina v{version}`.
+- **Scripts**:
+  - `scripts/sync-version.ts` (used by `bun run version:sync`)
+  - `scripts/bump-version.ts` (used by `bun run version:set`)
+
+---
+
 ## Testing Changes
 
 We use `bun test` for unit and integration testing.

@@ -1,6 +1,6 @@
 {
   "name": "desklumina",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "devDependencies": {
     "@types/bun": "latest",
     "typescript": "latest"
@@ -14,6 +14,8 @@
     "daemon:start": "bun run src/main.ts --daemon &",
     "daemon:status": "bun run src/main.ts --daemon-status",
     "send": "bun run src/main.ts --send",
+    "version:sync": "bun run scripts/sync-version.ts",
+    "version:set": "bun run scripts/bump-version.ts",
     "i18n:refactor": "bun run scripts/i18n-refactor.ts",
     "test": "bun test",
     "test:watch": "bun test --watch",

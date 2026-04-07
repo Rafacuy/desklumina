@@ -201,7 +201,8 @@ export async function textToSpeech(text: string): Promise<void> {
         ready: false,
       }));
 
-      logger.info("tts", `Adaptive chunking: ${jobs.length} chunks (first: ${chunks[0].length} chars)`);
+      const firstChunkLen = chunks[0]?.length ?? 0;
+      logger.info("tts", `Adaptive chunking: ${jobs.length} chunks (first: ${firstChunkLen} chars)`);
 
       const generateQueue = [...jobs];
       let generating = 0;
@@ -231,6 +232,7 @@ export async function textToSpeech(text: string): Promise<void> {
       const processPlayback = async () => {
         while (nextPlay < jobs.length) {
           const job = jobs[nextPlay];
+          if (!job) break;
           
           while (!job.ready) {
             await Bun.sleep(50);

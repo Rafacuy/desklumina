@@ -20,6 +20,19 @@ export const t = (text: string): string => {
   return dictionary[text] ?? text;
 };
 
+export const tf = (
+  key: string,
+  vars: Record<string, string | number>,
+): string => {
+  const template = t(key);
+  return template.replace(/\{([^}]+)\}/g, (match, varName: string) => {
+    if (Object.prototype.hasOwnProperty.call(vars, varName)) {
+      return String(vars[varName]);
+    }
+    return match;
+  });
+};
+
 /**
  * Set current language
  */

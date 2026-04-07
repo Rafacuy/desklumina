@@ -21,6 +21,7 @@
   "Invalid chat number.\\n": "Invalid chat number.\\n",
   "Usage: lumina --exec <message>": "Usage: lumina --exec <message>",
   "Lumina v1.0.0": "Lumina v1.0.0",
+  "Lumina v{version}": "Lumina v{version}",
   "Language": "Language",
   "Text-to-Speech": "Text-to-Speech",
   "Tool Display": "Tool Display",
