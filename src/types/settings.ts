@@ -2,7 +2,6 @@ export interface FeatureFlags {
   tts: boolean;
   toolDisplay: boolean;
   chatHistory: boolean;
-  windowContext: boolean;
   dangerousCommandConfirmation: boolean;
 }
 
@@ -21,7 +20,6 @@ export const DEFAULT_SETTINGS: Settings = {
     tts: false,
     toolDisplay: true,
     chatHistory: true,
-    windowContext: true,
     dangerousCommandConfirmation: true,
   },
   tts: {

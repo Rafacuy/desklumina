@@ -4,7 +4,6 @@
     "tts": false,
     "toolDisplay": true,
     "chatHistory": true,
-    "windowContext": true,
     "dangerousCommandConfirmation": true
   },
   "tts": {

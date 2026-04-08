@@ -39,7 +39,6 @@ DeskLumina stores user preferences in `~/.config/desklumina/settings.json`. You 
     "tts": false,
     "toolDisplay": true,
     "chatHistory": true,
-    "windowContext": true,
     "dangerousCommandConfirmation": true
   },
   "tts": {
@@ -52,7 +51,6 @@ DeskLumina stores user preferences in `~/.config/desklumina/settings.json`. You 
 - **`language`**: Primary language for the UI and AI. Supported: `"en"`, `"id"`.
 - **`features.tts`**: Enable/disable text-to-speech output.
 - **`features.toolDisplay`**: Show/hide tool execution details in the UI.
-- **`features.windowContext`**: Placeholder feature flag. Currently toggleable in settings but has no functional effect.
 - **`features.dangerousCommandConfirmation`**: Require confirmation for critical commands.
 - **`tts.voiceId`**: The Edge TTS voice ID to use.
 - **`tts.speed`**: Voice playback speed (0.5 to 2.0).

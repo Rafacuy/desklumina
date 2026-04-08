@@ -27,7 +27,6 @@ export async function rofiSettings(): Promise<boolean> {
   menuItems.push(getToggleLabel("tts", "🔊", t("Text-to-Speech")));
   menuItems.push(getToggleLabel("toolDisplay", "🔧", t("Tool Display")));
   menuItems.push(getToggleLabel("chatHistory", "💬", t("Chat History")));
-  menuItems.push(getToggleLabel("windowContext", "🪟", t("Window Context")));
   menuItems.push(getToggleLabel("dangerousCommandConfirmation", "⚠️", t("Confirmation")));
 
   // Localization
@@ -48,7 +47,7 @@ export async function rofiSettings(): Promise<boolean> {
   const resultObj = await rofiMenu(
     menuItems.join("\n"), 
     t("Settings"), 
-    "listview { lines: 14; }",
+    "listview { lines: 13; }",
     t("Search settings..."),
     `󰌑 ${t("Select")}/${t("Toggle")} │ 󱊷 ${t("Back")}/${t("Exit")} │ 󰍉 ${t("Search")}`
   );
@@ -97,11 +96,6 @@ export async function rofiSettings(): Promise<boolean> {
 
   if (result.includes(t("Chat History"))) {
     settingsManager.toggleFeature("chatHistory");
-    return rofiSettings();
-  }
-
-  if (result.includes(t("Window Context"))) {
-    settingsManager.toggleFeature("windowContext");
     return rofiSettings();
   }
 
