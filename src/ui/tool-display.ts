@@ -70,17 +70,23 @@ export class ToolDisplay {
   static formatResultsInline(results: ToolResult[]): string {
     if (results.length === 0) return "";
 
-    const uniqueTools = [...new Set(results.map((r) => r.tool))];
-    
     let output = `${this.SEPARATOR}\n`;
-    
-    uniqueTools.forEach((tool) => {
-      const label = getToolLabel(tool);
-      output += `  • ${label} ✓\n`;
+
+    results.forEach((result) => {
+      const label = getToolLabel(result.tool);
+      const mark = result.success === false ? "✕" : "✓";
+      const attemptSuffix = result.attempt && result.attempt > 1 ? ` (attempt ${result.attempt})` : "";
+      output += `  • ${label} ${mark}${attemptSuffix}\n`;
     });
 
     output += this.SEPARATOR;
     return output.trim();
+  }
+
+  static formatRetryUpdate(attempt: number, tools: string[], reason: string): string {
+    const uniqueTools = [...new Set(tools)];
+    const labels = uniqueTools.map((tool) => getToolLabel(tool)).join(", ");
+    return `${this.SEPARATOR}\n  • Retrying (${attempt}) ${labels}\n  • ${reason}\n${this.SEPARATOR}`.trim();
   }
 
   /**

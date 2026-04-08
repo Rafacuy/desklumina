@@ -57,7 +57,6 @@ export class DeskLuminaDaemon {
             
             // Create new chat for each command
             this.chatManager.createChat(command);
-            this.chatManager.addMessage(command, "user");
             
             let response = "";
             await this.lumina.chat(command, (chunk) => {

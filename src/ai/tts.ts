@@ -160,21 +160,38 @@ async function generateAudio(text: string, voice: string, rate: string, outputFi
   await Bun.write(outputFile, Buffer.concat(chunks));
 }
 
+async function hasCommand(command: string): Promise<boolean> {
+  const proc = spawn(["bash", "-lc", `command -v ${command}`], {
+    stdout: "ignore",
+    stderr: "ignore",
+  });
+  return (await proc.exited) === 0;
+}
+
 async function playAudio(file: string): Promise<boolean> {
-  const mpv = spawn(["mpv", "--no-terminal", "--really-quiet", file], {
-    stdout: "ignore",
-    stderr: "ignore",
-  });
+  if (await hasCommand("mpv")) {
+    const mpv = spawn(["mpv", "--no-terminal", "--really-quiet", file], {
+      stdout: "ignore",
+      stderr: "ignore",
+    });
 
-  const exitCode = await mpv.exited;
-  if (exitCode === 0) return true;
+    if ((await mpv.exited) === 0) {
+      return true;
+    }
+  }
 
-  const paplay = spawn(["paplay", file], {
-    stdout: "ignore",
-    stderr: "ignore",
-  });
+  logger.warn("tts", "mpv not available or playback failed, falling back to SoX 'play'");
 
-  return (await paplay.exited) === 0;
+  if (await hasCommand("play")) {
+    const soxPlay = spawn(["play", "-q", file], {
+      stdout: "ignore",
+      stderr: "ignore",
+    });
+    return (await soxPlay.exited) === 0;
+  }
+
+  logger.warn("tts", "No supported TTS playback backend found (mpv/play)");
+  return false;
 }
 
 export async function textToSpeech(text: string): Promise<void> {

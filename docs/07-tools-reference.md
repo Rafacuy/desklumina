@@ -28,11 +28,17 @@ DeskLumina uses a modular tool-based architecture. The AI agent generates struct
 
 Tool calls are parsed from markdown code fences in the model output. The only registered tools are: `app`, `terminal`, `file`, `media`, `clipboard`, `notify` (see `src/tools/registry.ts`).
 
+## BREAKING CHANGES
+
+- `app` rejects unknown aliases instead of executing them through `bash -c`.
+- `file` rejects unknown actions instead of falling through to shell execution.
+- `media` arguments are normalized and validated before execution. Canonical volume syntax is `volume <0-100 | +N | -N>`.
+
 ---
 
 ## Application Tool (`app`)
 
-Launch an application by alias. Aliases are defined in `src/config/apps.json`. If an alias is not found, the tool treats the input as a shell command and executes it via `bash -c` (with dangerous-command confirmation when matched by the analyzer).
+Launch an application by alias. Aliases are defined in `src/config/apps.json`. If an alias is not found, the tool returns an explicit error and the assistant must use the `terminal` tool for shell commands.
 
 **Path**: `src/tools/apps.ts`  
 **Aliases Configuration**: `src/config/apps.json`
@@ -79,7 +85,7 @@ Perform file and directory operations safely.
 
 - Paths starting with `~` are expanded to `$HOME`.
 - Some operations trigger a Rofi confirmation when they involve critical system paths (see `src/tools/files.ts`).
-- If the first token is not a supported operation, `file` falls back to executing the full string as a shell command (via `terminal.execute()`).
+- If the first token is not a supported operation, `file` now returns a validation error instead of executing shell commands.
 
 ---
 
@@ -96,6 +102,11 @@ Control MPD via `mpc` (the tool shells out to `mpc ...`).
 - `current` (Shows currently playing track info)
 - `search <query>` (Search within your music library)
 - `queue` (Print playlist via `mpc playlist`)
+
+### Argument Rules
+- Natural-language requests like "volume up", "volume down", and "set volume to 30" are normalized internally.
+- The model should emit canonical tool args only: `volume <0-100 | +N | -N>`.
+- Invalid media actions fail fast with a validation error instead of being passed through to the shell.
 
 ---
 

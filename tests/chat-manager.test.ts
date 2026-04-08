@@ -37,7 +37,8 @@ describe("ChatManager", () => {
   test("getMessagesForAPI returns formatted messages", () => {
     chatManager.createChat("Test");
     chatManager.addMessage("Hello", "user");
-    const messages = chatManager.getMessagesForAPI();
-    expect(Array.isArray(messages)).toBe(true);
+    const context = chatManager.getMessagesForAPI();
+    expect(Array.isArray(context.messages)).toBe(true);
+    expect(context.messages[0]?.content).toBe("Hello");
   });
 });

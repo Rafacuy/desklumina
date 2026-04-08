@@ -1,11 +1,10 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
-import type { Chat, ChatMessage, ToolCall, ToolResult } from "../types";
+import type { AIMessage, AIRequestContext, Chat, ChatMessage, ToolCall, ToolResult } from "../types";
 import { settingsManager } from "./settings-manager";
 import { t } from "../utils/i18n";
 
-// Tool label mapping for history display
 const TOOL_LABELS: Record<string, string> = {
   app: "Opening application",
   terminal: "Running terminal command",
@@ -15,20 +14,15 @@ const TOOL_LABELS: Record<string, string> = {
   notify: "Sending notification",
 };
 
-function getToolLabel(tool: string): string {
-  const label = TOOL_LABELS[tool] || "Executing actions";
-  return t(label);
-}
-
-export type { Chat, ChatMessage, ToolCall, ToolResult };
+const CHAT_DIR = join(homedir(), ".config/desklumina/chats");
+const MAX_CONTEXT_MESSAGES = 12;
+const MAX_SUMMARY_CHARS = 240;
 
 type InternalMessage = ChatMessage & {
   timestamp: number;
   toolCalls?: ToolCall[];
   toolResults?: ToolResult[];
 };
-
-const CHAT_DIR = join(homedir(), ".config/desklumina/chats");
 
 function ensureChatDir() {
   if (!existsSync(CHAT_DIR)) {
@@ -37,7 +31,7 @@ function ensureChatDir() {
 }
 
 function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 11);
 }
 
 function generateTitle(firstMessage: string): string {
@@ -46,6 +40,61 @@ function generateTitle(firstMessage: string): string {
   if (firstMessage.split(" ").length > 4) title += "...";
   return title || "New Chat";
 }
+
+function getToolLabel(tool: string): string {
+  const label = TOOL_LABELS[tool] || "Executing actions";
+  return t(label);
+}
+
+function cleanContent(content: string): string {
+  return content
+    .replace(/```json\s*\n[\s\S]*?\n```/g, "")
+    .replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "")
+    .replace(/^━+$/gm, "")
+    .trim();
+}
+
+function formatToolContext(result: ToolResult): string {
+  const status = result.success === false ? "FAILED" : "OK";
+  const segments = [
+    `[TOOL RESULT] ${result.tool} ${status}`,
+    result.normalizedArg ? `args=${result.normalizedArg}` : "",
+    result.command ? `command=${result.command}` : "",
+    result.exitCode !== undefined ? `exit_code=${result.exitCode}` : "",
+    result.stdout ? `stdout=${result.stdout.trim()}` : "",
+    result.stderr ? `stderr=${result.stderr.trim()}` : "",
+    `message=${result.result.trim()}`,
+  ].filter(Boolean);
+
+  return segments.join("\n");
+}
+
+function summarizeMessage(message: InternalMessage): string {
+  if (message.role === "tool") {
+    const toolResults = message.toolResults || [];
+    return toolResults
+      .map((result) => {
+        const status = result.success === false ? "failed" : "succeeded";
+        return `${getToolLabel(result.tool)} ${status}: ${result.result}`;
+      })
+      .join(" | ")
+      .slice(0, MAX_SUMMARY_CHARS);
+  }
+
+  const prefix = message.role === "user" ? "User" : "Assistant";
+  return `${prefix}: ${cleanContent(message.content)}`.slice(0, MAX_SUMMARY_CHARS);
+}
+
+function normalizeChat(chat: Chat): Chat {
+  const messages = chat.messages.map((message) => ({
+    ...message,
+    timestamp: message.timestamp || chat.updatedAt,
+  }));
+
+  return { ...chat, messages };
+}
+
+export type { Chat, ChatMessage, ToolCall, ToolResult };
 
 export class ChatManager {
   private currentChat: Chat | null = null;
@@ -73,7 +122,7 @@ export class ChatManager {
 
     try {
       const data = readFileSync(path, "utf-8");
-      this.currentChat = JSON.parse(data) as Chat;
+      this.currentChat = normalizeChat(JSON.parse(data) as Chat);
       return this.currentChat;
     } catch {
       return null;
@@ -99,11 +148,8 @@ export class ChatManager {
       role,
       content,
       timestamp: Date.now(),
+      ...(toolCalls ? { toolCalls } : {}),
     };
-
-    if (toolCalls) {
-      message.toolCalls = toolCalls;
-    }
 
     this.currentChat.messages.push(message);
 
@@ -116,25 +162,29 @@ export class ChatManager {
   }
 
   addToolResults(results: ToolResult[]): void {
-    if (!this.currentChat || this.currentChat.messages.length === 0) return;
+    if (!this.currentChat || results.length === 0) return;
 
-    const lastMessage = this.currentChat.messages[this.currentChat.messages.length - 1];
-    if (lastMessage && lastMessage.role === "assistant") {
-      lastMessage.toolResults = results;
-      this.currentChat.updatedAt = Date.now();
-      this.saveChat(this.currentChat);
-    }
+    const toolMessage: InternalMessage = {
+      role: "tool",
+      content: results.map(formatToolContext).join("\n\n"),
+      timestamp: Date.now(),
+      toolResults: results,
+    };
+
+    this.currentChat.messages.push(toolMessage);
+    this.currentChat.updatedAt = Date.now();
+    this.saveChat(this.currentChat);
   }
 
   getAllChats(): Chat[] {
     ensureChatDir();
-    const files = readdirSync(CHAT_DIR).filter(f => f.endsWith(".json"));
+    const files = readdirSync(CHAT_DIR).filter((f) => f.endsWith(".json"));
     const chats: Chat[] = [];
 
     for (const file of files) {
       try {
         const data = readFileSync(join(CHAT_DIR, file), "utf-8");
-        chats.push(JSON.parse(data) as Chat);
+        chats.push(normalizeChat(JSON.parse(data) as Chat));
       } catch {}
     }
 
@@ -155,9 +205,6 @@ export class ChatManager {
     this.currentChat = null;
   }
 
-  /**
-   * Remove the last message from the current chat
-   */
   removeLastMessage(): void {
     if (!this.currentChat || this.currentChat.messages.length === 0) return;
     this.currentChat.messages.pop();
@@ -165,21 +212,42 @@ export class ChatManager {
     this.saveChat(this.currentChat);
   }
 
-  getMessagesForAPI(): { role: "user" | "assistant"; content: string }[] {
-    if (!this.currentChat) return [];
+  getMessagesForAPI(): AIRequestContext {
+    if (!this.currentChat) {
+      return { messages: [] };
+    }
 
-    const messages: { role: "user" | "assistant"; content: string }[] = [];
+    const relevant = this.currentChat.messages.filter((message) => message.role !== "system") as InternalMessage[];
+    if (relevant.length <= MAX_CONTEXT_MESSAGES) {
+      return {
+        messages: relevant.map((message) => this.toAPIMessage(message)),
+      };
+    }
 
-    for (const m of this.currentChat.messages) {
-      if (m.role === "system") continue; // Skip system messages
+    const recentMessages = relevant.slice(-MAX_CONTEXT_MESSAGES);
+    const olderMessages = relevant.slice(0, -MAX_CONTEXT_MESSAGES);
+    const summaryLines = olderMessages
+      .map(summarizeMessage)
+      .filter(Boolean)
+      .slice(-6);
 
+    const messages: AIMessage[] = [];
+    if (summaryLines.length > 0) {
       messages.push({
-        role: m.role as "user" | "assistant",
-        content: m.content,
+        role: "system",
+        content: `Conversation summary (${olderMessages.length} earlier messages):\n${summaryLines.join("\n")}`,
       });
     }
 
-    return messages;
+    recentMessages.forEach((message) => {
+      messages.push(this.toAPIMessage(message));
+    });
+
+    return {
+      messages,
+      truncatedMessageCount: olderMessages.length,
+      summarizedMessageCount: summaryLines.length,
+    };
   }
 
   getChatHistoryPreview(maxChars: number = 500): string {
@@ -193,45 +261,46 @@ export class ChatManager {
     const preview: string[] = [];
     let totalChars = 0;
 
-    const recentMessages = [...this.currentChat.messages].reverse();
+    const recentMessages = [...this.currentChat.messages].reverse() as InternalMessage[];
 
     for (const msg of recentMessages) {
+      if (msg.role === "tool") {
+        const toolLine = (msg.toolResults || [])
+          .map((result) => `    • ${getToolLabel(result.tool)} ${result.success === false ? "✕" : "✓"}`)
+          .join("\n");
+        if (toolLine && totalChars + toolLine.length <= maxChars) {
+          preview.unshift(toolLine);
+          totalChars += toolLine.length;
+        }
+        continue;
+      }
+
       const prefix = msg.role === "user" ? `󱜙 ${t("You")}:` : `󱜙 ${t("Lumina")}:`;
-      
-      // Clean content: remove JSON blocks, tool tags, and separators
-      let cleanContent = msg.content
-        .replace(/```json\s*\n[\s\S]*?\n```/g, "")
-        .replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "")
-        .replace(/^━+$/gm, "")
-        .replace(/^\n+/, "")
-        .replace(/\n+$/, "")
-        .trim();
-      
-      // Skip if content is empty after cleaning
-      if (!cleanContent) continue;
-      
-      const truncated = cleanContent.length > 100
-        ? cleanContent.substring(0, 100) + "..."
-        : cleanContent;
+      const content = cleanContent(msg.content);
+      if (!content) continue;
+
+      const truncated = content.length > 100 ? `${content.slice(0, 100)}...` : content;
       const line = `${prefix} ${truncated}`;
 
       if (totalChars + line.length > maxChars) break;
       preview.unshift(line);
       totalChars += line.length;
-
-      // Add tool results if available (compact format with checkmarks)
-      if (msg.toolResults && msg.toolResults.length > 0 && settings.features.toolDisplay) {
-        const uniqueTools = [...new Set(msg.toolResults.map((r) => r.tool))];
-        uniqueTools.forEach((tool) => {
-          const toolLine = `    • ${getToolLabel(tool)} ✓`;
-          if (totalChars + toolLine.length <= maxChars) {
-            preview.unshift(toolLine);
-            totalChars += toolLine.length;
-          }
-        });
-      }
     }
 
     return preview.join("\n");
+  }
+
+  private toAPIMessage(message: InternalMessage): AIMessage {
+    if (message.role === "tool") {
+      return {
+        role: "system",
+        content: message.content,
+      };
+    }
+
+    return {
+      role: message.role,
+      content: message.content,
+    };
   }
 }

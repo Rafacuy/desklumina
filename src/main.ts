@@ -115,8 +115,6 @@ async function main() {
           return;
         }
 
-        chatManager.addMessage(trimmed, "user");
-
         startLoader();
         let response = "";
         await lumina.chat(trimmed, (chunk) => {
@@ -139,7 +137,6 @@ async function main() {
     }
 
     chatManager.createChat(message);
-    chatManager.addMessage(message, "user");
     const response = await lumina.chat(message);
     console.log(response);
   } else if (mode === "--version") {

@@ -48,6 +48,14 @@ Quick fixes for common issues encountered while using or installing DeskLumina.
 - **Symptom**: AI says it's executing a tool, but nothing happens.
 - **Fix**: Check `src/tools/registry.ts` to ensure the tool is correctly registered.
 
+### App alias rejected
+- **Symptom**: Lumina says an application alias is unknown instead of executing it.
+- **Fix**: Add the alias to `src/config/apps.json`, or use the `terminal` tool for arbitrary shell commands.
+
+### File action rejected
+- **Symptom**: A `file` request fails with "Unknown file action".
+- **Fix**: Use one of the supported `file` operations (`create_dir`, `delete`, `move`, `copy`, `list`, `read`, `write`, `find`). Shell commands now belong in `terminal`.
+
 ### Permission Denied (Terminal)
 - **Symptom**: Shell commands fail with "Permission Denied".
 - **Fix**: DeskLumina runs as your user. For commands requiring `sudo`, you must use a tool that specifically handles elevated privileges (not yet implemented for safety).
@@ -73,7 +81,7 @@ Quick fixes for common issues encountered while using or installing DeskLumina.
 - **Fix**: 
   - Check if `Text-to-Speech` is enabled in **Settings** (press `Tab` to expand, then select **Settings**).
   - Ensure your system volume is not muted.
-  - Test if you can play audio using a standard player (like `mpv`).
+  - Test if you can play audio using `mpv`. If `mpv` is unavailable, Lumina falls back to SoX `play`.
 
 ### Distorted / Laggy Audio
 - **Symptom**: Voice sounds robotic or cut-off.

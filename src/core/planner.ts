@@ -1,6 +1,29 @@
 import { logger } from "../logger";
 import type { ParsedToolCall } from "../types";
 
+const VALID_TOOLS = new Set(["app", "terminal", "file", "media", "clipboard", "notify"]);
+
+function toParsedToolCall(candidate: unknown): ParsedToolCall | null {
+  if (!candidate || typeof candidate !== "object") return null;
+
+  const tool = "tool" in candidate ? (candidate as { tool?: unknown }).tool : undefined;
+  const args = "args" in candidate ? (candidate as { args?: unknown }).args : undefined;
+
+  if (typeof tool !== "string" || typeof args !== "string") {
+    return null;
+  }
+
+  if (!VALID_TOOLS.has(tool)) {
+    logger.warn("planner", `Ignoring unknown tool call: ${tool}`);
+    return null;
+  }
+
+  return {
+    tool,
+    arg: args.trim(),
+  };
+}
+
 export function parseToolCalls(text: string): ParsedToolCall[] {
   const calls: ParsedToolCall[] = [];
 
@@ -15,22 +38,16 @@ export function parseToolCalls(text: string): ParsedToolCall[] {
     try {
       const parsed = JSON.parse(jsonContent);
 
-      // Handle single tool call object
-      if (parsed.tool && parsed.args !== undefined) {
-        calls.push({
-          tool: parsed.tool,
-          arg: typeof parsed.args === "string" ? parsed.args : JSON.stringify(parsed.args),
-        });
+      const singleCall = toParsedToolCall(parsed);
+      if (singleCall) {
+        calls.push(singleCall);
       }
 
-      // Handle array of tool calls
       if (Array.isArray(parsed)) {
         for (const item of parsed) {
-          if (item.tool && item.args !== undefined) {
-            calls.push({
-              tool: item.tool,
-              arg: typeof item.args === "string" ? item.args : JSON.stringify(item.args),
-            });
+          const arrayCall = toParsedToolCall(item);
+          if (arrayCall) {
+            calls.push(arrayCall);
           }
         }
       }

@@ -27,6 +27,18 @@ Processes user input, streams the AI response, executes tools, and returns the f
 - **`onChunk`**: Optional callback invoked while streaming text. Receives `chunk` (text content) and optionally `toolOutput` (formatted tool execution results). When `toolOutput` is provided, `chunk` will be empty.
 - **Returns**: The complete text response.
 
+`chat()` now always constructs the model payload from:
+
+```ts
+[
+  { role: "system", content: await buildSystemPrompt() },
+  ...boundedContextMessages,
+  { role: "user", content: userMessage },
+]
+```
+
+If tool execution fails, Lumina captures structured tool feedback and performs up to 2 correction retries.
+
 ---
 
 ## Tool Handler Signature
@@ -39,7 +51,7 @@ type ToolHandler = (arg: string) => Promise<string> | string;
 
 ### Return Values
 
-Tool handlers return a string result. DeskLumina does not enforce a prefix convention; handlers in this repository commonly return `✓ ...` on success and `❌ ...` on errors.
+Tool handlers return a structured result object with a user-facing `result` string plus execution metadata such as `success`, `normalizedArg`, `stderr`, and `exitCode`.
 
 ---
 
@@ -50,6 +62,8 @@ Tool handlers return a string result. DeskLumina does not enforce a prefix conve
 ### Storage location
 
 Chats are saved under `~/.config/desklumina/chats/` as JSON files (see `src/core/chat-manager.ts`).
+
+Tool execution is persisted as dedicated chat messages and replayed back to the model as compact tool-result context. Chat export also prunes older messages into summaries to keep token growth bounded.
 
 ---
 

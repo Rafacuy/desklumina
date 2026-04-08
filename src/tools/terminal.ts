@@ -8,6 +8,7 @@ export interface CommandResult {
   stdout: string;
   stderr: string;
   exitCode: number;
+  timedOut?: boolean;
 }
 
 /**
@@ -42,7 +43,9 @@ export async function execute(command: string): Promise<CommandResult> {
       stderr: "pipe",
     });
 
+    let timedOut = false;
     const timeout = setTimeout(() => {
+      timedOut = true;
       proc.kill();
       logger.error("terminal", `Timeout: ${command}`);
     }, COMMAND_TIMEOUT);
@@ -59,7 +62,7 @@ export async function execute(command: string): Promise<CommandResult> {
       logger.warn("terminal", `Exit ${exitCode}: ${stderr || "no error output"}`);
     }
 
-    return { stdout, stderr, exitCode };
+    return { stdout, stderr, exitCode, timedOut };
   } catch (error) {
     if (error instanceof CancellationError) {
       throw error;
@@ -70,6 +73,7 @@ export async function execute(command: string): Promise<CommandResult> {
       stdout: "",
       stderr: `Execution error: ${err.message}`,
       exitCode: 127,
+      timedOut: false,
     };
   }
 }

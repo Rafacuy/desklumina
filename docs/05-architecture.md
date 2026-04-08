@@ -81,14 +81,22 @@ A central mapping of tool names (like `app`, `file`, `terminal`) to their TypeSc
 ## Data Flow
 
 1.  **Input Capture**: User types a command in Rofi or Terminal.
-2.  **Context Building**: `Lumina` gathers the system prompt and (optionally) chat history.
+2.  **Context Building**: `Lumina` builds the request from `system prompt + bounded prior context + current user message`.
 3.  **AI Request**: The input and context are sent to the Groq API.
 4.  **Streaming**: AI starts streaming text and tool calls back to DeskLumina.
 5.  **Tool Execution**:
     - `Planner` parses tool call JSON.
     - `Security` checks for dangerous commands.
-    - `Registry` dispatches to the correct tool handler.
-6.  **Final Output**: Tool results may be displayed in the UI; the assistant text is displayed and can be spoken via TTS.
+    - `Registry` dispatches to the correct tool handler and records structured result data (`success`, `stderr`, `exitCode`, normalized args).
+6.  **Retry Loop**: Failed tool calls are fed back into the model as structured tool-result context. Lumina retries corrected tool calls up to 2 times.
+7.  **Persistence**: Assistant text and tool-result messages are saved into chat history. Older turns are compacted into summaries to bound context growth.
+8.  **Final Output**: Tool results may be displayed in the UI; the assistant text is displayed and can be spoken via TTS.
+
+## BREAKING CHANGES
+
+- `app` no longer treats unknown aliases as shell commands. Use the `terminal` tool for arbitrary commands.
+- `file` no longer falls back to arbitrary shell execution. Unsupported file actions now fail explicitly.
+- Tool outcomes are now persisted as first-class chat messages and replayed into future model context.
 
 ---
 

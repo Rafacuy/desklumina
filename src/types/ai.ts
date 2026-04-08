@@ -6,6 +6,12 @@ export interface AIMessage {
   content: string;
 }
 
+export interface AIRequestContext {
+  messages: AIMessage[];
+  truncatedMessageCount?: number;
+  summarizedMessageCount?: number;
+}
+
 /**
  * Model configuration
  */

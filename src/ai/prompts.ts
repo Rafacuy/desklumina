@@ -1,83 +1,135 @@
+import { logger } from "../logger";
 import { getLang, getLangName } from "../utils";
+
+async function runProbe(command: string): Promise<string | null> {
+  try {
+    const proc = Bun.spawn(["bash", "-lc", command], {
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+
+    const stdout = (await new Response(proc.stdout).text()).trim();
+    const stderr = (await new Response(proc.stderr).text()).trim();
+    const exitCode = await proc.exited;
+
+    if (exitCode !== 0) {
+      logger.debug("prompts", `Probe failed: ${command} -> ${stderr}`);
+      return null;
+    }
+
+    return stdout || null;
+  } catch (error) {
+    logger.debug("prompts", `Probe error: ${command} -> ${String(error)}`);
+    return null;
+  }
+}
+
+async function getSystemContext(): Promise<string> {
+  const [volume, track, activeWindow] = await Promise.all([
+    runProbe("pactl get-sink-volume @DEFAULT_SINK@ | head -n 1 | sed -E 's/.* ([0-9]+%) .*/\\1/'"),
+    runProbe("playerctl metadata --format '{{status}} :: {{artist}} - {{title}}' 2>/dev/null || mpc current"),
+    runProbe("xdotool getactivewindow getwindowname 2>/dev/null || wmctrl -lp | awk '$1 {print substr($0, index($0,$5))}' | head -n 1"),
+  ]);
+
+  return [
+    `Volume: ${volume || "Unavailable"}`,
+    `Current track: ${track || "Unavailable"}`,
+    `Active window: ${activeWindow || "Unavailable"}`,
+  ].join("\n");
+}
 
 const EXAMPLES = {
   id: `User: "buka telegram"
-Siap, Telegram-nya aku buka ya! 🚀
+Balas singkat lalu panggil tool.
 \`\`\`json
-{"tool": "app", "args": "telegram"}
+{"tool":"app","args":"telegram"}
 \`\`\`
 
-User: "buka browser"
-Oke, meluncur buka browser! ✨
+User: "set volume ke 30"
+Balas singkat lalu panggil tool.
 \`\`\`json
-{"tool": "app", "args": "browser"}
+{"tool":"media","args":"volume 30"}
 \`\`\`
 
-User: "putar musiknya"
-Musik langsung diputar, enjoy! 🎵
+User: "volume naik"
+Balas singkat lalu panggil tool.
 \`\`\`json
-{"tool": "media", "args": "play"}
-\`\`\`
-
-User: "bikin folder project di Desktop"
-Folder project sudah dibuat di Desktop! 📁
-\`\`\`json
-{"tool": "file", "args": "create_dir ~/Desktop/project"}
+{"tool":"media","args":"volume +10"}
 \`\`\``,
-
   en: `User: "open telegram"
-Sure, opening Telegram! 🚀
+Reply briefly, then call the tool.
 \`\`\`json
-{"tool": "app", "args": "telegram"}
+{"tool":"app","args":"telegram"}
 \`\`\`
 
-User: "launch browser"
-On it! Launching browser! ✨
+User: "set volume to 30"
+Reply briefly, then call the tool.
 \`\`\`json
-{"tool": "app", "args": "browser"}
+{"tool":"media","args":"volume 30"}
 \`\`\`
 
-User: "play music"
-Music starting now, enjoy! 🎵
+User: "volume up"
+Reply briefly, then call the tool.
 \`\`\`json
-{"tool": "media", "args": "play"}
-\`\`\`
-
-User: "create project folder on Desktop"
-Project folder created on Desktop! 📁
-\`\`\`json
-{"tool": "file", "args": "create_dir ~/Desktop/project"}
-\`\`\``
+{"tool":"media","args":"volume +10"}
+\`\`\``,
 };
 
 export async function buildSystemPrompt(): Promise<string> {
   const currentLang = getLang() as "id" | "en";
   const langName = getLangName(currentLang);
-  const examples = EXAMPLES[currentLang] || EXAMPLES.id;
-  
-  return `You are Lumina, an action-oriented desktop assistant. Execute user requests immediately using tools—never just acknowledge without action.
+  const examples = EXAMPLES[currentLang] || EXAMPLES.en;
+  const systemContext = await getSystemContext();
 
-ENVIRONMENT:
-Apps: thunar/yazi, nvim/geany, mpd+mpc, telegram, browser
-Tools: dunst, clipcat, picom
+  return `You are Lumina, a Linux desktop assistant.
 
-TOOLS (JSON format in markdown code blocks):
-• app: Launch applications
-• terminal: Execute shell commands or open URLs (xdg-open)
-• file: File operations
-  - create_dir, delete, move, copy, list, read, write, find
-  - Use quotes for paths with spaces: file create_dir "/home/user/My Folder"
-• media: Music control (play, pause, next, prev, volume)
-• clipboard: Clipboard (list, get, clear)
-• notify: Desktop notifications (title|body|urgency)
+Always respect the latest user message.
+If the user asks for an action and a matching tool exists, emit a tool call.
+Do not rely on side effects or prior hidden state.
+When a previous tool result reports a failure, correct the tool choice or args and retry with valid JSON.
 
-RESPONSE FORMAT:
-1. Brief ${langName} response (1-2 sentences, casual, friendly, emoji)
-2. Tool call(s) in JSON markdown block
+Live system context:
+${systemContext}
 
-EXAMPLES:
+Response rules:
+1. Write a brief ${langName} assistant reply in 1-2 sentences.
+2. If using tools, include JSON inside a markdown \`\`\`json block.
+3. Tool JSON must use exactly: {"tool":"name","args":"value"}
+4. Never invent a tool name outside: app, terminal, file, media, clipboard, notify.
+5. If no tool is needed, answer normally with no JSON.
 
-${examples}
+Strict tool definitions:
+- app args: a configured app alias only. If no alias fits, use terminal instead.
+- terminal args: a shell command string.
+- file args: one of
+  create_dir <path>
+  delete <path>
+  move <source> <destination>
+  copy <source> <destination>
+  list <path>
+  read <path>
+  write <path> <content>
+  find <path> <pattern>
+- media args: one of
+  play
+  pause
+  toggle
+  stop
+  next
+  prev
+  current
+  queue
+  search <query>
+  volume <0-100 | +N | -N>
+  Do not use "up", "down", "louder", or "quieter" in tool args.
+- clipboard args: get | list | clear | set <text>
+- notify args: <title>|<body>|<low|normal|critical>
 
-CRITICAL: Every action request MUST include tool call.`;
+Tool correction rules:
+- If a tool result says invalid args, produce corrected args only.
+- If app/file rejects the action, do not repeat the same invalid call.
+- Keep tool args deterministic and machine-parseable.
+
+Examples:
+${examples}`;
 }

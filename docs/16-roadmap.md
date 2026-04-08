@@ -23,6 +23,7 @@ This file describes **non-implemented** ideas. Do not treat any item below as av
 
 - [x] **Remove Settings Manager Placeholder**: Removed the `features.windowContext` placeholder from settings and updated the documentation. (v1.1.2)
 - [ ] **Advanced File Management**: Support for deep file searching using `locate` or `fzf`.
+- [ ] **Download & play songs**: Lumina can search and download specific songs with yt-dlp and play them.
 - [ ] **Local LLM Integration**: Support for Ollama or Llama.cpp for privacy-conscious users.
 - [ ] **Enhanced TTS**: Add support for more natural voices and offline TTS engines (e.g., Piper).
 - [ ] **Enhanced Callback System**: Implement a callback system that displays structured results like an AI agent, supporting multi-step responses: initial response text, tool execution display, and result response text (where tool output is sent back to the API to provide contextual data such as time, date, and other information).

@@ -1,8 +1,10 @@
 import { describe, test, expect } from "bun:test";
+import { fileOp } from "../src/tools/files";
+import { media } from "../src/tools/media";
+import { clipboard } from "../src/tools/clipboard";
+import { notify } from "../src/tools/notify";
 
 describe("File Tool", () => {
-  const { fileOp } = require("../src/tools/files");
-
   test("fileOp is defined", () => {
     expect(fileOp).toBeDefined();
     expect(typeof fileOp).toBe("function");
@@ -10,32 +12,35 @@ describe("File Tool", () => {
 
   test("fileOp rejects dangerous paths", async () => {
     const result = await fileOp("delete /");
-    expect(result).toContain("❌");
+    expect(result.result).toContain("❌");
+    expect(result.success).toBe(false);
   });
 
   test("fileOp list operation works", async () => {
     const result = await fileOp("list /tmp");
-    expect(typeof result).toBe("string");
+    expect(typeof result.result).toBe("string");
   });
 });
 
 describe("Media Tool", () => {
-  const { media } = require("../src/tools/media");
-
   test("media is defined", () => {
     expect(media).toBeDefined();
     expect(typeof media).toBe("function");
   });
 
-  test("media returns string result", async () => {
+  test("media returns structured result", async () => {
     const result = await media("current");
-    expect(typeof result).toBe("string");
+    expect(typeof result.result).toBe("string");
+    expect(result.tool).toBe("media");
+  });
+
+  test("media normalizes natural language volume changes", async () => {
+    const result = await media("volume up");
+    expect(result.normalizedArg).toBe("volume +10");
   });
 });
 
 describe("Clipboard Tool", () => {
-  const { clipboard } = require("../src/tools/clipboard");
-
   test("clipboard is defined", () => {
     expect(clipboard).toBeDefined();
     expect(typeof clipboard).toBe("function");
@@ -43,13 +48,11 @@ describe("Clipboard Tool", () => {
 
   test("clipboard get action works", async () => {
     const result = await clipboard("get");
-    expect(typeof result).toBe("string");
+    expect(typeof result.result).toBe("string");
   });
 });
 
 describe("Notify Tool", () => {
-  const { notify } = require("../src/tools/notify");
-
   test("notify is defined", () => {
     expect(notify).toBeDefined();
     expect(typeof notify).toBe("function");
@@ -57,6 +60,6 @@ describe("Notify Tool", () => {
 
   test("notify sends notification", async () => {
     const result = await notify("Test|Message|normal");
-    expect(typeof result).toBe("string");
+    expect(typeof result.result).toBe("string");
   });
 });

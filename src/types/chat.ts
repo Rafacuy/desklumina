@@ -1,7 +1,7 @@
 /**
  * Chat message role types
  */
-export type MessageRole = "system" | "user" | "assistant";
+export type MessageRole = "system" | "user" | "assistant" | "tool";
 
 /**
  * Tool call structure
@@ -17,6 +17,13 @@ export interface ToolCall {
 export interface ToolResult {
   tool: string;
   result: string;
+  success?: boolean;
+  normalizedArg?: string;
+  command?: string;
+  stdout?: string;
+  stderr?: string;
+  exitCode?: number;
+  attempt?: number;
 }
 
 /**
