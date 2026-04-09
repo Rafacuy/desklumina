@@ -22,11 +22,11 @@ This file describes **non-implemented** ideas. Do not treat any item below as av
 ## Short-Term (v1.x)
 
 - [x] **Remove Settings Manager Placeholder**: Removed the `features.windowContext` placeholder from settings and updated the documentation. (v1.1.2)
-- [ ] **Advanced File Management**: Support for deep file searching using `locate` or `fzf`.
+- [x] **Advanced File Management**: Deep file searching is implemented with `locate` for indexed discovery, optional terminal-side `fzf` selection, preview support, and persisted search history. (v1.3.0)
+- [x] **Enhanced Callback System**: Structuren callback events now support multi-step responses with initial assistant text, tool display, and final response. (v1.3.0)
 - [ ] **Download & play songs**: Lumina can search and download specific songs with yt-dlp and play them.
 - [ ] **Local LLM Integration**: Support for Ollama or Llama.cpp for privacy-conscious users.
 - [ ] **Enhanced TTS**: Add support for more natural voices and offline TTS engines (e.g., Piper).
-- [ ] **Enhanced Callback System**: Implement a callback system that displays structured results like an AI agent, supporting multi-step responses: initial response text, tool execution display, and result response text (where tool output is sent back to the API to provide contextual data such as time, date, and other information).
 - [ ] **Long-Term Memory (LTM)**: Implement persistent memory using SQLite3 with robust storage and automatic cleaning. Capabilities include storing schedules, time checks, reminders, and related contextual data.
 
 ---

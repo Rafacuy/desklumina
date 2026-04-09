@@ -9,7 +9,7 @@ import { logger } from "../logger";
 import { ToolDisplay } from "../ui/tool-display";
 import { settingsManager } from "./settings-manager";
 import { CancellationError } from "../types";
-import type { AIMessage, ToolCall, ToolExecutionResult, ToolResult } from "../types";
+import type { AIMessage, ToolCall, ToolCallbackPayload, ToolExecutionResult, ToolResult } from "../types";
 
 const MAX_TOOL_RETRIES = 2;
 
@@ -20,7 +20,34 @@ function cleanAssistantResponse(response: string): string {
     .trim();
 }
 
+function formatFileToolResultForContext(result: ToolResult): string {
+  const files = result.files || [];
+  const lines = [
+    `[TOOL RESULT] tool=file`,
+    `status=${result.success === false ? "failed" : "ok"}`,
+    result.normalizedArg ? `args=${result.normalizedArg}` : "",
+    result.summary?.mode ? `search_mode=${result.summary.mode}` : "",
+    result.summary?.query ? `query=${result.summary.query}` : "",
+    result.summary?.totalMatches !== undefined ? `total_matches=${result.summary.totalMatches}` : "",
+    result.summary?.filteredMatches !== undefined ? `filtered_matches=${result.summary.filteredMatches}` : "",
+    result.selectedFile ? `selected_file=${result.selectedFile}` : "",
+    files.length > 0 ? "matched_files:" : "",
+    ...files.slice(0, 10).map((file, index) => `${index + 1}. ${file.path}`),
+    result.preview?.path ? `preview_path=${result.preview.path}` : "",
+    result.preview?.content ? `preview_excerpt=${result.preview.content.slice(0, 400).trim()}` : "",
+    result.preview?.unavailableReason ? `preview_unavailable=${result.preview.unavailableReason}` : "",
+    result.stderr ? `stderr=${result.stderr.trim()}` : "",
+    result.success === false ? `message=${result.result.trim()}` : "",
+  ].filter(Boolean);
+
+  return lines.join("\n");
+}
+
 function formatToolResultForContext(result: ToolResult): string {
+  if (result.tool === "file") {
+    return formatFileToolResultForContext(result);
+  }
+
   const lines = [
     `[TOOL RESULT] tool=${result.tool}`,
     `status=${result.success === false ? "failed" : "ok"}`,
@@ -29,6 +56,9 @@ function formatToolResultForContext(result: ToolResult): string {
     result.exitCode !== undefined ? `exit_code=${result.exitCode}` : "",
     result.stdout ? `stdout=${result.stdout.trim()}` : "",
     result.stderr ? `stderr=${result.stderr.trim()}` : "",
+    result.actions && result.actions.length > 0 ? `actions=${result.actions.join(",")}` : "",
+    result.selectedFile ? `selected_file=${result.selectedFile}` : "",
+    result.files && result.files.length > 0 ? `files=${result.files.map((file) => file.path).join(" | ")}` : "",
     `message=${result.result.trim()}`,
   ].filter(Boolean);
 
@@ -60,6 +90,33 @@ function buildRetryMessages(
   ];
 }
 
+function buildFollowUpMessages(
+  baseMessages: AIMessage[],
+  userMessage: string,
+  previousAssistantResponse: string,
+  toolResults: ToolResult[]
+): AIMessage[] {
+  const toolFeedback = toolResults.map(formatToolResultForContext).join("\n\n");
+
+  return [
+    ...baseMessages,
+    { role: "assistant", content: cleanAssistantResponse(previousAssistantResponse) || previousAssistantResponse },
+    {
+      role: "system",
+      content: [
+        "Tool execution completed.",
+        `Original user request: ${userMessage}`,
+        "Write the final answer using only the actual tool results below.",
+        "If the tool failed or found nothing, say that explicitly.",
+        "Do not copy raw tool fields like status labels, summaries, actions, or numbered machine lists verbatim.",
+        "Answer naturally and mention concrete file paths only when useful.",
+        "Do not emit any more tool calls.",
+        toolFeedback,
+      ].join("\n\n"),
+    },
+  ];
+}
+
 async function collectStream(messages: AIMessage[], onChunk?: (chunk: string) => void): Promise<string> {
   let response = "";
   for await (const chunk of streamGroq(messages)) {
@@ -86,7 +143,7 @@ export class Lumina {
 
   async chat(
     userMessage: string,
-    onChunk?: (chunk: string, toolOutput?: string) => void
+    onChunk?: (chunk: string, callback?: ToolCallbackPayload) => void
   ): Promise<string> {
     logger.info("lumina", `User: ${userMessage}`);
 
@@ -115,13 +172,6 @@ export class Lumina {
       const initialToolCalls = parseToolCalls(fullResponse);
       const cleanResponse = cleanAssistantResponse(fullResponse);
 
-      if (this.chatManager) {
-        this.chatManager.addMessage(cleanResponse, "assistant", initialToolCalls);
-      } else {
-        this.context.add("user", userMessage);
-        this.context.add("assistant", cleanResponse || fullResponse);
-      }
-
       if (settings.features.tts) {
         logger.debug("lumina", t("TTS enabled, triggering text-to-speech"));
         textToSpeech(fullResponse).catch((err) => {
@@ -130,7 +180,20 @@ export class Lumina {
       }
 
       if (initialToolCalls.length === 0) {
+        if (this.chatManager) {
+          this.chatManager.addMessage(cleanResponse, "assistant", initialToolCalls);
+        } else {
+          this.context.add("user", userMessage);
+          this.context.add("assistant", cleanResponse || fullResponse);
+        }
         return fullResponse;
+      }
+
+      if (this.chatManager) {
+        this.chatManager.addMessage(cleanResponse, "assistant", initialToolCalls);
+      } else {
+        this.context.add("user", userMessage);
+        this.context.add("assistant", cleanResponse || fullResponse);
       }
 
       logger.info("lumina", `Executing ${initialToolCalls.length} tool call(s)`);
@@ -158,7 +221,13 @@ export class Lumina {
           failedResults.map((result) => result.tool),
           failedResults[0]?.stderr || failedResults[0]?.result || "Retrying with corrected arguments"
         );
-        onChunk?.("", `\n${retryLabel}`);
+        onChunk?.("", {
+          type: "retry",
+          text: `\n${retryLabel}`,
+          tools: failedResults.map((result) => result.tool),
+          reason: failedResults[0]?.stderr || failedResults[0]?.result || "Retrying with corrected arguments",
+          results: failedResults,
+        });
 
         const retryMessages = buildRetryMessages(baseMessages, userMessage, retrySourceResponse, failedResults);
         const retryResponse = await collectStream(retryMessages);
@@ -171,11 +240,13 @@ export class Lumina {
         }
       }
 
-      if (settings.features.toolDisplay) {
-        const formattedResults = ToolDisplay.formatResultsInline(allToolResults);
-        if (formattedResults) {
-          onChunk?.("", `\n${formattedResults}`);
-        }
+      const formattedResults = ToolDisplay.formatResultsInline(allToolResults);
+      if (formattedResults || allToolResults.length > 0) {
+        onChunk?.("", {
+          type: "results",
+          text: settings.features.toolDisplay && formattedResults ? `\n${formattedResults}` : "",
+          results: allToolResults,
+        });
       }
 
       logger.debug("lumina", `Tool execution completed: ${allToolResults.length} results`);
@@ -189,7 +260,17 @@ export class Lumina {
         );
       }
 
-      return fullResponse;
+      const followUpMessages = buildFollowUpMessages(baseMessages, userMessage, retrySourceResponse, allToolResults);
+      const followUpResponse = await collectStream(followUpMessages, (chunk) => onChunk?.(chunk));
+      const cleanFollowUp = cleanAssistantResponse(followUpResponse);
+
+      if (this.chatManager) {
+        this.chatManager.addMessage(cleanFollowUp || followUpResponse, "assistant");
+      } else {
+        this.context.add("assistant", cleanFollowUp || followUpResponse);
+      }
+
+      return followUpResponse;
     } catch (error) {
       if (error instanceof CancellationError) {
         throw error;

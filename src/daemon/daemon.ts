@@ -5,6 +5,7 @@ import { env } from "../config/env";
 import { existsSync, mkdirSync, unlinkSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
+import type { ToolCallbackPayload } from "../types";
 
 export class DeskLuminaDaemon {
   private lumina: Lumina;
@@ -59,8 +60,15 @@ export class DeskLuminaDaemon {
             this.chatManager.createChat(command);
             
             let response = "";
-            await this.lumina.chat(command, (chunk) => {
-              response += chunk;
+            let callback = "";
+            const callbackEvents: ToolCallbackPayload[] = [];
+            await this.lumina.chat(command, (chunk, callbackOutput) => {
+              if (callbackOutput) {
+                callbackEvents.push(callbackOutput);
+                callback += callbackOutput.text;
+              } else {
+                response += chunk;
+              }
             });
 
             // Clean response for daemon usage
@@ -69,9 +77,28 @@ export class DeskLuminaDaemon {
               .replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "")
               .trim() || "Done.";
 
+            const currentChat = this.chatManager.getCurrentChat();
+            const toolResults = currentChat?.messages
+              .filter((message) => message.role === "tool")
+              .flatMap((message) => message.toolResults || []) || [];
+            const fileResults = toolResults.filter((result) => result.tool === "file");
+            const files = fileResults.flatMap((result) => result.files || []);
+            const selectedFile = fileResults.map((result) => result.selectedFile).find(Boolean);
+            const actions = fileResults.flatMap((result) => result.actions || []);
+            const summary = fileResults.map((result) => result.summary).find(Boolean) || undefined;
+            const status = fileResults.map((result) => result.status).find(Boolean) || "completed";
+
             return new Response(JSON.stringify({ 
               success: true, 
-              response: cleanResponse 
+              response: cleanResponse,
+              status,
+              callback: callback.trim(),
+              callbackEvents,
+              toolResults,
+              files,
+              selectedFile,
+              actions,
+              summary,
             }), {
               headers: { "Content-Type": "application/json" }
             });

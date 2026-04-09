@@ -1,4 +1,5 @@
 import { execute } from "./terminal";
+import { handleFileManagement, parseQuotedArgs } from "./file-management";
 import { logger } from "../logger";
 import { rofiConfirm } from "../security/confirmation";
 import { CancellationError } from "../types";
@@ -11,42 +12,7 @@ function expandPath(path: string): string {
 function isDangerousPath(path: string): boolean {
   const dangerous = ["/", "/bin", "/boot", "/dev", "/etc", "/lib", "/root", "/sys", "/usr", "/var"];
   const expandedPath = expandPath(path);
-  return dangerous.some(d => expandedPath === d || expandedPath.startsWith(d + "/"));
-}
-
-/**
- * Parse arguments that may contain spaces, optionally enclosed in quotes.
- */
-function parseArgs(input: string): string[] {
-  const args: string[] = [];
-  let current = "";
-  let inQuotes = false;
-  let quoteChar = "";
-
-  for (let i = 0; i < input.length; i++) {
-    const char = input[i];
-    if ((char === '"' || char === "'") && (i === 0 || input[i - 1] !== "\\")) {
-      if (inQuotes) {
-        if (char === quoteChar) {
-          inQuotes = false;
-        } else {
-          current += char;
-        }
-      } else {
-        inQuotes = true;
-        quoteChar = char;
-      }
-    } else if (char === " " && !inQuotes) {
-      if (current) {
-        args.push(current);
-        current = "";
-      }
-    } else {
-      current += char;
-    }
-  }
-  if (current) args.push(current);
-  return args;
+  return dangerous.some((entry) => expandedPath === entry || expandedPath.startsWith(`${entry}/`));
 }
 
 function result(
@@ -74,7 +40,12 @@ export async function fileOp(operation: string): Promise<ToolExecutionResult> {
   logger.info("files", `Operation: ${operation}`);
 
   try {
-    const allArgs = parseArgs(operation.trim());
+    const advancedResult = await handleFileManagement(operation);
+    if (advancedResult) {
+      return advancedResult;
+    }
+
+    const allArgs = parseQuotedArgs(operation.trim());
     const cmd = allArgs[0]?.toLowerCase();
     const args = allArgs.slice(1).map(expandPath);
 
@@ -93,11 +64,7 @@ export async function fileOp(operation: string): Promise<ToolExecutionResult> {
         }
 
         if (isDangerousPath(args[0])) {
-          await rofiConfirm(
-            "Delete Operation",
-            `Path: ${args[0]}\n\nThis is a critical system path!`,
-            "critical"
-          );
+          await rofiConfirm("Delete Operation", `Path: ${args[0]}\n\nThis is a critical system path!`, "critical");
         }
 
         const command = `rm -rf "${args[0]}"`;
@@ -111,11 +78,7 @@ export async function fileOp(operation: string): Promise<ToolExecutionResult> {
         const dest = args[1];
         if (!src || !dest) return result("move", "❌ Incomplete path", false, undefined, undefined, "Incomplete path", 2);
         if (isDangerousPath(src) || isDangerousPath(dest)) {
-          await rofiConfirm(
-            "Move Operation",
-            `From: ${src}\nTo: ${dest}\n\nInvolves critical system path!`,
-            "high"
-          );
+          await rofiConfirm("Move Operation", `From: ${src}\nTo: ${dest}\n\nInvolves critical system path!`, "high");
         }
 
         const command = `mv "${src}" "${dest}"`;
@@ -144,8 +107,8 @@ export async function fileOp(operation: string): Promise<ToolExecutionResult> {
           if (!(await file.exists())) return result("read", "❌ File not found", false, undefined, undefined, "File not found", 404);
           const text = await file.text();
           return result("read", text, true, undefined, text, undefined, 0);
-        } catch (e) {
-          const err = e instanceof Error ? e : new Error(String(e));
+        } catch (error) {
+          const err = error instanceof Error ? error : new Error(String(error));
           logger.error("files", `Read failed: ${err.message}`, err);
           return result("read", `❌ Failed to read: ${err.message}`, false, undefined, undefined, err.message, 1);
         }
@@ -158,19 +121,18 @@ export async function fileOp(operation: string): Promise<ToolExecutionResult> {
         try {
           await Bun.write(path as string, content);
           return result("write", `✓ File "${path}" written`, true, undefined, content, undefined, 0);
-        } catch (e) {
-          const err = e instanceof Error ? e : new Error(String(e));
+        } catch (error) {
+          const err = error instanceof Error ? error : new Error(String(error));
           logger.error("files", `Write failed: ${err.message}`, err);
           return result("write", `❌ Failed to write: ${err.message}`, false, undefined, undefined, err.message, 1);
         }
       },
       find: async () => {
-        if (args.length < 2) return result("find", "❌ Path and pattern required", false, undefined, undefined, "Path and pattern required", 2);
-        const pattern = allArgs[2] || "";
-        const command = `find "${args[0]}" -name "*${pattern}*"`;
-        const commandResult = await execute(command);
-        if (commandResult.exitCode !== 0) return result("find", `❌ Failed: ${commandResult.stderr}`, false, command, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
-        return result("find", commandResult.stdout || "No results", true, command, commandResult.stdout, commandResult.stderr, 0);
+        const legacy = await handleFileManagement(operation);
+        if (legacy) {
+          return legacy;
+        }
+        return result("find", "❌ Path and pattern required", false, undefined, undefined, "Path and pattern required", 2);
       },
     };
 
@@ -181,7 +143,7 @@ export async function fileOp(operation: string): Promise<ToolExecutionResult> {
 
     return result(
       operation.trim(),
-      "❌ Unknown file action. Supported actions: create_dir, delete, move, copy, list, read, write, find.",
+      "❌ Unknown file action. Supported actions: create_dir, delete, move, copy, list, read, write, find, search_name, search_path, search_pattern, preview, history, repeat_last.",
       false,
       undefined,
       undefined,

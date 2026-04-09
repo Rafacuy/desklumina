@@ -1,34 +1,7 @@
-/**
- * Chat message role types
- */
+import type { ToolCall, ToolResult } from "./tool";
+
 export type MessageRole = "system" | "user" | "assistant" | "tool";
 
-/**
- * Tool call structure
- */
-export interface ToolCall {
-  tool: string;
-  arg: string;
-}
-
-/**
- * Tool result structure
- */
-export interface ToolResult {
-  tool: string;
-  result: string;
-  success?: boolean;
-  normalizedArg?: string;
-  command?: string;
-  stdout?: string;
-  stderr?: string;
-  exitCode?: number;
-  attempt?: number;
-}
-
-/**
- * Chat message structure
- */
 export interface ChatMessage {
   role: MessageRole;
   content: string;
@@ -37,9 +10,6 @@ export interface ChatMessage {
   toolResults?: ToolResult[];
 }
 
-/**
- * Chat session structure
- */
 export interface Chat {
   id: string;
   title: string;
@@ -48,9 +18,6 @@ export interface Chat {
   updatedAt: number;
 }
 
-/**
- * Chat metadata for listing
- */
 export interface ChatMetadata {
   id: string;
   title: string;

@@ -6,9 +6,29 @@ import { startLoader, stopLoader } from "./ui/loader";
 import { logger } from "./logger";
 import { env } from "./config/env";
 import { DeskLuminaDaemon, DaemonClient } from "./daemon";
+import type { ToolCallbackPayload } from "./types";
 
 const args = process.argv.slice(2);
 const mode = args[0];
+
+function appendCallbackText(target: string, callback?: ToolCallbackPayload): string {
+  if (!callback?.text) return target;
+  return target + callback.text;
+}
+
+function cleanAssistantText(text: string): string {
+  return text
+    .replace(/```json\s*\n[\s\S]*?\n```/g, "")
+    .replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "")
+    .replace(/(^|\n)Status:\s.*?(?=\n\n|$)/gis, "")
+    .replace(/(^|\n)Summary:\s.*?(?=\n|$)/gis, "")
+    .replace(/(^|\n)Actions:\s.*?(?=\n|$)/gis, "")
+    .replace(/(^|\n)Results:\s*\n(?:\d+\.\s.*\n?)+/gis, "\n")
+    .replace(/^━+$/gm, "")
+    .replace(/^\n+/, "")
+    .replace(/\n+$/, "")
+    .trim();
+}
 
 async function main() {
   logger.info("main", t("Lumina started"));
@@ -117,12 +137,20 @@ async function main() {
 
         startLoader();
         let response = "";
-        await lumina.chat(trimmed, (chunk) => {
+        let toolOutput = "";
+        await lumina.chat(trimmed, (chunk, callbackOutput) => {
           stopLoader();
+          if (callbackOutput) {
+            toolOutput = appendCallbackText(toolOutput, callbackOutput);
+            return;
+          }
           response += chunk;
           process.stdout.write(chunk);
         });
 
+        if (toolOutput.trim()) {
+          process.stdout.write(`\n${toolOutput.trim()}`);
+        }
         console.log("\n");
         prompt();
       });
@@ -137,8 +165,23 @@ async function main() {
     }
 
     chatManager.createChat(message);
-    const response = await lumina.chat(message);
-    console.log(response);
+    let response = "";
+    let toolOutput = "";
+    await lumina.chat(message, (chunk, callbackOutput) => {
+      if (callbackOutput) {
+        toolOutput = appendCallbackText(toolOutput, callbackOutput);
+      } else {
+        response += chunk;
+      }
+    });
+
+    const cleanResponse = response
+      .replace(/```json\s*\n[\s\S]*?\n```/g, "")
+      .replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "")
+      .trim();
+
+    const finalOutput = [cleanResponse, toolOutput.trim()].filter(Boolean).join("\n\n") || "Done.";
+    console.log(finalOutput);
   } else if (mode === "--version") {
     const version = await getAppVersion();
     console.log(tf("Lumina v{version}", { version }));
@@ -146,31 +189,31 @@ async function main() {
   } else {
     // Default: Rofi chat mode
     await rofiChatLoop(chatManager, async (message) => {
-      let response = "";
+      let initialResponse = "";
+      let callbackResponse = "";
       let toolDisplay = "";
+      let sawToolCallback = false;
       
       await lumina.chat(message, (chunk, toolOutput) => {
-        // Collect tool display separately
         if (toolOutput) {
-          toolDisplay += toolOutput;
+          sawToolCallback = true;
+          toolDisplay = appendCallbackText(toolDisplay, toolOutput);
         } else {
-          response += chunk;
+          if (sawToolCallback) {
+            callbackResponse += chunk;
+          } else {
+            initialResponse += chunk;
+          }
         }
       });
       
-      // Clean response: remove JSON blocks, tool tags, and any separators
-      const cleanResponse = response
-        .replace(/```json\s*\n[\s\S]*?\n```/g, "")
-        .replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "")
-        .replace(/^━+$/gm, "")
-        .replace(/^\n+/, "")
-        .replace(/\n+$/, "")
-        .trim();
-      
-      // Combine clean response with tool display (below)
-      const finalOutput = toolDisplay && cleanResponse
-        ? `${cleanResponse}\n\n${toolDisplay}`
-        : (cleanResponse || toolDisplay || "Done.");
+      const cleanInitialResponse = cleanAssistantText(initialResponse);
+      const cleanCallbackResponse = cleanAssistantText(callbackResponse);
+      const cleanToolDisplay = toolDisplay.trim();
+
+      const finalOutput = [cleanInitialResponse, cleanToolDisplay, cleanCallbackResponse]
+        .filter(Boolean)
+        .join("\n\n") || "Done.";
       
       return finalOutput;
     });

@@ -13,7 +13,12 @@ const mockStreamGroq = mock(async function* (messages: Array<{ role: string; con
     return;
   }
 
-  yield 'Retrying.\n```json\n{"tool":"media","args":"volume +10"}\n```';
+  if (streamInvocations === 2) {
+    yield 'Retrying.\n```json\n{"tool":"media","args":"volume +10"}\n```';
+    return;
+  }
+
+  yield "Volume updated to 10%.";
 });
 
 const mockDispatch = mock(async (tool: string, arg: string) => {
@@ -109,30 +114,35 @@ describe("Lumina", () => {
 
     await lumina.chat("set volume to 30");
 
-    expect(capturedMessages).toHaveLength(2);
+    expect(capturedMessages).toHaveLength(3);
     expect(capturedMessages[0]?.[capturedMessages[0].length - 1]).toEqual({
       role: "user",
       content: "set volume to 30",
     });
   });
 
-  test("feeds failed tool results back into the retry request", async () => {
+  test("feeds failed tool results back into the retry request and produces a final grounded reply", async () => {
     const lumina = new Lumina();
-    const toolOutputs: string[] = [];
+    const toolOutputs: Array<{ text: string; type: string }> = [];
+    let finalText = "";
 
-    await lumina.chat("volume up", (_chunk, toolOutput) => {
+    await lumina.chat("volume up", (chunk, toolOutput) => {
       if (toolOutput) {
-        toolOutputs.push(toolOutput);
+        toolOutputs.push({ text: toolOutput.text, type: toolOutput.type });
       }
+      finalText += chunk;
     });
 
-    expect(streamInvocations).toBe(2);
+    expect(streamInvocations).toBe(3);
     expect(dispatchCalls).toEqual([
       { tool: "media", arg: "volume up" },
       { tool: "media", arg: "volume +10" },
     ]);
     expect(capturedMessages[1]?.some((message) => message.content.includes("[TOOL RESULT] tool=media"))).toBe(true);
-    expect(toolOutputs.some((entry) => entry.includes("retry-update"))).toBe(true);
+    expect(capturedMessages[2]?.some((message) => message.content.includes("Tool execution completed."))).toBe(true);
+    expect(toolOutputs.some((entry) => entry.type === "retry" && entry.text.includes("retry-update"))).toBe(true);
+    expect(toolOutputs.some((entry) => entry.type === "results")).toBe(true);
+    expect(finalText).toContain("Volume updated to 10%.");
   });
 
   test("persists tool result messages in chat history", async () => {
@@ -143,5 +153,6 @@ describe("Lumina", () => {
 
     const currentChat = chatManager.getCurrentChat();
     expect(currentChat?.messages.some((message) => message.role === "tool")).toBe(true);
+    expect(currentChat?.messages.filter((message) => message.role === "assistant").length).toBeGreaterThan(1);
   });
 });

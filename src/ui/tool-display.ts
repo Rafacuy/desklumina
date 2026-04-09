@@ -42,6 +42,59 @@ function getToolIcon(tool: string): string {
   return TOOL_CONFIG[tool]?.icon || "🔧";
 }
 
+function formatFileResult(result: ToolResult): string[] {
+  const lines: string[] = [];
+  const files = result.files || [];
+
+  if (result.status === "search_complete") {
+    const matchCount = files.length;
+    lines.push(`    Search complete: ${matchCount} match${matchCount === 1 ? "" : "es"}`);
+  } else if (result.status === "no_matches") {
+    lines.push("    Search complete: no matches");
+  } else if (result.status === "preview_ready") {
+    lines.push("    Preview ready");
+  } else if (result.status === "history_ready") {
+    lines.push(`    History entries: ${files.length}`);
+  } else if (result.status === "history_empty") {
+    lines.push("    Search history is empty");
+  } else if (result.status === "invalid_request") {
+    lines.push("    Invalid file request");
+  }
+
+  if (result.selectedFile) {
+    lines.push(`    Selected: ${result.selectedFile}`);
+  } else {
+    files.slice(0, 3).forEach((file) => {
+      lines.push(`    • ${file.path}`);
+    });
+    if (files.length > 3) {
+      lines.push(`    • +${files.length - 3} more`);
+    }
+  }
+
+  if (result.preview?.path && result.preview.path !== result.selectedFile) {
+    lines.push(`    Preview: ${result.preview.path}`);
+  }
+
+  if (result.success === false && result.stderr) {
+    lines.push(`    ${result.stderr}`);
+  }
+
+  return lines;
+}
+
+function summarizeResult(result: ToolResult): string[] {
+  if (result.tool === "file") {
+    return formatFileResult(result);
+  }
+
+  if (result.success === false && result.stderr) {
+    return [`    ${result.stderr}`];
+  }
+
+  return [];
+}
+
 export class ToolDisplay {
   private static readonly SEPARATOR = "━".repeat(36);
 
@@ -77,6 +130,10 @@ export class ToolDisplay {
       const mark = result.success === false ? "✕" : "✓";
       const attemptSuffix = result.attempt && result.attempt > 1 ? ` (attempt ${result.attempt})` : "";
       output += `  • ${label} ${mark}${attemptSuffix}\n`;
+      const summaryLines = summarizeResult(result);
+      if (summaryLines.length > 0) {
+        output += `${summaryLines.join("\n")}\n`;
+      }
     });
 
     output += this.SEPARATOR;

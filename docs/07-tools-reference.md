@@ -64,7 +64,7 @@ Launch an application by alias. Aliases are defined in `src/config/apps.json`. I
 
 ## File Tool (`file`)
 
-Perform file and directory operations safely.
+Perform file and directory operations safely, including indexed file discovery and preview.
 
 **Path**: `src/tools/files.ts`
 
@@ -80,12 +80,37 @@ Perform file and directory operations safely.
 | `read` | `<path>` | `read config.json` |
 | `write` | `<path> <text>`| `write log.txt "Entry updated"` |
 | `find` | `<dir> <name>` | `find ~/Downloads report.pdf` |
+| `preview` | `<path>` | `preview ~/.config/bspwm/bspwmrc` |
+| `history` | `[limit]` | `history 5` |
+| `repeat_last` | none | `repeat_last` |
+| `search_name` | `<query> [filters]` | `search_name bspwm base=~/.config type=file preview=true` |
+| `search_path` | `<query> [filters]` | `search_path .config/bspwm type=file` |
+| `search_pattern` | `<regex> [filters]` | `search_pattern "bspwm(rc)?$" base=~/.config` |
+
+### Advanced Search Filters
+
+Advanced search operations use `locate` as the primary indexed backend and support these canonical key-value filters:
+
+| Filter | Values | Description |
+|--------|--------|-------------|
+| `base` | `<path>` | Restrict results to a base directory |
+| `type` | `file`, `directory`, `any` | Restrict by entry type |
+| `ext` | `md,txt,json` | Restrict by extension list |
+| `hidden` | `true`, `false` | Include only hidden or non-hidden entries |
+| `limit` | `1-200` | Cap returned matches |
+| `select` | `true`, `false` | Open terminal-side `fzf` selection when a TTY is available |
+| `preview` | `true`, `false` | Attach file or directory preview data |
 
 ### Notes
 
 - Paths starting with `~` are expanded to `$HOME`.
 - Some operations trigger a Rofi confirmation when they involve critical system paths (see `src/tools/files.ts`).
 - If the first token is not a supported operation, `file` now returns a validation error instead of executing shell commands.
+- `find <dir> <name>` remains supported as a legacy convenience form and is normalized through the indexed search backend.
+- Advanced search results are structured: DeskLumina stores matched files, selected file, preview data, actions performed, and summary counts.
+- Preview returns file contents for readable text files and directory listings for folders; binary files return metadata without dumping raw bytes.
+- Search history is stored under `~/.config/desklumina/file-search-history.json`.
+- `fzf` selection is terminal-oriented. In Rofi mode, DeskLumina shows deterministic result lists and previews instead of spawning an interactive fuzzy picker.
 
 ---
 

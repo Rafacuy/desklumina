@@ -63,6 +63,9 @@ function formatToolContext(result: ToolResult): string {
     result.exitCode !== undefined ? `exit_code=${result.exitCode}` : "",
     result.stdout ? `stdout=${result.stdout.trim()}` : "",
     result.stderr ? `stderr=${result.stderr.trim()}` : "",
+    result.actions && result.actions.length > 0 ? `actions=${result.actions.join(",")}` : "",
+    result.selectedFile ? `selected_file=${result.selectedFile}` : "",
+    result.files && result.files.length > 0 ? `files=${result.files.map((file) => file.path).join(" | ")}` : "",
     `message=${result.result.trim()}`,
   ].filter(Boolean);
 

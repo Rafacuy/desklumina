@@ -5,9 +5,30 @@ import { homedir } from "os";
 
 // --- Mocks (hoisted before imports) ---
 
-const mockChat = mock(async (_: string, cb: (chunk: string) => void) => {
+const mockChat = mock(async (_: string, cb: (chunk: string, toolOutput?: any) => void) => {
   cb("response text");
 });
+
+const mockCurrentChat = {
+  messages: [
+    {
+      role: "tool",
+      content: "",
+      toolResults: [
+        {
+          tool: "file",
+          result: "search output",
+          success: true,
+          status: "search_complete",
+          files: [{ path: "/tmp/example.txt", name: "example.txt", directory: "/tmp", type: "file", hidden: false }],
+          selectedFile: "/tmp/example.txt",
+          actions: ["locate:name", "filter_results"],
+          summary: { mode: "name", query: "example", totalMatches: 1, filteredMatches: 1, returnedMatches: 1 },
+        },
+      ],
+    },
+  ],
+};
 
 mock.module("../src/core", () => ({
   Lumina: class {
@@ -16,6 +37,7 @@ mock.module("../src/core", () => ({
   ChatManager: class {
     createChat = mock(() => ({ id: "test-id" }));
     addMessage = mock(() => {});
+    getCurrentChat = mock(() => mockCurrentChat);
   },
 }));
 
@@ -59,7 +81,7 @@ describe("DeskLuminaDaemon", () => {
     serveSpy.mockRestore();
     exitSpy.mockRestore();
     mockChat.mockReset();
-    mockChat.mockImplementation(async (_: string, cb: (chunk: string) => void) => {
+    mockChat.mockImplementation(async (_: string, cb: (chunk: string, toolOutput?: any) => void) => {
       cb("response text");
     });
     if (existsSync(socketPath)) unlinkSync(socketPath);
@@ -159,7 +181,7 @@ describe("DeskLuminaDaemon", () => {
     });
 
     test("strips json code blocks from AI response", async () => {
-      mockChat.mockImplementationOnce(async (_: string, cb: (chunk: string) => void) => {
+      mockChat.mockImplementationOnce(async (_: string, cb: (chunk: string, toolOutput?: any) => void) => {
         cb('Done!\n```json\n{"tool":"app","args":"telegram"}\n```');
       });
       const res = await capturedFetch!(new Request("http://localhost/?cmd=open+telegram"));
@@ -168,12 +190,28 @@ describe("DeskLuminaDaemon", () => {
     });
 
     test("returns 'Done.' when response is empty after cleaning", async () => {
-      mockChat.mockImplementationOnce(async (_: string, cb: (chunk: string) => void) => {
+      mockChat.mockImplementationOnce(async (_: string, cb: (chunk: string, toolOutput?: any) => void) => {
         cb('```json\n{"tool":"app","args":"telegram"}\n```');
       });
       const res = await capturedFetch!(new Request("http://localhost/?cmd=open+telegram"));
       const body = await res.json() as any;
       expect(body.response).toBe("Done.");
+    });
+
+    test("includes structured callback fields while preserving response", async () => {
+      mockChat.mockImplementationOnce(async (_: string, cb: (chunk: string, toolOutput?: any) => void) => {
+        cb("response text");
+        cb("", { type: "results", text: "tool callback output", results: mockCurrentChat.messages[0].toolResults });
+      });
+      const res = await capturedFetch!(new Request("http://localhost/?cmd=file+search"));
+      const body = await res.json() as any;
+      expect(body.response).toBe("response text");
+      expect(body.status).toBe("search_complete");
+      expect(body.callback).toContain("tool callback output");
+      expect(body.callbackEvents[0].type).toBe("results");
+      expect(body.files[0].path).toBe("/tmp/example.txt");
+      expect(body.selectedFile).toBe("/tmp/example.txt");
+      expect(body.actions).toContain("filter_results");
     });
 
     test("returns 500 when lumina.chat throws", async () => {

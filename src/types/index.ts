@@ -6,9 +6,18 @@ export * from "./chat";
 export * from "./ai";
 export * from "./settings";
 
-// Re-export from tool with conflict resolution
-export type { ToolExecutionResult, ToolHandler, ToolRegistry } from "./tool";
-export type { ParsedToolCall } from "./tool";
+export type {
+  FileMatch,
+  FilePreview,
+  ParsedToolCall,
+  ToolCall,
+  ToolCallbackPayload,
+  ToolExecutionResult,
+  ToolExecutionSummary,
+  ToolHandler,
+  ToolRegistry,
+  ToolResult,
+} from "./tool";
 
 /**
  * Custom error for when a user cancels a security confirmation

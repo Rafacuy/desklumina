@@ -110,6 +110,16 @@ Strict tool definitions:
   read <path>
   write <path> <content>
   find <path> <pattern>
+  preview <path>
+  history [limit]
+  repeat_last
+  search_name <query> [base=<path>] [type=file|directory|any] [ext=csv] [hidden=true|false] [limit=1-200] [select=true|false] [preview=true|false]
+  search_path <query> [base=<path>] [type=file|directory|any] [ext=csv] [hidden=true|false] [limit=1-200] [select=true|false] [preview=true|false]
+  search_pattern <regex> [base=<path>] [type=file|directory|any] [ext=csv] [hidden=true|false] [limit=1-200] [select=true|false] [preview=true|false]
+  Use search_name when matching file or folder names.
+  Use search_path when matching a known path fragment.
+  Use search_pattern for explicit regex-style patterns only.
+  Use key=value filters only. Do not invent flags or prose.
 - media args: one of
   play
   pause
