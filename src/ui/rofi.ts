@@ -322,7 +322,6 @@ export async function rofiChatLoop(
       case "send":
         if (result.input) {
           const userMessageIndex = chatManager.getCurrentChat()?.messages.length || 0;
-          chatManager.addMessage(result.input, "user");
           try {
             const response = await onMessage(result.input);
             
