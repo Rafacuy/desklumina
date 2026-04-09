@@ -129,26 +129,25 @@ DeskLumina is highly customizable through three primary files:
 
 DeskLumina uses a modular design to separate intelligence from execution:
 
-```text
-┌───────────────────────────────────────────┐
-│              User Interface               │
-│        (Rofi / Terminal / Daemon)         │
-└───────────────────┬───────────────────────┘
-                    │
-                    ▼
-┌───────────────────────────────────────────┐
-│             Core Orchestrator             │
-│        (Lumina / ChatManager / i18n)      │
-└────────┬──────────┬──────────┬────────────┘
-         │          │          │
-         ▼          ▼          ▼
-┌──────────────┐ ┌──────────┐ ┌──────────────┐
-│   AI Layer   │ │ Security │ │ Tools Layer  │
-│    (Groq)    │ │ Layer    │ │ (Desktop)    │
-└──────────────┘ └──────────┘ └──────────────┘
-```
+```mermaid
+graph TD
+    UI["<b>User Interface</b><br/>(Rofi / Terminal / Daemon)"]
+    
+    Core["<b>Core Orchestrator</b><br/>(Lumina / ChatManager / i18n)"]
+    
+    AI["<b>AI Layer</b><br/>(Groq)"]
+    Security["<b>Security Layer</b>"]
+    Tools["<b>Tools Layer</b><br/>(Desktop)"]
 
----
+    UI --> Core
+    
+    Core --> AI
+    Core --> Security
+    Core --> Tools
+
+    style UI fill:#f9f9f9,stroke:#333,stroke-width:2px
+    style Core fill:#f9f9f9,stroke:#333,stroke-width:2px
+```
 
 ## 📚 Documentation
 
