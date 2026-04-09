@@ -78,7 +78,7 @@ bun install
 cp .env.example .env
 ```
 
-> <strong>[!IMPORTANT]</strong> \
+> [!IMPORTANT]
 > Edit your `.env` file and add your `GROQ_API_KEY` and preferred `MODEL_NAME`.
 
 ---
@@ -120,7 +120,7 @@ DeskLumina is highly customizable through three primary files:
 - **`settings.json`**: UI preferences, language, TTS settings, and security toggles.
 - **`apps.json`**: Custom application aliases and system commands.
 
-> <strong>[!TIP]</strong> \
+> [!TIP]
 > Access the **Settings** menu directly in the Rofi UI by pressing `Tab`.
 
 ---
