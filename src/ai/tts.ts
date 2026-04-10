@@ -9,6 +9,7 @@ interface ChunkJob {
   text: string;
   audioFile: string;
   ready: boolean;
+  error?: boolean;
   generationStart?: number;
   generationEnd?: number;
 }
@@ -216,6 +217,7 @@ export async function textToSpeech(text: string): Promise<void> {
         text: chunk,
         audioFile: `/tmp/lumina-tts-${Date.now()}-${i}.mp3`,
         ready: false,
+        error: false,
       }));
 
       const firstChunkLen = chunks[0]?.length ?? 0;
@@ -231,20 +233,22 @@ export async function textToSpeech(text: string): Promise<void> {
         try {
           await generateAudio(job.text, voice, rate, job.audioFile);
           job.generationEnd = Date.now();
-          job.ready = true;
-          
+
           const duration = job.generationEnd - job.generationStart;
           chunker.updateMetrics(duration);
-          
+
           if (job.id === 0) {
             logger.info("tts", `First chunk ready in ${duration}ms`);
           }
         } catch (err) {
           logger.error("tts", `Chunk ${job.id} failed: ${err}`);
+          job.error = true;
         } finally {
+          job.ready = true;
           generating--;
         }
       };
+
 
       const processPlayback = async () => {
         while (nextPlay < jobs.length) {
@@ -255,7 +259,12 @@ export async function textToSpeech(text: string): Promise<void> {
             await Bun.sleep(50);
           }
 
-          await playAudio(job.audioFile);
+          if (!job.error) {
+            await playAudio(job.audioFile);
+          } else {
+            logger.warn("tts", `Skipping playback for chunk ${job.id} due to generation error`);
+          }
+          
           nextPlay++;
 
           setTimeout(() => {
