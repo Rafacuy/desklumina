@@ -118,3 +118,4 @@ temp/
 # Build artifacts
 build/
 artifacts/
+.worktrees/
