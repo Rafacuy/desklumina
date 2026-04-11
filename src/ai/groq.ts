@@ -74,7 +74,7 @@ async function* streamWithModel(
 
   if (!response.ok) {
     const body = await response.text();
-    logger.error("groq", `API error untuk model ${model}: ${response.status} - ${body}`);
+    logger.error("groq", `API error occured for ${model}: ${response.status} - ${body}`);
 
     if (isModelNotFoundError(response.status, body)) {
       throw new ModelNotFoundError(model, body);

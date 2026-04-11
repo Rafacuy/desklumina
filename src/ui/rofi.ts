@@ -154,7 +154,8 @@ export async function rofiMenu(
   prompt: string = "Lumina", 
   themeOverride: string = "",
   placeholder: string = "",
-  hints: string = ""
+  hints: string = "",
+  message: string = ""
 ): Promise<{ output: string | null; code: number }> {
   const args = [
     "rofi", 
@@ -168,8 +169,9 @@ export async function rofiMenu(
     "-kb-custom-1", "Tab"
   ];
   
-  if (hints) {
-    args.push("-mesg", hints);
+  const finalMessage = message || hints;
+  if (finalMessage) {
+    args.push("-mesg", finalMessage);
   }
   
   let finalTheme = themeOverride;
@@ -196,6 +198,84 @@ export async function rofiMenu(
     output: output.trim() || null, 
     code 
   };
+}
+
+export async function rofiResponsePanel(message: string): Promise<string | null> {
+  const cleanMessage = message
+    .replace(/^━+$/gm, "")
+    .replace(/^\n+/, "")
+    .replace(/\n+$/, "")
+    .trim();
+
+  const formattedMessage = `󱜙 ${t("Lumina")}\n${"─".repeat(40)}\n\n${cleanMessage}`;
+
+  const themeOverride = `
+    window {
+      width: 500px;
+      height: 500px;
+      border-radius: 16px;
+      border: 1px solid;
+      border-color: @border-subtle;
+      background-color: @bg;
+    }
+    mainbox {
+      children: [message, inputbar];
+      padding: 0px;
+      spacing: 0px;
+      background-color: transparent;
+    }
+    message {
+      padding: 24px 24px 12px 24px;
+      border: 0;
+      background-color: transparent;
+      expand: true;
+    }
+    textbox {
+      text-color: @text-primary;
+      font: "JetBrainsMono Nerd Font 10";
+      horizontal-align: 0.5;
+      vertical-align: 0.5;
+      expand: true;
+    }
+    inputbar {
+      padding: 14px 20px;
+      margin: 12px 24px 24px 24px;
+      background-color: @bg;
+      border: 2px;
+      border-color: @accent-color;
+      border-radius: 14px;
+      children: [prompt, entry];
+    }
+    prompt {
+      text-color: @accent-color;
+      font: "JetBrainsMono Nerd Font Bold 10";
+      vertical-align: 0.5;
+    }
+    entry {
+      placeholder: "${t("Reply...")}";
+      placeholder-color: @text-muted;
+      font: "JetBrainsMono Nerd Font 10";
+      vertical-align: 0.5;
+    }
+    listview {
+      enabled: false;
+    }
+  `;
+
+  const result = await rofiMenu(
+    "", 
+    t("Lumina"),
+    themeOverride,
+    t("Type a reply..."),
+    "",
+    formattedMessage
+  );
+
+  if (result.code === 0 && result.output) {
+    return result.output;
+  }
+  
+  return null;
 }
 
 export async function rofiSimpleInput(prompt: string, placeholder: string = ""): Promise<string> {
@@ -321,37 +401,42 @@ export async function rofiChatLoop(
 
       case "send":
         if (result.input) {
-          const userMessageIndex = chatManager.getCurrentChat()?.messages.length || 0;
-          try {
-            const response = await onMessage(result.input);
-            
-            // Show response in Rofi window
-            if (response && response !== "Done.") {
-              await rofiDisplay(response);
-            }
-          } catch (error) {
-            const isCancellation = 
-              error instanceof CancellationError || 
-              (error && typeof error === 'object' && 'name' in error && error.name === "CancellationError") ||
-              (error instanceof Error && error.message.includes("cancelled by user"));
-
-            if (isCancellation) {
-              logger.info("ui", "Cancellation detected, intercepting and hiding response panel");
+          let currentInput: string | null = result.input;
+          
+          while (currentInput) {
+            const userMessageIndex = chatManager.getCurrentChat()?.messages.length || 0;
+            try {
+              const response = await onMessage(currentInput);
               
-              // Interceptor: Hide AI response and remove cancelled interaction from history
-              // Remove everything from the user message onwards
-              const currentChat = chatManager.getCurrentChat();
-              if (currentChat) {
-                const messagesToRemove = currentChat.messages.length - userMessageIndex;
-                logger.debug("ui", `Removing ${messagesToRemove} messages from history (undo)`);
-                for (let i = 0; i < messagesToRemove; i++) {
-                  chatManager.removeLastMessage();
-                }
+              if (response && response !== "Done.") {
+                // Show response with continuous prompt
+                currentInput = await rofiResponsePanel(response);
+              } else {
+                currentInput = null;
               }
-              break;
+            } catch (error) {
+              const isCancellation = 
+                error instanceof CancellationError || 
+                (error && typeof error === 'object' && 'name' in error && error.name === "CancellationError") ||
+                (error instanceof Error && error.message.includes("cancelled by user"));
+
+              if (isCancellation) {
+                logger.info("ui", "Cancellation detected, intercepting and hiding response panel");
+                
+                const currentChat = chatManager.getCurrentChat();
+                if (currentChat) {
+                  const messagesToRemove = currentChat.messages.length - userMessageIndex;
+                  logger.debug("ui", `Removing ${messagesToRemove} messages from history (undo)`);
+                  for (let i = 0; i < messagesToRemove; i++) {
+                    chatManager.removeLastMessage();
+                  }
+                }
+                currentInput = null;
+                break;
+              }
+              logger.error("ui", `Error in onMessage: ${error instanceof Error ? error.message : String(error)}`);
+              throw error;
             }
-            logger.error("ui", `Error in onMessage: ${error instanceof Error ? error.message : String(error)}`);
-            throw error;
           }
         }
         break;
