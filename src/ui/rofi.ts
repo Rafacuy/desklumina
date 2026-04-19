@@ -188,7 +188,7 @@ export async function rofiMenu(
     stdout: "pipe",
   });
 
-  proc.stdin.write(items);
+  proc.stdin.write(items || "");
   proc.stdin.end();
 
   const output = await new Response(proc.stdout).text();
@@ -200,11 +200,110 @@ export async function rofiMenu(
   };
 }
 
-export async function rofiResponsePanel(message: string): Promise<string | null> {
-  const cleanMessage = message
+export async function rofiExpandedResponse(fullMessage: string): Promise<void> {
+  const WRAP_WIDTH = 85; // Slightly wider for full view
+  
+  const wrapText = (text: string, width: number) => {
+    const lines: string[] = [];
+    text.split('\n').forEach(line => {
+      if (line.length <= width) {
+        lines.push(line);
+      } else {
+        const words = line.split(' ');
+        let currentLine = '';
+        words.forEach(word => {
+          if ((currentLine + word).length > width) {
+            lines.push(currentLine.trim());
+            currentLine = word + ' ';
+          } else {
+            currentLine += word + ' ';
+          }
+        });
+        lines.push(currentLine.trim());
+      }
+    });
+    return lines;
+  };
+
+  const lines = wrapText(fullMessage, WRAP_WIDTH);
+
+  const themeOverride = `
+    window {
+      width: 800px;
+      height: 700px;
+      border-radius: 16px;
+      border: 1px solid;
+      border-color: @border-subtle;
+      background-color: @bg;
+    }
+    mainbox {
+      children: [listview];
+      padding: 24px;
+    }
+    listview {
+      lines: 40;
+      scrollbar: true;
+      fixed-height: false;
+    }
+    element {
+      padding: 2px 0px;
+      text-color: @text-primary;
+      font: "JetBrainsMono Nerd Font 8";
+    }
+    element selected.normal {
+      background-color: transparent;
+      text-color: @text-primary;
+    }
+  `;
+
+  await rofiMenu(
+    lines.join('\n'),
+    t("Full Response"),
+    themeOverride,
+    "",
+    `󱊷 [ESC] ${t("Back")}`
+  );
+}
+
+export async function rofiResponsePanel(message: string): Promise<{ action: "reply" | "expand" | "exit"; input?: string }> {
+  const MAX_LINES = 12; // Reduced slightly to ensure indicator visibility
+  const WRAP_WIDTH = 55;
+
+  const wrapText = (text: string, width: number) => {
+    const lines: string[] = [];
+    text.split('\n').forEach(line => {
+      if (line.length <= width) {
+        lines.push(line);
+      } else {
+        const words = line.split(' ');
+        let currentLine = '';
+        words.forEach(word => {
+          if ((currentLine + word).length > width) {
+            lines.push(currentLine.trim());
+            currentLine = word + ' ';
+          } else {
+            currentLine += word + ' ';
+          }
+        });
+        lines.push(currentLine.trim());
+      }
+    });
+    return lines;
+  };
+
+  const allLines = wrapText(message, WRAP_WIDTH);
+  const needsTruncation = allLines.length > MAX_LINES;
+  
+  const displayLines = needsTruncation 
+    ? allLines.slice(0, MAX_LINES) 
+    : allLines;
+
+  if (needsTruncation) {
+    displayLines.push("", "(… truncated · [TAB] Expand)");
+  }
+
+  const cleanMessage = displayLines.join('\n')
     .replace(/^━+$/gm, "")
-    .replace(/^\n+/, "")
-    .replace(/\n+$/, "")
     .trim();
 
   const formattedMessage = `󱜙 ${t("Lumina")}\n${"─".repeat(40)}\n\n${cleanMessage}`;
@@ -212,7 +311,7 @@ export async function rofiResponsePanel(message: string): Promise<string | null>
   const themeOverride = `
     window {
       width: 500px;
-      height: 500px;
+      height: 550px;
       border-radius: 16px;
       border: 1px solid;
       border-color: @border-subtle;
@@ -225,7 +324,7 @@ export async function rofiResponsePanel(message: string): Promise<string | null>
       background-color: transparent;
     }
     message {
-      padding: 24px 24px 12px 24px;
+      padding: 24px 24px 24px 24px;
       border: 0;
       background-color: transparent;
       expand: true;
@@ -233,13 +332,11 @@ export async function rofiResponsePanel(message: string): Promise<string | null>
     textbox {
       text-color: @text-primary;
       font: "JetBrainsMono Nerd Font 10";
-      horizontal-align: 0.5;
-      vertical-align: 0.5;
       expand: true;
     }
     inputbar {
       padding: 14px 20px;
-      margin: 12px 24px 24px 24px;
+      margin: 0px 24px 24px 24px;
       background-color: @bg;
       border: 2px;
       border-color: @accent-color;
@@ -271,11 +368,15 @@ export async function rofiResponsePanel(message: string): Promise<string | null>
     formattedMessage
   );
 
+  if (result.code === 10 && needsTruncation) {
+    return { action: "expand" };
+  }
+
   if (result.code === 0 && result.output) {
-    return result.output;
+    return { action: "reply", input: result.output };
   }
   
-  return null;
+  return { action: "exit" };
 }
 
 export async function rofiSimpleInput(prompt: string, placeholder: string = ""): Promise<string> {
@@ -409,8 +510,23 @@ export async function rofiChatLoop(
               const response = await onMessage(currentInput);
               
               if (response && response !== "Done.") {
-                // Show response with continuous prompt
-                currentInput = await rofiResponsePanel(response);
+                let showResponse = true;
+                let fullResponse = response;
+                
+                while (showResponse) {
+                  const panelResult = await rofiResponsePanel(fullResponse);
+                  
+                  if (panelResult.action === "expand") {
+                    await rofiExpandedResponse(fullResponse);
+                    // After expanding, stay on the response panel
+                  } else if (panelResult.action === "reply" && panelResult.input) {
+                    currentInput = panelResult.input;
+                    showResponse = false;
+                  } else {
+                    currentInput = null;
+                    showResponse = false;
+                  }
+                }
               } else {
                 currentInput = null;
               }

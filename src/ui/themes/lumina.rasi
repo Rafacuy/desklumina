@@ -77,11 +77,20 @@ textbox {
 listview {
     lines: 8;
     fixed-height: false;
-    scrollbar: false;
+    scrollbar: true;
     border: 0;
     padding: 8px 12px;
     spacing: 4px;
     background-color: @bg;
+}
+
+scrollbar {
+    background-color: transparent;
+    handle-color: @text-muted;
+    handle-width: 4px;
+    border-radius: 2px;
+    width: 6px;
+    margin: 8px 4px;
 }
 
 element {
