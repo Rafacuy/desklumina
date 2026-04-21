@@ -50,13 +50,14 @@ export async function execute(command: string): Promise<CommandResult> {
       logger.error("terminal", `Timeout: ${command}`);
     }, COMMAND_TIMEOUT);
 
-    const [stdout, stderr] = await Promise.all([
+    const [stdout, stderr, exitCode] = await Promise.all([
       new Response(proc.stdout).text(),
       new Response(proc.stderr).text(),
+      proc.exited.then((code) => {
+        clearTimeout(timeout);
+        return code;
+      }),
     ]);
-
-    clearTimeout(timeout);
-    const exitCode = await proc.exited;
 
     if (exitCode !== 0) {
       logger.warn("terminal", `Exit ${exitCode}: ${stderr || "no error output"}`);

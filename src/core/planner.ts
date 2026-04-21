@@ -3,13 +3,29 @@ import type { ParsedToolCall } from "../types";
 
 const VALID_TOOLS = new Set(["app", "terminal", "file", "media", "clipboard", "notify"]);
 
+const MAX_JSON_LENGTH = 50000; // 50KB limit
+const MAX_JSON_DEPTH = 5;
+
+function checkDepth(str: string, maxDepth: number): boolean {
+  let depth = 0;
+  for (const char of str) {
+    if (char === "{" || char === "[") {
+      depth++;
+      if (depth > maxDepth) return false;
+    } else if (char === "}" || char === "]") {
+      depth--;
+    }
+  }
+  return depth === 0; // Ensure balanced
+}
+
 function toParsedToolCall(candidate: unknown): ParsedToolCall | null {
   if (!candidate || typeof candidate !== "object") return null;
 
-  const tool = "tool" in candidate ? (candidate as { tool?: unknown }).tool : undefined;
-  const args = "args" in candidate ? (candidate as { args?: unknown }).args : undefined;
+  const tool = "tool" in (candidate as any) ? (candidate as any).tool : undefined;
+  const args = "args" in (candidate as any) ? (candidate as any).args : undefined;
 
-  if (typeof tool !== "string" || typeof args !== "string") {
+  if (typeof tool !== "string" || (typeof args !== "string" && typeof args !== "object")) {
     return null;
   }
 
@@ -18,9 +34,12 @@ function toParsedToolCall(candidate: unknown): ParsedToolCall | null {
     return null;
   }
 
+  // Handle object args by stringifying them (some models might send JSON objects as args)
+  const argString = typeof args === "string" ? args : JSON.stringify(args);
+
   return {
     tool,
-    arg: args.trim(),
+    arg: argString.trim(),
   };
 }
 
@@ -35,13 +54,18 @@ export function parseToolCalls(text: string): ParsedToolCall[] {
     const jsonContent = match[1];
     if (!jsonContent) continue;
 
+    if (jsonContent.length > MAX_JSON_LENGTH) {
+      logger.warn("planner", `JSON block too large: ${jsonContent.length} bytes`);
+      continue;
+    }
+
+    if (!checkDepth(jsonContent, MAX_JSON_DEPTH)) {
+      logger.warn("planner", "JSON block too deep or unbalanced");
+      continue;
+    }
+
     try {
       const parsed = JSON.parse(jsonContent);
-
-      const singleCall = toParsedToolCall(parsed);
-      if (singleCall) {
-        calls.push(singleCall);
-      }
 
       if (Array.isArray(parsed)) {
         for (const item of parsed) {
@@ -50,9 +74,14 @@ export function parseToolCalls(text: string): ParsedToolCall[] {
             calls.push(arrayCall);
           }
         }
+      } else {
+        const singleCall = toParsedToolCall(parsed);
+        if (singleCall) {
+          calls.push(singleCall);
+        }
       }
     } catch (e) {
-      logger.warn("planner", `Failed to parse JSON tool call: ${e}`);
+      logger.error("planner", `Failed to parse JSON tool call: ${e instanceof Error ? e.message : e}`);
     }
   }
 

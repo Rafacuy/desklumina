@@ -121,8 +121,14 @@ export class DeskLuminaDaemon {
       logger.info("daemon", t(`Daemon started on ${this.socketPath}`));
       
       // Handle graceful shutdown
-      process.on("SIGINT", () => this.stop());
-      process.on("SIGTERM", () => this.stop());
+      process.on("SIGINT", async () => {
+        logger.info("daemon", "Received SIGINT, stopping...");
+        await this.stop();
+      });
+      process.on("SIGTERM", async () => {
+        logger.info("daemon", "Received SIGTERM, stopping...");
+        await this.stop();
+      });
 
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -137,20 +143,24 @@ export class DeskLuminaDaemon {
     }
 
     try {
+      this.isRunning = false;
+      
       if (this.server) {
         this.server.stop();
+        logger.info("daemon", "Server stopped");
       }
       
       if (existsSync(this.socketPath)) {
         unlinkSync(this.socketPath);
+        logger.info("daemon", "Socket file removed");
       }
 
-      this.isRunning = false;
       logger.info("daemon", t("Daemon stopped"));
-      process.exit(0);
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error("daemon", `Error stopping daemon: ${err.message}`, err);
+    } finally {
+      process.exit(0);
     }
   }
 
