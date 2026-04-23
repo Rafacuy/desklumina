@@ -40,7 +40,6 @@ const safePatterns: RegExp[] = [
   /^\s*tail\b/i,
   /^\s*wc\b/i,
   /^\s*grep\b/i,
-  /^\s*find\b/i,
   /^\s*stat\b/i,
 ];
 
@@ -283,8 +282,6 @@ export function isDangerousCommand(command: string): boolean {
  * Check command for dangerous patterns
  */
 export function checkDangerousCommand(command: string): DangerousPattern | null {
-  if (isSafeCommand(command)) return null;
-
   for (const entry of dangerousPatterns) {
     if (entry.pattern.test(command)) {
       return entry;
@@ -297,15 +294,6 @@ export function checkDangerousCommand(command: string): DangerousPattern | null 
  * Analyze command for dangerous patterns
  */
 export function analyzeCommand(command: string): CommandAnalysis {
-  if (isSafeCommand(command)) {
-    return {
-      isDangerous: false,
-      matches: [],
-      highestSeverity: "safe",
-      summary: "Safe command",
-    };
-  }
-
   const matches: DangerousPattern[] = [];
   for (const entry of dangerousPatterns) {
     if (entry.pattern.test(command)) {

@@ -5,6 +5,13 @@ describe("Security - Dangerous Command Detection", () => {
   test("detects rm -rf commands", () => {
     expect(isDangerousCommand("rm -rf /")).toBe(true);
     expect(isDangerousCommand("rm -rf /home")).toBe(true);
+    expect(isDangerousCommand("find . -exec rm -rf / \\;")).toBe(true);
+  });
+
+  test("detects shell injection/operators", () => {
+    expect(isDangerousCommand("ls || rm -rf /")).toBe(true);
+    expect(isDangerousCommand("echo test && sudo reboot")).toBe(true);
+    expect(isDangerousCommand("cat file | bash")).toBe(true);
   });
 
   test("detects sudo commands", () => {
@@ -22,6 +29,7 @@ describe("Security - Dangerous Command Detection", () => {
     expect(isDangerousCommand("cat file.txt")).toBe(false);
     expect(isDangerousCommand("pwd")).toBe(false);
     expect(isDangerousCommand("echo test")).toBe(false);
+    expect(isDangerousCommand("find . -name '*.ts'")).toBe(false);
   });
 
   test("analyzeCommand returns correct structure", () => {

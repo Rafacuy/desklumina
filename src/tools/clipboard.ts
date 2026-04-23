@@ -60,10 +60,21 @@ export async function clipboard(action: string): Promise<ToolExecutionResult> {
       },
       set: async () => {
         if (!arg) return failure("set", "❌ Clipboard set requires text content", undefined, "Missing clipboard content", 2);
-        const command = `printf %s "${arg.replace(/"/g, '\\"')}" | clipcatctl insert`;
-        const result = await execute(command);
-        if (result.exitCode !== 0) return failure("set", `❌ Error: ${result.stderr}`, command, result.stderr, result.exitCode);
-        return success("set", "✓ Clipboard set", command, result.stdout);
+        
+        try {
+          const proc = Bun.spawn(["clipcatctl", "insert", arg]);
+          
+          const exitCode = await proc.exited;
+          
+          if (exitCode !== 0) {
+            return failure("set", `❌ Error: clipcatctl exited with code ${exitCode}`, "clipcatctl insert", `Exit code ${exitCode}`, exitCode);
+          }
+          
+          return success("set", "✓ Clipboard set", "clipcatctl insert", "");
+        } catch (error) {
+          const err = error instanceof Error ? error : new Error(String(error));
+          return failure("set", `❌ Error: ${err.message}`, "clipcatctl insert", err.message, 1);
+        }
       },
       clear: async () => {
         const command = "clipcatctl clear";

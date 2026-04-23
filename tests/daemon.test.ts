@@ -69,6 +69,10 @@ describe("DeskLuminaDaemon", () => {
 
     serveSpy = spyOn(Bun, "serve").mockImplementation((opts: any) => {
       capturedFetch = opts.fetch;
+      // Simulate socket creation for tests
+      if (opts.unix) {
+        writeFileSync(opts.unix, "");
+      }
       return { stop: mock(() => {}), port: 0 } as any;
     });
 
@@ -110,6 +114,13 @@ describe("DeskLuminaDaemon", () => {
     expect(serveSpy).toHaveBeenCalledWith(
       expect.objectContaining({ unix: socketPath })
     );
+  });
+
+  test("start sets restrictive permissions (0600) on socket file", async () => {
+    await daemon.start();
+    const { statSync } = require("fs");
+    const stats = statSync(socketPath);
+    expect(stats.mode & 0o777).toBe(0o600);
   });
 
   test("start removes existing socket file before binding", async () => {

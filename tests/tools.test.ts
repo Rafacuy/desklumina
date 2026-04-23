@@ -50,6 +50,13 @@ describe("Clipboard Tool", () => {
     const result = await clipboard("get");
     expect(typeof result.result).toBe("string");
   });
+
+  test("clipboard set action avoids shell injection", async () => {
+    const complexString = '"; rm -rf /; echo "';
+    const result = await clipboard(`set ${complexString}`);
+    expect(result.command).toBe("clipcatctl insert");
+    expect(result.success).toBeDefined();
+  });
 });
 
 describe("Notify Tool", () => {

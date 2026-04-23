@@ -2,7 +2,7 @@ import { t } from "../utils";
 import { Lumina, ChatManager } from "../core";
 import { logger } from "../logger";
 import { env } from "../config/env";
-import { existsSync, mkdirSync, unlinkSync } from "fs";
+import { existsSync, mkdirSync, unlinkSync, chmodSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 import type { ToolCallbackPayload } from "../types";
@@ -116,6 +116,11 @@ export class DeskLuminaDaemon {
           }
         }
       });
+
+      // Set restrictive permissions on the socket file
+      if (existsSync(this.socketPath)) {
+        chmodSync(this.socketPath, 0600);
+      }
 
       this.isRunning = true;
       logger.info("daemon", t(`Daemon started on ${this.socketPath}`));
