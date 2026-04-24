@@ -36,6 +36,21 @@ function result(
   };
 }
 
+async function spawnSafe(args: string[]): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  const proc = Bun.spawn(args, {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+
+  const [stdout, stderr] = await Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+  ]);
+  const exitCode = await proc.exited;
+
+  return { stdout, stderr, exitCode };
+}
+
 export async function fileOp(operation: string): Promise<ToolExecutionResult> {
   logger.info("files", `Operation: ${operation}`);
 
@@ -52,10 +67,11 @@ export async function fileOp(operation: string): Promise<ToolExecutionResult> {
     const ops: Record<string, () => Promise<ToolExecutionResult>> = {
       create_dir: async () => {
         if (!args[0]) return result("create_dir", "❌ Path not found", false, undefined, undefined, "Missing path", 2);
-        const command = `mkdir -p "${args[0]}"`;
-        const commandResult = await execute(command);
-        if (commandResult.exitCode !== 0) return result("create_dir", `❌ Failed: ${commandResult.stderr}`, false, command, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
-        return result("create_dir", `✓ Folder "${args[0]}" created`, true, command, commandResult.stdout, commandResult.stderr, 0);
+        const command = ["mkdir", "-p", args[0]!];
+        const commandResult = await spawnSafe(command);
+        const cmdStr = command.join(" ");
+        if (commandResult.exitCode !== 0) return result("create_dir", `❌ Failed: ${commandResult.stderr}`, false, cmdStr, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
+        return result("create_dir", `✓ Folder "${args[0]}" created`, true, cmdStr, commandResult.stdout, commandResult.stderr, 0);
       },
       delete: async () => {
         if (!args[0]) return result("delete", "❌ Path not found", false, undefined, undefined, "Missing path", 2);
@@ -67,38 +83,42 @@ export async function fileOp(operation: string): Promise<ToolExecutionResult> {
           await rofiConfirm("Delete Operation", `Path: ${args[0]}\n\nThis is a critical system path!`, "critical");
         }
 
-        const command = `rm -rf "${args[0]}"`;
-        const commandResult = await execute(command);
-        if (commandResult.exitCode !== 0) return result("delete", `❌ Failed: ${commandResult.stderr}`, false, command, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
-        return result("delete", `✓ "${args[0]}" deleted`, true, command, commandResult.stdout, commandResult.stderr, 0);
+        const command = ["rm", "-rf", args[0]!];
+        const commandResult = await spawnSafe(command);
+        const cmdStr = command.join(" ");
+        if (commandResult.exitCode !== 0) return result("delete", `❌ Failed: ${commandResult.stderr}`, false, cmdStr, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
+        return result("delete", `✓ "${args[0]}" deleted`, true, cmdStr, commandResult.stdout, commandResult.stderr, 0);
       },
       move: async () => {
         if (args.length < 2) return result("move", "❌ Source and destination required", false, undefined, undefined, "Source and destination required", 2);
-        const src = args[0];
-        const dest = args[1];
+        const src = args[0]!;
+        const dest = args[1]!;
         if (!src || !dest) return result("move", "❌ Incomplete path", false, undefined, undefined, "Incomplete path", 2);
         if (isDangerousPath(src) || isDangerousPath(dest)) {
           await rofiConfirm("Move Operation", `From: ${src}\nTo: ${dest}\n\nInvolves critical system path!`, "high");
         }
 
-        const command = `mv "${src}" "${dest}"`;
-        const commandResult = await execute(command);
-        if (commandResult.exitCode !== 0) return result("move", `❌ Failed: ${commandResult.stderr}`, false, command, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
-        return result("move", `✓ Moved to "${dest}"`, true, command, commandResult.stdout, commandResult.stderr, 0);
+        const command = ["mv", src, dest];
+        const commandResult = await spawnSafe(command);
+        const cmdStr = command.join(" ");
+        if (commandResult.exitCode !== 0) return result("move", `❌ Failed: ${commandResult.stderr}`, false, cmdStr, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
+        return result("move", `✓ Moved to "${dest}"`, true, cmdStr, commandResult.stdout, commandResult.stderr, 0);
       },
       copy: async () => {
         if (args.length < 2) return result("copy", "❌ Source and destination required", false, undefined, undefined, "Source and destination required", 2);
-        const command = `cp -r "${args[0]}" "${args[1]}"`;
-        const commandResult = await execute(command);
-        if (commandResult.exitCode !== 0) return result("copy", `❌ Failed: ${commandResult.stderr}`, false, command, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
-        return result("copy", `✓ Copied to "${args[1]}"`, true, command, commandResult.stdout, commandResult.stderr, 0);
+        const command = ["cp", "-r", args[0]!, args[1]!];
+        const commandResult = await spawnSafe(command);
+        const cmdStr = command.join(" ");
+        if (commandResult.exitCode !== 0) return result("copy", `❌ Failed: ${commandResult.stderr}`, false, cmdStr, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
+        return result("copy", `✓ Copied to "${args[1]}"`, true, cmdStr, commandResult.stdout, commandResult.stderr, 0);
       },
       list: async () => {
         const path = args[0] || ".";
-        const command = `ls -la "${path}"`;
-        const commandResult = await execute(command);
-        if (commandResult.exitCode !== 0) return result("list", `❌ Failed: ${commandResult.stderr}`, false, command, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
-        return result("list", commandResult.stdout, true, command, commandResult.stdout, commandResult.stderr, 0);
+        const command = ["ls", "-la", path];
+        const commandResult = await spawnSafe(command);
+        const cmdStr = command.join(" ");
+        if (commandResult.exitCode !== 0) return result("list", `❌ Failed: ${commandResult.stderr}`, false, cmdStr, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
+        return result("list", commandResult.stdout, true, cmdStr, commandResult.stdout, commandResult.stderr, 0);
       },
       read: async () => {
         if (!args[0]) return result("read", "❌ Path not found", false, undefined, undefined, "Missing path", 2);

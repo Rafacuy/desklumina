@@ -63,7 +63,7 @@ async function main() {
     }
   } else if (mode === "--daemon-status") {
     const client = new DaemonClient();
-    if (client.isDaemonRunning()) {
+    if (await client.isDaemonRunning()) {
       console.log(t("✓ Daemon is running"));
       console.log(t(`Socket: ${client.getSocketPath()}`));
     } else {

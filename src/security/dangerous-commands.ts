@@ -46,9 +46,33 @@ const safePatterns: RegExp[] = [
 export const dangerousPatterns: DangerousPattern[] = [
   // === CRITICAL ===
   {
+    pattern: /\$\(/,
+    category: "command_substitution",
+    description: "Command substitution $(...)",
+    severity: "critical",
+  },
+  {
+    pattern: /`/,
+    category: "command_substitution",
+    description: "Command substitution backticks",
+    severity: "critical",
+  },
+  {
+    pattern: /<\(/,
+    category: "process_substitution",
+    description: "Process substitution <(...)",
+    severity: "critical",
+  },
+  {
     pattern: /\brm\s+.*(-r|-rf|-fr|--recursive)/i,
     category: "file_deletion_recursive",
     description: "Recursive file/directory deletion",
+    severity: "critical",
+  },
+  {
+    pattern: /\brm\s+.*--no-preserve-root\b/i,
+    category: "system_deletion",
+    description: "Dangerous system-level deletion",
     severity: "critical",
   },
   {

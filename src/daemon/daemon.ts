@@ -2,9 +2,10 @@ import { t } from "../utils";
 import { Lumina, ChatManager } from "../core";
 import { logger } from "../logger";
 import { env } from "../config/env";
-import { existsSync, mkdirSync, unlinkSync, chmodSync } from "fs";
+import { existsSync, mkdirSync, unlinkSync, chmodSync, writeFileSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
+import { randomUUID } from "crypto";
 import type { ToolCallbackPayload } from "../types";
 
 export class DeskLuminaDaemon {
@@ -12,12 +13,15 @@ export class DeskLuminaDaemon {
   private chatManager: ChatManager;
   private isRunning = false;
   private socketPath: string;
+  private tokenPath: string;
   private server?: any;
+  private token?: string;
 
   constructor() {
     this.chatManager = new ChatManager();
     this.lumina = new Lumina(this.chatManager);
     this.socketPath = join(homedir(), ".config/desklumina/daemon.sock");
+    this.tokenPath = join(homedir(), ".config/desklumina/.daemon-token");
     this.ensureSocketDir();
   }
 
@@ -28,6 +32,13 @@ export class DeskLuminaDaemon {
     }
   }
 
+  private generateToken(): string {
+    const token = randomUUID();
+    writeFileSync(this.tokenPath, token, { mode: 0o600 });
+    this.token = token;
+    return token;
+  }
+
   async start(): Promise<void> {
     if (this.isRunning) {
       logger.warn("daemon", t("Daemon already running"));
@@ -35,6 +46,9 @@ export class DeskLuminaDaemon {
     }
 
     try {
+      // Generate new token for this session
+      this.generateToken();
+
       // Clean up existing socket
       if (existsSync(this.socketPath)) {
         unlinkSync(this.socketPath);
@@ -45,6 +59,23 @@ export class DeskLuminaDaemon {
         fetch: async (req) => {
           try {
             const url = new URL(req.url);
+
+            // Health check endpoint (no auth needed for health check from localhost)
+            if (url.pathname === "/health") {
+              return new Response(JSON.stringify({ status: "ok" }), {
+                headers: { "Content-Type": "application/json" }
+              });
+            }
+
+            // Authentication check
+            const authHeader = req.headers.get("Authorization");
+            if (authHeader !== `Bearer ${this.token}`) {
+              return new Response(JSON.stringify({ error: "Unauthorized" }), {
+                status: 401,
+                headers: { "Content-Type": "application/json" }
+              });
+            }
+
             const command = url.searchParams.get("cmd");
             
             if (!command) {
@@ -119,7 +150,7 @@ export class DeskLuminaDaemon {
 
       // Set restrictive permissions on the socket file
       if (existsSync(this.socketPath)) {
-        chmodSync(this.socketPath, 0600);
+        chmodSync(this.socketPath, 0o600);
       }
 
       this.isRunning = true;
@@ -158,6 +189,11 @@ export class DeskLuminaDaemon {
       if (existsSync(this.socketPath)) {
         unlinkSync(this.socketPath);
         logger.info("daemon", "Socket file removed");
+      }
+
+      if (existsSync(this.tokenPath)) {
+        unlinkSync(this.tokenPath);
+        logger.info("daemon", "Token file removed");
       }
 
       logger.info("daemon", t("Daemon stopped"));

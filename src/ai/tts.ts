@@ -3,6 +3,10 @@ import { logger } from "../logger";
 import { settingsManager } from "../core/settings-manager";
 import { Communicate } from "edge-tts-universal";
 import { spawn } from "bun";
+import { randomUUID } from "crypto";
+import { join } from "path";
+import { homedir } from "os";
+import { existsSync, mkdirSync, unlinkSync } from "fs";
 
 interface ChunkJob {
   id: number;
@@ -207,19 +211,29 @@ export async function textToSpeech(text: string): Promise<void> {
     return;
   }
 
-  (async () => {
+  const tmpDir = join(homedir(), ".config/desklumina/tmp");
+  if (!existsSync(tmpDir)) {
     try {
-      const chunker = new AdaptiveChunker();
-      const chunks = chunker.chunk(cleaned);
-      
-      const jobs: ChunkJob[] = chunks.map((chunk, i) => ({
-        id: i,
-        text: chunk,
-        audioFile: `/tmp/lumina-tts-${Date.now()}-${i}.mp3`,
-        ready: false,
-        error: false,
-      }));
+      mkdirSync(tmpDir, { recursive: true });
+    } catch (err) {
+      logger.error("tts", `Failed to create temp directory: ${err}`);
+      return;
+    }
+  }
 
+  (async () => {
+    const chunker = new AdaptiveChunker();
+    const chunks = chunker.chunk(cleaned);
+    
+    const jobs: ChunkJob[] = chunks.map((chunk, i) => ({
+      id: i,
+      text: chunk,
+      audioFile: join(tmpDir, `tts-${randomUUID()}-${i}.mp3`),
+      ready: false,
+      error: false,
+    }));
+
+    try {
       const firstChunkLen = chunks[0]?.length ?? 0;
       logger.info("tts", `Adaptive chunking: ${jobs.length} chunks (first: ${firstChunkLen} chars)`);
 
@@ -266,10 +280,6 @@ export async function textToSpeech(text: string): Promise<void> {
           }
           
           nextPlay++;
-
-          setTimeout(() => {
-            Bun.spawn(["rm", "-f", job.audioFile], { detached: true });
-          }, 5000);
         }
       };
 
@@ -288,6 +298,17 @@ export async function textToSpeech(text: string): Promise<void> {
 
     } catch (error) {
       logger.error("tts", `Failed: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      // Robust cleanup of all temp files
+      for (const job of jobs) {
+        try {
+          if (existsSync(job.audioFile)) {
+            unlinkSync(job.audioFile);
+          }
+        } catch (err) {
+          logger.warn("tts", `Failed to cleanup temp file ${job.audioFile}: ${err}`);
+        }
+      }
     }
   })();
 }

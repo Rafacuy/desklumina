@@ -167,19 +167,47 @@ describe("DeskLuminaDaemon", () => {
   // --- HTTP fetch handler ---
 
   describe("fetch handler", () => {
+    let token: string;
+
     beforeEach(async () => {
       await daemon.start();
+      const tokenPath = join(homedir(), ".config/desklumina/.daemon-token");
+      const { readFileSync } = require("fs");
+      token = readFileSync(tokenPath, "utf8").trim();
     });
 
-    test("returns 400 when cmd param is missing", async () => {
-      const res = await capturedFetch!(new Request("http://localhost/"));
+    test("returns 200 on health check (no auth needed)", async () => {
+      const res = await capturedFetch!(new Request("http://localhost/health"));
+      expect(res.status).toBe(200);
+      const body = await res.json() as any;
+      expect(body).toHaveProperty("status", "ok");
+    });
+
+    test("returns 401 when Authorization header is missing", async () => {
+      const res = await capturedFetch!(new Request("http://localhost/?cmd=test"));
+      expect(res.status).toBe(401);
+    });
+
+    test("returns 401 when Authorization token is invalid", async () => {
+      const res = await capturedFetch!(new Request("http://localhost/?cmd=test", {
+        headers: { "Authorization": "Bearer invalid" }
+      }));
+      expect(res.status).toBe(401);
+    });
+
+    test("returns 400 when cmd param is missing with valid auth", async () => {
+      const res = await capturedFetch!(new Request("http://localhost/", {
+        headers: { "Authorization": `Bearer ${token}` }
+      }));
       expect(res.status).toBe(400);
       const body = await res.json() as any;
       expect(body).toHaveProperty("error", "Missing command");
     });
 
-    test("returns 200 with success on valid command", async () => {
-      const res = await capturedFetch!(new Request("http://localhost/?cmd=open+telegram"));
+    test("returns 200 with success on valid command and auth", async () => {
+      const res = await capturedFetch!(new Request("http://localhost/?cmd=open+telegram", {
+        headers: { "Authorization": `Bearer ${token}` }
+      }));
       expect(res.status).toBe(200);
       const body = await res.json() as any;
       expect(body).toHaveProperty("success", true);
@@ -187,7 +215,9 @@ describe("DeskLuminaDaemon", () => {
     });
 
     test("response has application/json Content-Type", async () => {
-      const res = await capturedFetch!(new Request("http://localhost/?cmd=test"));
+      const res = await capturedFetch!(new Request("http://localhost/?cmd=test", {
+        headers: { "Authorization": `Bearer ${token}` }
+      }));
       expect(res.headers.get("Content-Type")).toContain("application/json");
     });
 
@@ -195,7 +225,9 @@ describe("DeskLuminaDaemon", () => {
       mockChat.mockImplementationOnce(async (_: string, cb: (chunk: string, toolOutput?: any) => void) => {
         cb('Done!\n```json\n{"tool":"app","args":"telegram"}\n```');
       });
-      const res = await capturedFetch!(new Request("http://localhost/?cmd=open+telegram"));
+      const res = await capturedFetch!(new Request("http://localhost/?cmd=open+telegram", {
+        headers: { "Authorization": `Bearer ${token}` }
+      }));
       const body = await res.json() as any;
       expect(body.response).not.toContain("```json");
     });
@@ -204,7 +236,9 @@ describe("DeskLuminaDaemon", () => {
       mockChat.mockImplementationOnce(async (_: string, cb: (chunk: string, toolOutput?: any) => void) => {
         cb('```json\n{"tool":"app","args":"telegram"}\n```');
       });
-      const res = await capturedFetch!(new Request("http://localhost/?cmd=open+telegram"));
+      const res = await capturedFetch!(new Request("http://localhost/?cmd=open+telegram", {
+        headers: { "Authorization": `Bearer ${token}` }
+      }));
       const body = await res.json() as any;
       expect(body.response).toBe("Done.");
     });
@@ -214,7 +248,9 @@ describe("DeskLuminaDaemon", () => {
         cb("response text");
         cb("", { type: "results", text: "tool callback output", results: mockCurrentChat.messages[0].toolResults });
       });
-      const res = await capturedFetch!(new Request("http://localhost/?cmd=file+search"));
+      const res = await capturedFetch!(new Request("http://localhost/?cmd=file+search", {
+        headers: { "Authorization": `Bearer ${token}` }
+      }));
       const body = await res.json() as any;
       expect(body.response).toBe("response text");
       expect(body.status).toBe("search_complete");
@@ -229,7 +265,9 @@ describe("DeskLuminaDaemon", () => {
       mockChat.mockImplementationOnce(async () => {
         throw new Error("API failure");
       });
-      const res = await capturedFetch!(new Request("http://localhost/?cmd=crash"));
+      const res = await capturedFetch!(new Request("http://localhost/?cmd=crash", {
+        headers: { "Authorization": `Bearer ${token}` }
+      }));
       expect(res.status).toBe(500);
       const body = await res.json() as any;
       expect(body).toHaveProperty("error", "API failure");
