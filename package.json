@@ -23,7 +23,7 @@
     "test:verbose": "bun test --verbose"
   },
   "dependencies": {
-    "agent": ".",
+    "desklumina": ".",
     "edge-tts-universal": "^1.4.0"
   }
 }
