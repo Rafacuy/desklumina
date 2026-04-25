@@ -101,6 +101,17 @@ A central mapping of tool names (like `app`, `file`, `terminal`) to their TypeSc
 
 ---
 
+## Recent Security Hardening (RECENTLY)
+
+DeskLumina has recently undergone a comprehensive security audit and hardening process. Key improvements include:
+
+1.  **Shell Injection Prevention**: All file operations (mkdir, rm, mv, cp, ls) now use direct array-based spawning, eliminating the risk of command injection via malicious path names.
+2.  **Command Substitution Detection**: The security analyzer now detects and blocks nested command substitution (`$(...)`, backticks) in terminal commands.
+3.  **Secure TTS Lifecycle**: Text-to-Speech temporary files use `randomUUID` naming and are stored in a private directory with guaranteed `try/finally` cleanup.
+4.  **Daemon Authentication**: Background services now require a session token for communication, preventing unauthorized local access.
+
+---
+
 ## Security Model
 
 DeskLumina implements a **Human-in-the-Loop** security model.

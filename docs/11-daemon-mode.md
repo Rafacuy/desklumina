@@ -18,12 +18,23 @@ Optimize DeskLumina for instant response times with persistent background execut
 ## Introduction
 
 Daemon mode runs DeskLumina as a persistent background process. The daemon stays active and listens for incoming commands over a **Unix Domain Socket** at `~/.config/desklumina/daemon.sock`.
-
 ---
 
 ## Why Daemon Mode?
 
-- Avoids starting a new Bun process for every command.\n+- Provides a stable socket endpoint for hotkeys and scripts.\n+- Each request is handled independently by the daemon (a new chat is created per command in the daemon handler).
+- Avoids starting a new Bun process for every command.
+- Provides a stable socket endpoint for hotkeys and scripts.
+- Each request is handled independently by the daemon (a new chat is created per command in the daemon handler).
+
+---
+
+## Security & Authentication
+
+To prevent unauthorized access from other local processes, the daemon implements a token-based authentication system.
+
+1.  **Token Generation**: A unique session token is generated when the daemon starts and saved to `~/.config/desklumina/.daemon-token` with restricted permissions (`0600`).
+2.  **Authorization**: All requests sent to the daemon socket must include this token in the `Authorization` header as a `Bearer` token.
+3.  **Client Handling**: The `DaemonClient` automatically retrieves this token from the configuration directory before sending commands.
 
 ---
 
@@ -98,7 +109,7 @@ super + b
 
 ## Troubleshooting
 
-- **Socket Already in Use**: If the daemon crashes, the socket file might remain. Run `rm ~/.config/desklumina/daemon.sock` and restart.
+- **Socket Already in Use**: If the daemon crashes, the socket file might remain. The system now performs an automated **Health Check** by attempting to fetch `http://localhost/health`. If the socket is stale, it is automatically removed and refreshed.
 - **Connection Refused**: Ensure the daemon is actually running with `bun run daemon:status`.
 - **Logs**: Check `~/.config/desklumina/logs/general.log` and `~/.config/desklumina/logs/error.log`.
 

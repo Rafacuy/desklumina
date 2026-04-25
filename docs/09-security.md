@@ -39,6 +39,10 @@ Every command passed to the **Terminal** or **File** tools is scanned by a rule-
 | **High** | More destructive operations. | **Require confirmation.** |
 | **Critical** | High risk of data loss/system failure. | **Require confirmation.** |
 
+### Command Substitution Protection
+
+DeskLumina explicitly detects and blocks nested command execution within terminal strings. Patterns for command substitution (`$(...)`, `` `...` ``) and process substitution (`<(...)`) are classified as **Critical** risks. This prevents bypass attacks where a dangerous command is hidden inside an otherwise safe-looking command.
+
 ---
 
 ## Confirmation System
@@ -53,12 +57,12 @@ When a command is flagged as **High** or **Critical** severity, DeskLumina pause
 
 ## Path Restrictions
 
-The **File** tool implements restrictions to prevent accidental modification of system-critical files.
+The **File** tool implements restrictions to prevent accidental modification of system-critical files. Path interpolation is handled via array-based spawning, which eliminates shell injection vulnerabilities by bypassing the shell layer entirely.
 
 ### Protected Directories:
 - `/bin`, `/boot`, `/dev`, `/etc`, `/lib`, `/root`, `/sys`, `/usr`, `/var`
 
-Any operation (move, delete, write) targeting these paths will trigger a **High** severity confirmation, even if the command itself isn't inherently flagged as dangerous.
+Any operation (move, delete, write) targeting these paths will trigger a **High** severity confirmation, even if the command itself isn't inherently flagged as dangerous. Normalization and path expansion (e.g., `~` to `$HOME`) are performed before security analysis to ensure consistent protection.
 
 ---
 

@@ -104,9 +104,9 @@ Advanced search operations use `locate` as the primary indexed backend and suppo
 ### Notes
 
 - Paths starting with `~` are expanded to `$HOME`.
+- File operations (`mkdir`, `rm`, `mv`, `cp`, `ls`) are executed via direct array-based spawning (`Bun.spawn`). This eliminates shell injection vulnerabilities by bypassing the shell entirely.
 - Some operations trigger a Rofi confirmation when they involve critical system paths (see `src/tools/files.ts`).
-- If the first token is not a supported operation, `file` now returns a validation error instead of executing shell commands.
-- `find <dir> <name>` remains supported as a legacy convenience form and is normalized through the indexed search backend.
+- If the first token is not a supported operation, `file` now returns a validation error instead of executing shell commands. There is no fallback to arbitrary shell execution.
 - Advanced search results are structured: DeskLumina stores matched files, selected file, preview data, actions performed, and summary counts.
 - Preview returns file contents for readable text files and directory listings for folders; binary files return metadata without dumping raw bytes.
 - Search history is stored under `~/.config/desklumina/file-search-history.json`.
