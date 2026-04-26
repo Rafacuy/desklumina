@@ -6,17 +6,25 @@ const VALID_TOOLS = new Set(["app", "terminal", "file", "media", "clipboard", "n
 const MAX_JSON_LENGTH = 50000; // 50KB limit
 const MAX_JSON_DEPTH = 5;
 
-function checkDepth(str: string, maxDepth: number): boolean {
-  let depth = 0;
-  for (const char of str) {
-    if (char === "{" || char === "[") {
-      depth++;
-      if (depth > maxDepth) return false;
-    } else if (char === "}" || char === "]") {
-      depth--;
-    }
+function getActualDepth(obj: any): number {
+  if (obj === null || typeof obj !== "object") return 0;
+  if (Array.isArray(obj)) {
+    const depths = obj.map(getActualDepth);
+    return 1 + (depths.length > 0 ? Math.max(...depths) : 0);
   }
-  return depth === 0; // Ensure balanced
+  const values = Object.values(obj);
+  const depths = values.map(getActualDepth);
+  return 1 + (depths.length > 0 ? Math.max(...depths) : 0);
+}
+
+function checkDepth(str: string, maxDepth: number): boolean {
+  try {
+    const parsed = JSON.parse(str);
+    return getActualDepth(parsed) <= maxDepth;
+  } catch {
+    // If it can't be parsed, it's invalid anyway
+    return false;
+  }
 }
 
 function toParsedToolCall(candidate: unknown): ParsedToolCall | null {

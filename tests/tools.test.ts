@@ -57,6 +57,13 @@ describe("Clipboard Tool", () => {
     expect(result.command).toBe("clipcatctl insert");
     expect(result.success).toBeDefined();
   });
+
+  test("clipboard set action rejects excessively large content", async () => {
+    const largeContent = "a".repeat(1024 * 1024 + 1); // 1MB + 1 byte
+    const result = await clipboard(`set ${largeContent}`);
+    expect(result.success).toBe(false);
+    expect(result.result).toContain("too large");
+  });
 });
 
 describe("Notify Tool", () => {

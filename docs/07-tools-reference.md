@@ -147,6 +147,9 @@ Manage your clipboard via `clipcatctl`.
 - `set <text>`: `clipcatctl insert` (piped from `echo`)
 - `clear`: `clipcatctl clear`
 
+### Limitations:
+- Maximum content size: 1MB (1,048,576 bytes). Content exceeding this limit will be rejected.
+
 ---
 
 ## Terminal Tool (`terminal`)

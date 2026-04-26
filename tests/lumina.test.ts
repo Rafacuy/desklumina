@@ -75,9 +75,23 @@ mock.module("../src/ui/tool-display", () => ({
   },
 }));
 
-mock.module("../src/core/settings-manager", () => ({
-  settingsManager: {
-    get: () => ({
+mock.module("../src/utils", () => ({
+  t: (value: string) => value,
+}));
+
+import { Lumina } from "../src/core/lumina";
+import { ChatManager } from "../src/core/chat-manager";
+import { settingsManager } from "../src/core/settings-manager";
+import { spyOn, afterAll, beforeAll } from "bun:test";
+
+describe("Lumina", () => {
+  let getSpy: any;
+  let saveSpy: any;
+  let toggleSpy: any;
+
+  beforeAll(() => {
+    // Mock settingsManager to avoid side effects and provide controlled state
+    getSpy = spyOn(settingsManager, "get").mockReturnValue({
       language: "en",
       features: {
         tts: false,
@@ -89,18 +103,17 @@ mock.module("../src/core/settings-manager", () => ({
         voiceId: "en-US-AvaNeural",
         speed: 1,
       },
-    }),
-  },
-}));
+    });
+    saveSpy = spyOn(settingsManager, "save").mockResolvedValue(Promise.resolve() as any);
+    toggleSpy = spyOn(settingsManager, "toggleFeature").mockImplementation(() => {});
+  });
 
-mock.module("../src/utils", () => ({
-  t: (value: string) => value,
-}));
+  afterAll(() => {
+    getSpy.mockRestore();
+    saveSpy.mockRestore();
+    toggleSpy.mockRestore();
+  });
 
-import { Lumina } from "../src/core/lumina";
-import { ChatManager } from "../src/core/chat-manager";
-
-describe("Lumina", () => {
   beforeEach(() => {
     streamInvocations = 0;
     capturedMessages = [];

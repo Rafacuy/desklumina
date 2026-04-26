@@ -38,7 +38,7 @@ function failure(
 }
 
 export async function clipboard(action: string): Promise<ToolExecutionResult> {
-  logger.info("clipboard", `Action: ${action}`);
+  logger.info("clipboard", `Action: ${action.slice(0, 100)}${action.length > 100 ? "..." : ""}`);
 
   try {
     const parts = action.trim().split(/\s+/);
@@ -61,6 +61,11 @@ export async function clipboard(action: string): Promise<ToolExecutionResult> {
       set: async () => {
         if (!arg) return failure("set", "❌ Clipboard set requires text content", undefined, "Missing clipboard content", 2);
         
+        const MAX_CLIPBOARD_SIZE = 1024 * 1024; // 1MB
+        if (arg.length > MAX_CLIPBOARD_SIZE) {
+          return failure("set", `❌ Clipboard content too large (${arg.length} > ${MAX_CLIPBOARD_SIZE})`, undefined, "Content exceeds 1MB limit", 2);
+        }
+
         try {
           const proc = Bun.spawn(["clipcatctl", "insert", arg]);
           

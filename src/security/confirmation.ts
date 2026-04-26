@@ -39,6 +39,10 @@ export async function rofiConfirm(
   const cancelLabel = `󰅖 ${t("Cancel")}`;
   const options = [proceedLabel, cancelLabel];
  
+  if (!(await Bun.which("rofi"))) {
+    throw new Error(`${t("rofi is not installed")}. ${t("Please install it to use security confirmations")}.`);
+  }
+
   const themeOverride = [
     `window { width: 500px; border: 2px; border-radius: 24px; border-color: ${iconColor}; background-color: @bg; }`,
     "mainbox { children: [message, listview]; padding: 10px; }",
