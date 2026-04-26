@@ -24,18 +24,36 @@ async function runProbe(command: string): Promise<string | null> {
   }
 }
 
-async function getSystemContext(): Promise<string> {
+let cachedContext: string | null = null;
+let cachedAt = 0;
+const CACHE_TTL_MS = 3000;
+
+export async function getSystemContext(): Promise<string> {
+  const now = Date.now();
+  if (cachedContext && now - cachedAt < CACHE_TTL_MS) {
+    return cachedContext;
+  }
+
   const [volume, track, activeWindow] = await Promise.all([
     runProbe("pactl get-sink-volume @DEFAULT_SINK@ | head -n 1 | sed -E 's/.* ([0-9]+%) .*/\\1/'"),
     runProbe("playerctl metadata --format '{{status}} :: {{artist}} - {{title}}' 2>/dev/null || mpc current"),
     runProbe("xdotool getactivewindow getwindowname 2>/dev/null || wmctrl -lp | awk '$1 {print substr($0, index($0,$5))}' | head -n 1"),
   ]);
 
-  return [
+  cachedContext = [
     `Volume: ${volume || "Unavailable"}`,
     `Current track: ${track || "Unavailable"}`,
     `Active window: ${activeWindow || "Unavailable"}`,
   ].join("\n");
+
+  cachedAt = now;
+  return cachedContext;
+}
+
+/** @internal - For testing only */
+export function _resetPromptCache() {
+  cachedContext = null;
+  cachedAt = 0;
 }
 
 const EXAMPLES = {

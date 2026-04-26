@@ -1,8 +1,9 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync, renameSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 import type { AIMessage, AIRequestContext, Chat, ChatMessage, ToolCall, ToolResult } from "../types";
 import { settingsManager } from "./settings-manager";
+import { logger } from "../logger";
 import { t } from "../utils/i18n";
 
 const TOOL_LABELS: Record<string, string> = {
@@ -135,7 +136,14 @@ export class ChatManager {
   saveChat(chat: Chat): void {
     ensureChatDir();
     const path = join(CHAT_DIR, `${chat.id}.json`);
-    writeFileSync(path, JSON.stringify(chat, null, 2));
+    const tempPath = `${path}.tmp`;
+    try {
+      writeFileSync(tempPath, JSON.stringify(chat, null, 2));
+      renameSync(tempPath, path);
+    } catch (err) {
+      logger.error("chat-manager", `Failed to save chat: ${err}`);
+      if (existsSync(tempPath)) unlinkSync(tempPath);
+    }
   }
 
   getCurrentChat(): Chat | null {

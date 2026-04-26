@@ -1,11 +1,22 @@
-import { describe, test, expect, beforeEach } from "bun:test";
+import { describe, test, expect, beforeEach, spyOn } from "bun:test";
 import { ChatManager } from "../src/core/chat-manager";
+import * as fs from "fs";
 
 describe("ChatManager", () => {
   let chatManager: ChatManager;
 
   beforeEach(() => {
     chatManager = new ChatManager();
+  });
+
+  test("saveChat uses atomic write (renameSync)", () => {
+    const renameSpy = spyOn(fs, "renameSync");
+    const chat = chatManager.createChat("Test atomic write");
+    
+    chatManager.saveChat(chat);
+    
+    expect(renameSpy).toHaveBeenCalled();
+    renameSpy.mockRestore();
   });
 
   test("creates new chat", () => {

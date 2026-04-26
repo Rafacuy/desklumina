@@ -1,6 +1,6 @@
 import { homedir } from "os";
 import { join } from "path";
-import { existsSync, readFileSync, mkdirSync, writeFileSync } from "fs";
+import { existsSync, readFileSync, mkdirSync, writeFileSync, renameSync, unlinkSync } from "fs";
 import type { Settings } from "../types";
 import { DEFAULT_SETTINGS } from "../types";
 import { logger } from "../logger";
@@ -11,6 +11,7 @@ const SETTINGS_PATH = join(SETTINGS_DIR, "settings.json");
 
 export class SettingsManager {
   private settings: Settings = DEFAULT_SETTINGS;
+  private savePromise: Promise<void> = Promise.resolve();
 
   constructor() {
     this.ensureDir();
@@ -52,19 +53,26 @@ export class SettingsManager {
   private saveSync() {
     try {
       this.ensureDir();
-      writeFileSync(SETTINGS_PATH, JSON.stringify(this.settings, null, 2));
+      const tempPath = `${SETTINGS_PATH}.tmp`;
+      writeFileSync(tempPath, JSON.stringify(this.settings, null, 2));
+      renameSync(tempPath, SETTINGS_PATH);
     } catch (error) {
       logger.error("settings", `Failed to saveSync: ${error}`);
     }
   }
 
   async save() {
-    try {
-      this.ensureDir();
-      await Bun.write(SETTINGS_PATH, JSON.stringify(this.settings, null, 2));
-    } catch (error) {
-      logger.error("settings", `Failed to save: ${error}`);
-    }
+    this.savePromise = this.savePromise.then(async () => {
+      try {
+        this.ensureDir();
+        const tempPath = `${SETTINGS_PATH}.tmp`;
+        await Bun.write(tempPath, JSON.stringify(this.settings, null, 2));
+        renameSync(tempPath, SETTINGS_PATH);
+      } catch (error) {
+        logger.error("settings", `Failed to save: ${error}`);
+      }
+    });
+    return this.savePromise;
   }
 
   get(): Settings {

@@ -109,6 +109,8 @@ DeskLumina has recently undergone a comprehensive security audit and hardening p
 2.  **Command Substitution Detection**: The security analyzer now detects and blocks nested command substitution (`$(...)`, backticks) in terminal commands.
 3.  **Secure TTS Lifecycle**: Text-to-Speech temporary files use `randomUUID` naming and are stored in a private directory with guaranteed `try/finally` cleanup.
 4.  **Daemon Authentication**: Background services now require a session token for communication, preventing unauthorized local access.
+5.  **Atomic File Writes**: All configuration and chat persistence now use atomic writes (write to temp, then rename), preventing data corruption from interrupted saves.
+6.  **Log Rotation**: Logs are now automatically rotated at 10MB with 3 backup files, preventing unbounded disk growth.
 
 ---
 
