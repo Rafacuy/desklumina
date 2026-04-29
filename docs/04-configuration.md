@@ -55,6 +55,13 @@ DeskLumina stores user preferences in `~/.config/desklumina/settings.json`. You 
 - **`tts.voiceId`**: The Edge TTS voice ID to use.
 - **`tts.speed`**: Voice playback speed (0.5 to 2.0).
 
+### Storage & Retention Limits
+
+To ensure high performance and low memory usage, DeskLumina enforces the following limits:
+
+- **Chat Retention**: DeskLumina keeps only the **100 most recent chats** in `~/.config/desklumina/chats/`. When this limit is exceeded, the oldest chat files are automatically deleted during new chat creation or saving.
+- **Memory Optimization**: Metadata for the chat list is extracted efficiently using regex. Full chat message history is only loaded into memory when a specific chat is active, preventing latency even with dozens of stored conversations.
+
 ---
 
 ## Interactive Settings (Rofi)

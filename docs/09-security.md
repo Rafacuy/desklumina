@@ -26,18 +26,22 @@ DeskLumina follows a **Human-in-the-Loop** (HITL) security model. We believe tha
 
 ## Dangerous Command Detection
 
-Every command passed to the **Terminal** or **File** tools is scanned by a rule-based analyzer before execution.
+Every command passed to the **Terminal** or **File** tools is scanned by a rule-based analyzer before execution. DeskLumina uses consistent word boundary enforcement (`\b`) to ensure dangerous commands are detected even when they are not at the beginning of a command string.
 
 **Logic**: `src/security/dangerous-commands.ts`
+
+### Embedded Command Detection
+
+The security engine does not rely on simple prefix matching. It scans the entire command string for dangerous patterns. For example, a command like `ls; rm -rf /` will correctly trigger a **Critical** severity warning because the recursive deletion is detected even though it follows a safe command.
 
 ### Severity Levels:
 
 | Level | Definition | Action |
 |-------|------------|--------|
 | **Safe** | Read-only or standard operations (e.g., `ls`, `free`). | Execute immediately. |
-| **Medium** | Potentially destructive or system-impacting. | **Require confirmation.** |
-| **High** | More destructive operations. | **Require confirmation.** |
-| **Critical** | High risk of data loss/system failure. | **Require confirmation.** |
+| **Medium** | Potentially destructive or system-impacting (e.g., `cp`, `npm install`). | **Require confirmation.** |
+| **High** | More destructive operations (e.g., `rm`, `mv`, `chmod`). | **Require confirmation.** |
+| **Critical** | High risk of data loss/system failure (e.g., `rm -rf`, `sudo`, `$(...)`). | **Require confirmation.** |
 
 ### Command Substitution Protection
 

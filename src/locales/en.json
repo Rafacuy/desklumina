@@ -90,5 +90,9 @@
   "You": "You",
   "Lumina": "Lumina",
   "Reply...": "Reply...",
-  "Type a reply...": "Type a reply..."
+  "Type a reply...": "Type a reply...",
+  "baru saja": "just now",
+  "{count} menit yang lalu": "{count} minutes ago",
+  "{count} jam yang lalu": "{count} hours ago",
+  "{count} hari yang lalu": "{count} days ago"
 }

@@ -64,19 +64,19 @@ export const dangerousPatterns: DangerousPattern[] = [
     severity: "critical",
   },
   {
-    pattern: /\brm\s+.*(-r|-rf|-fr|--recursive)/i,
+    pattern: /\brm\b.*?\b(-r|-rf|-fr|--recursive)\b/i,
     category: "file_deletion_recursive",
     description: "Recursive file/directory deletion",
     severity: "critical",
   },
   {
-    pattern: /\brm\s+.*--no-preserve-root\b/i,
+    pattern: /\brm\b.*?\b--no-preserve-root\b/i,
     category: "system_deletion",
     description: "Dangerous system-level deletion",
     severity: "critical",
   },
   {
-    pattern: /\brm\s+.*(-f|--force)/i,
+    pattern: /\brm\b.*?\b(-f|--force)\b/i,
     category: "file_deletion_force",
     description: "Forced file deletion (force)",
     severity: "critical",
@@ -124,7 +124,7 @@ export const dangerousPatterns: DangerousPattern[] = [
     severity: "critical",
   },
   {
-    pattern: /\|\s*(sh|bash|zsh)\s*$/i,
+    pattern: /\|\s*(sh|bash|zsh)\b/i,
     category: "pipe_to_shell",
     description: "Pipe output to shell",
     severity: "critical",
@@ -156,13 +156,13 @@ export const dangerousPatterns: DangerousPattern[] = [
 
   // === HIGH ===
   {
-    pattern: /^\s*rm\b/i,
+    pattern: /\brm\b/i,
     category: "file_deletion",
     description: "File deletion",
     severity: "high",
   },
   {
-    pattern: /^\s*rmdir\b/i,
+    pattern: /\brmdir\b/i,
     category: "dir_deletion",
     description: "Directory deletion",
     severity: "high",
@@ -248,7 +248,7 @@ export const dangerousPatterns: DangerousPattern[] = [
 
   // === MEDIUM ===
   {
-    pattern: /^\s*cp\b/i,
+    pattern: /\bcp\b/i,
     category: "file_copy",
     description: "File copy",
     severity: "medium",
@@ -272,7 +272,7 @@ export const dangerousPatterns: DangerousPattern[] = [
     severity: "medium",
   },
   {
-    pattern: /\bnpm\s+(install|i|uninstall|remove)\b/i,
+    pattern: /\bnpm\b\s+\b(install|i|uninstall|remove)\b/i,
     category: "package_install",
     description: "npm package install/remove",
     severity: "medium",
@@ -284,7 +284,7 @@ export const dangerousPatterns: DangerousPattern[] = [
     severity: "medium",
   },
   {
-    pattern: /\btee\s+/i,
+    pattern: /\btee\b\s+/i,
     category: "file_write",
     description: "Write to file via tee",
     severity: "medium",

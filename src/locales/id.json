@@ -90,5 +90,9 @@
   "You": "Anda",
   "Lumina": "Lumina",
   "Reply...": "Balas...",
-  "Type a reply...": "Ketik balasan..."
+  "Type a reply...": "Ketik balasan...",
+  "baru saja": "baru saja",
+  "{count} menit yang lalu": "{count} menit yang lalu",
+  "{count} jam yang lalu": "{count} jam yang lalu",
+  "{count} hari yang lalu": "{count} hari yang lalu"
 }

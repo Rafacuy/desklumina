@@ -97,18 +97,17 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
   items.push(`󰗋 ${t("Select Chat")}`);
   items.push("──────────────────");
   
-  const chatItems = chats.map((chat: Chat) => {
+  const chatItems = chats.map((chat: any) => {
     const date = new Date(chat.updatedAt).toLocaleDateString(undefined, { 
       month: 'short', 
       day: 'numeric' 
     });
-    const lastMsg = chat.messages[chat.messages.length - 1];
-    const preview = lastMsg
-      ? lastMsg.content.substring(0, 30).replace(/\n/g, " ")
+    const preview = chat.lastMessage
+      ? chat.lastMessage.substring(0, 30).replace(/\n/g, " ")
       : t("Empty chat");
       
     // Format: 󰭹 Title [Date] (Count) - Preview...
-    return `󰭹 ${chat.title.padEnd(20)} │ 󰃭 ${date} │ 󰅒 ${chat.messages.length} │ ${preview}...`;
+    return `󰭹 ${chat.title.padEnd(20)} │ 󰃭 ${date} │ 󰅒 ${chat.messageCount} │ ${preview}...`;
   });
   
   items.push(...chatItems);

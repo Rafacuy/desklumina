@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { t, tf, getAppVersion } from "./utils";
+import { t, tf, getAppVersion, cleanAssistantResponse } from "./utils";
 import { Lumina, ChatManager } from "./core";
 import { rofiChatLoop } from "./ui";
 import { startLoader, stopLoader } from "./ui/loader";
@@ -14,20 +14,6 @@ const mode = args[0];
 function appendCallbackText(target: string, callback?: ToolCallbackPayload): string {
   if (!callback?.text) return target;
   return target + callback.text;
-}
-
-function cleanAssistantText(text: string): string {
-  return text
-    .replace(/```json\s*\n[\s\S]*?\n```/g, "")
-    .replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "")
-    .replace(/(^|\n)Status:\s.*?(?=\n\n|$)/gis, "")
-    .replace(/(^|\n)Summary:\s.*?(?=\n|$)/gis, "")
-    .replace(/(^|\n)Actions:\s.*?(?=\n|$)/gis, "")
-    .replace(/(^|\n)Results:\s*\n(?:\d+\.\s.*\n?)+/gis, "\n")
-    .replace(/^━+$/gm, "")
-    .replace(/^\n+/, "")
-    .replace(/\n+$/, "")
-    .trim();
 }
 
 async function main() {
@@ -105,8 +91,8 @@ async function main() {
             console.log(t("No chats yet.\n"));
           } else {
             chats.forEach((chat, i) => {
-              const active = currentChat?.id === chat.id ? " *" : "";
-              console.log(`${i + 1}. ${chat.title} (${chat.messages.length} msgs)${active}`);
+              const active = chatManager.getCurrentChat()?.id === chat.id ? " *" : "";
+              console.log(`${i + 1}. ${chat.title} (${chat.messageCount} msgs)${active}`);
             });
             console.log(t("\nUse 'load <number>' to switch chats.\n"));
           }
@@ -175,10 +161,7 @@ async function main() {
       }
     });
 
-    const cleanResponse = response
-      .replace(/```json\s*\n[\s\S]*?\n```/g, "")
-      .replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "")
-      .trim();
+    const cleanResponse = cleanAssistantResponse(response);
 
     const finalOutput = [cleanResponse, toolOutput.trim()].filter(Boolean).join("\n\n") || "Done.";
     console.log(finalOutput);
@@ -207,8 +190,8 @@ async function main() {
         }
       });
       
-      const cleanInitialResponse = cleanAssistantText(initialResponse);
-      const cleanCallbackResponse = cleanAssistantText(callbackResponse);
+      const cleanInitialResponse = cleanAssistantResponse(initialResponse);
+      const cleanCallbackResponse = cleanAssistantResponse(callbackResponse);
       const cleanToolDisplay = toolDisplay.trim();
 
       const finalOutput = [cleanInitialResponse, cleanToolDisplay, cleanCallbackResponse]

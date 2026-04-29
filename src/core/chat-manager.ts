@@ -1,10 +1,10 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync, renameSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync, renameSync, statSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
-import type { AIMessage, AIRequestContext, Chat, ChatMessage, ToolCall, ToolResult } from "../types";
+import type { AIMessage, AIRequestContext, Chat, ChatMessage, ToolCall, ToolResult, ChatMetadata } from "../types";
 import { settingsManager } from "./settings-manager";
 import { logger } from "../logger";
-import { t } from "../utils/i18n";
+import { t, cleanAssistantResponse } from "../utils";
 
 const TOOL_LABELS: Record<string, string> = {
   app: "Opening application",
@@ -18,6 +18,7 @@ const TOOL_LABELS: Record<string, string> = {
 const CHAT_DIR = join(homedir(), ".config/desklumina/chats");
 const MAX_CONTEXT_MESSAGES = 12;
 const MAX_SUMMARY_CHARS = 240;
+const MAX_CHATS = 100;
 
 type InternalMessage = ChatMessage & {
   timestamp: number;
@@ -48,11 +49,7 @@ function getToolLabel(tool: string): string {
 }
 
 function cleanContent(content: string): string {
-  return content
-    .replace(/```json\s*\n[\s\S]*?\n```/g, "")
-    .replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "")
-    .replace(/^━+$/gm, "")
-    .trim();
+  return cleanAssistantResponse(content);
 }
 
 function formatToolContext(result: ToolResult): string {
@@ -108,6 +105,7 @@ export class ChatManager {
   }
 
   createChat(firstMessage?: string): Chat {
+    this.pruneChats();
     const chat: Chat = {
       id: generateId(),
       title: firstMessage ? generateTitle(firstMessage) : "New Chat",
@@ -118,6 +116,36 @@ export class ChatManager {
     this.currentChat = chat;
     this.saveChat(chat);
     return chat;
+  }
+
+  private pruneChats(): void {
+    try {
+      ensureChatDir();
+      const files = readdirSync(CHAT_DIR)
+        .filter((f) => f.endsWith(".json"))
+        .map((f) => ({
+          name: f,
+          path: join(CHAT_DIR, f),
+          mtime: statSync(join(CHAT_DIR, f)).mtimeMs
+        }))
+        .sort((a, b) => b.mtime - a.mtime);
+
+      if (files.length > MAX_CHATS) {
+        const toDelete = files.slice(MAX_CHATS);
+        for (const file of toDelete) {
+          try {
+            if (existsSync(file.path)) {
+              unlinkSync(file.path);
+              logger.info("chat-manager", `Pruned old chat: ${file.name}`);
+            }
+          } catch (err) {
+            logger.error("chat-manager", `Failed to prune chat ${file.name}: ${err}`);
+          }
+        }
+      }
+    } catch (err) {
+      logger.error("chat-manager", `Error during chat pruning: ${err}`);
+    }
   }
 
   loadChat(chatId: string): Chat | null {
@@ -187,16 +215,55 @@ export class ChatManager {
     this.saveChat(this.currentChat);
   }
 
-  getAllChats(): Chat[] {
+  getAllChats(): (ChatMetadata & { lastMessage?: string })[] {
     ensureChatDir();
-    const files = readdirSync(CHAT_DIR).filter((f) => f.endsWith(".json"));
-    const chats: Chat[] = [];
+    const files = readdirSync(CHAT_DIR)
+      .filter((f) => f.endsWith(".json"))
+      .map((f) => ({
+        name: f,
+        path: join(CHAT_DIR, f),
+        mtime: statSync(join(CHAT_DIR, f)).mtimeMs,
+      }))
+      .sort((a, b) => b.mtime - a.mtime)
+      .slice(0, MAX_CHATS);
+
+    const chats: (ChatMetadata & { lastMessage?: string })[] = [];
 
     for (const file of files) {
       try {
-        const data = readFileSync(join(CHAT_DIR, file), "utf-8");
-        chats.push(normalizeChat(JSON.parse(data) as Chat));
-      } catch {}
+        const data = readFileSync(file.path, "utf-8");
+        
+        // Extract metadata using regex to avoid parsing full message arrays
+        const id = data.match(/"id":\s*"([^"]*)"/)?.[1];
+        const title = data.match(/"title":\s*"([^"]*)"/)?.[1];
+        const updatedAt = parseInt(data.match(/"updatedAt":\s*(\d+)/)?.[1] || "0");
+        
+        // Count messages by counting occurrences of "role" field
+        const messageCount = (data.match(/"role":/g) || []).length;
+        
+        // Extract last message content (simplified)
+        const messagesMatch = data.match(/"messages":\s*\[([\s\S]*)\]/);
+        let lastMessage = "";
+        if (messagesMatch?.[1]) {
+          const contentMatches = messagesMatch[1].match(/"content":\s*"([^"]*)"/g);
+          if (contentMatches && contentMatches.length > 0) {
+            const lastMatch = contentMatches[contentMatches.length - 1];
+            lastMessage = lastMatch.match(/"content":\s*"([^"]*)"/)?.[1] || "";
+          }
+        }
+
+        if (id && title) {
+          chats.push({
+            id,
+            title,
+            messageCount,
+            updatedAt: updatedAt || 0,
+            lastMessage,
+          });
+        }
+      } catch (err) {
+        logger.error("chat-manager", `Failed to extract metadata from ${file.name}: ${err}`);
+      }
     }
 
     return chats.sort((a, b) => b.updatedAt - a.updatedAt);

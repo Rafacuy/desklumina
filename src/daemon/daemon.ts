@@ -1,4 +1,4 @@
-import { t } from "../utils";
+import { t, cleanAssistantResponse } from "../utils";
 import { Lumina, ChatManager } from "../core";
 import { logger } from "../logger";
 import { env } from "../config/env";
@@ -103,10 +103,7 @@ export class DeskLuminaDaemon {
             });
 
             // Clean response for daemon usage
-            const cleanResponse = response
-              .replace(/```json\s*\n[\s\S]*?\n```/g, "")
-              .replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "")
-              .trim() || "Done.";
+            const cleanResponse = cleanAssistantResponse(response) || "Done.";
 
             const currentChat = this.chatManager.getCurrentChat();
             const toolResults = currentChat?.messages

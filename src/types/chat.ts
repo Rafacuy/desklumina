@@ -23,4 +23,5 @@ export interface ChatMetadata {
   title: string;
   messageCount: number;
   updatedAt: number;
+  lastMessage?: string;
 }

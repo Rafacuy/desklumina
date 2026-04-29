@@ -1,4 +1,4 @@
-import { t } from "../utils";
+import { t, cleanAssistantResponse } from "../utils";
 import { streamGroq, textToSpeech } from "../ai";
 import { buildSystemPrompt } from "../ai/prompts";
 import { Context } from "./context";
@@ -12,13 +12,6 @@ import { CancellationError } from "../types";
 import type { AIMessage, ToolCall, ToolCallbackPayload, ToolExecutionResult, ToolResult } from "../types";
 
 const MAX_TOOL_RETRIES = 2;
-
-function cleanAssistantResponse(response: string): string {
-  return response
-    .replace(/```json\s*\n[\s\S]*?\n```/g, "")
-    .replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "")
-    .trim();
-}
 
 function formatFileToolResultForContext(result: ToolResult): string {
   const files = result.files || [];

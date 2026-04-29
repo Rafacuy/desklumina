@@ -5,12 +5,11 @@
     "": {
       "name": "desklumina",
       "dependencies": {
-        "desklumina": ".",
         "edge-tts-universal": "^1.4.0",
       },
       "devDependencies": {
-        "@types/bun": "latest",
-        "typescript": "latest",
+        "@types/bun": "^1.3.13",
+        "typescript": "^6.0.3",
       },
     },
   },
@@ -36,8 +35,6 @@
     "debug": ["debug@4.4.3", "", { "dependencies": { "ms": "^2.1.3" } }, ""],
 
     "delayed-stream": ["delayed-stream@1.0.0", "", {}, ""],
-
-    "desklumina": ["desklumina@root:", {}],
 
     "dunder-proto": ["dunder-proto@1.0.1", "", { "dependencies": { "call-bind-apply-helpers": "^1.0.1", "es-errors": "^1.3.0", "gopd": "^1.2.0" } }, ""],
 

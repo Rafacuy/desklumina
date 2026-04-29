@@ -52,4 +52,44 @@ describe("ChatManager", () => {
     expect(Array.isArray(context.messages)).toBe(true);
     expect(context.messages[0]?.content).toBe("Hello");
   });
+
+  test("prunes chats when exceeding MAX_CHATS", () => {
+    const unlinkSpy = spyOn(fs, "unlinkSync").mockImplementation(() => {});
+    const existsSpy = spyOn(fs, "existsSync").mockReturnValue(true);
+    const readdirSpy = spyOn(fs, "readdirSync").mockReturnValue(
+      Array.from({ length: 110 }, (_, i) => `chat-${i}.json`) as any
+    );
+    const statSpy = spyOn(fs, "statSync").mockReturnValue({ mtimeMs: Date.now() } as any);
+    
+    // Trigger pruning
+    (chatManager as any).pruneChats();
+    
+    // Should attempt to delete 10 chats (110 - 100)
+    expect(unlinkSpy).toHaveBeenCalledTimes(10);
+    
+    unlinkSpy.mockRestore();
+    existsSpy.mockRestore();
+    readdirSpy.mockRestore();
+    statSpy.mockRestore();
+  });
+
+  test("prunes chats handles missing files gracefully (ENOENT fix)", () => {
+    const unlinkSpy = spyOn(fs, "unlinkSync").mockImplementation(() => {});
+    const existsSpy = spyOn(fs, "existsSync").mockReturnValue(false); // File doesn't exist
+    const readdirSpy = spyOn(fs, "readdirSync").mockReturnValue(
+      Array.from({ length: 110 }, (_, i) => `chat-${i}.json`) as any
+    );
+    const statSpy = spyOn(fs, "statSync").mockReturnValue({ mtimeMs: Date.now() } as any);
+    
+    // Trigger pruning
+    (chatManager as any).pruneChats();
+    
+    // Should NOT call unlinkSync because existsSync returns false
+    expect(unlinkSpy).not.toHaveBeenCalled();
+    
+    unlinkSpy.mockRestore();
+    existsSpy.mockRestore();
+    readdirSpy.mockRestore();
+    statSpy.mockRestore();
+  });
 });
