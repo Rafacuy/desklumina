@@ -1,4 +1,3 @@
-import { execute } from "./terminal";
 import { logger } from "../logger";
 import type { ToolExecutionResult } from "../types";
 
@@ -36,18 +35,24 @@ export async function notify(args: string): Promise<ToolExecutionResult> {
       return buildResult(args.trim(), "❌ Invalid urgency. Use low, normal, or critical.", false, undefined, undefined, "Invalid urgency", 2);
     }
 
-    const safeTitle = title.replace(/"/g, '\\"');
-    const safeBody = body.replace(/"/g, '\\"');
-    const command = `dunstify -u ${urgency} -i lumina "${safeTitle}" "${safeBody}"`;
+    const command = `dunstify -u ${urgency} -i lumina "${title}" "${body}"`;
 
-    const result = await execute(command);
-    
-    if (result.exitCode !== 0) {
-      logger.warn("notify", `Notification failed: ${result.stderr}`);
-      return buildResult(args.trim(), `❌ Error: ${result.stderr || "Failed to send notification"}`, false, command, result.stdout, result.stderr, result.exitCode);
+    const proc = Bun.spawn(["dunstify", "-u", urgency, "-i", "lumina", title, body], {
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    const [stdout, stderr, exitCode] = await Promise.all([
+      new Response(proc.stdout).text(),
+      new Response(proc.stderr).text(),
+      proc.exited,
+    ]);
+
+    if (exitCode !== 0) {
+      logger.warn("notify", `Notification failed: ${stderr}`);
+      return buildResult(args.trim(), `❌ Error: ${stderr || "Failed to send notification"}`, false, command, stdout, stderr, exitCode);
     }
-    
-    return buildResult(`${title}|${body}|${urgency}`, "✓ Notification sent", true, command, result.stdout, result.stderr, 0);
+
+    return buildResult(`${title}|${body}|${urgency}`, "✓ Notification sent", true, command, stdout, stderr, 0);
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error("notify", `Notification failed: ${err.message}`, err);

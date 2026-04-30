@@ -1,11 +1,10 @@
-import { execute } from "./terminal";
 import { logger } from "../logger";
 import type { ToolExecutionResult } from "../types";
 
 type MediaAction =
-  | { kind: "simple"; normalizedArg: string; command: string }
-  | { kind: "volume"; normalizedArg: string; command: string }
-  | { kind: "search"; normalizedArg: string; command: string }
+  | { kind: "simple"; normalizedArg: string; args: string[]; command: string }
+  | { kind: "volume"; normalizedArg: string; args: string[]; command: string }
+  | { kind: "search"; normalizedArg: string; args: string[]; command: string }
   | { kind: "error"; normalizedArg: string; message: string; stderr: string; exitCode: number };
 
 function buildResult(
@@ -53,6 +52,7 @@ function parseVolume(action: string, parts: string[]): MediaAction {
       return {
         kind: "volume",
         normalizedArg: `volume ${candidate}`,
+        args: ["mpc", "volume", candidate],
         command: `mpc volume ${candidate}`,
       };
     }
@@ -62,6 +62,7 @@ function parseVolume(action: string, parts: string[]): MediaAction {
     return {
       kind: "volume",
       normalizedArg: "volume +10",
+      args: ["mpc", "volume", "+10"],
       command: "mpc volume +10",
     };
   }
@@ -70,6 +71,7 @@ function parseVolume(action: string, parts: string[]): MediaAction {
     return {
       kind: "volume",
       normalizedArg: "volume -10",
+      args: ["mpc", "volume", "-10"],
       command: "mpc volume -10",
     };
   }
@@ -80,6 +82,7 @@ function parseVolume(action: string, parts: string[]): MediaAction {
       return {
         kind: "volume",
         normalizedArg: `volume ${candidate}`,
+        args: ["mpc", "volume", candidate],
         command: `mpc volume ${candidate}`,
       };
     }
@@ -110,18 +113,18 @@ function normalizeAction(action: string): MediaAction {
     };
   }
 
-  const simpleMap: Record<string, string> = {
-    play: "mpc play",
-    pause: "mpc pause",
-    toggle: "mpc toggle",
-    stop: "mpc stop",
-    next: "mpc next",
-    prev: "mpc prev",
-    previous: "mpc prev",
-    current: "mpc current",
-    now: "mpc current",
-    queue: "mpc playlist",
-    playlist: "mpc playlist",
+  const simpleMap: Record<string, { args: string[]; command: string }> = {
+    play:     { args: ["mpc", "play"],     command: "mpc play" },
+    pause:    { args: ["mpc", "pause"],    command: "mpc pause" },
+    toggle:   { args: ["mpc", "toggle"],   command: "mpc toggle" },
+    stop:     { args: ["mpc", "stop"],     command: "mpc stop" },
+    next:     { args: ["mpc", "next"],     command: "mpc next" },
+    prev:     { args: ["mpc", "prev"],     command: "mpc prev" },
+    previous: { args: ["mpc", "prev"],     command: "mpc prev" },
+    current:  { args: ["mpc", "current"],  command: "mpc current" },
+    now:      { args: ["mpc", "current"],  command: "mpc current" },
+    queue:    { args: ["mpc", "playlist"], command: "mpc playlist" },
+    playlist: { args: ["mpc", "playlist"], command: "mpc playlist" },
   };
 
   if (first === "volume" || lower.startsWith("set volume") || /(volume|sound).*(up|down|increase|decrease|raise|lower|louder|quieter)/.test(lower)) {
@@ -140,20 +143,21 @@ function normalizeAction(action: string): MediaAction {
       };
     }
 
-    const escapedQuery = query.replace(/"/g, '\\"');
     return {
       kind: "search",
       normalizedArg: `search ${query}`,
-      command: `mpc search any "${escapedQuery}"`,
+      args: ["mpc", "search", "any", query],
+      command: `mpc search any "${query}"`,
     };
   }
 
-  const command = simpleMap[first];
-  if (command) {
+  const entry = simpleMap[first];
+  if (entry) {
     return {
       kind: "simple",
       normalizedArg: first === "now" ? "current" : first === "playlist" ? "queue" : first,
-      command,
+      args: entry.args,
+      command: entry.command,
     };
   }
 
@@ -185,7 +189,13 @@ export async function media(action: string): Promise<ToolExecutionResult> {
     }
 
     logger.info("media", `Normalized "${action}" -> "${normalized.normalizedArg}"`);
-    const commandResult = await execute(normalized.command);
+    const proc = Bun.spawn(normalized.args, { stdout: "pipe", stderr: "pipe" });
+    const [stdout, stderr, exitCode] = await Promise.all([
+      new Response(proc.stdout).text(),
+      new Response(proc.stderr).text(),
+      proc.exited,
+    ]);
+    const commandResult = { stdout, stderr, exitCode: exitCode ?? 1 };
 
     if (commandResult.exitCode !== 0) {
       const errorMessage = `❌ Error: ${commandResult.stderr || "Command failed"}`;

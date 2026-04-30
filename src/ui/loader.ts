@@ -16,11 +16,11 @@ let currentIndex = 0;
 
 export function startLoader() {
   currentIndex = 0;
-  console.log(MESSAGES[currentIndex]);
+  process.stdout.write(MESSAGES[currentIndex] ?? "");
   
   loaderInterval = setInterval(() => {
     currentIndex = (currentIndex + 1) % MESSAGES.length;
-    console.log(MESSAGES[currentIndex]);
+    process.stdout.write(`\r${MESSAGES[currentIndex]}`);
   }, 1200);
 }
 
@@ -28,5 +28,6 @@ export function stopLoader() {
   if (loaderInterval) {
     clearInterval(loaderInterval);
     loaderInterval = null;
+    process.stdout.write("\r" + " ".repeat(80) + "\r");
   }
 }

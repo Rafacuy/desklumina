@@ -34,7 +34,11 @@ export async function launch(alias: string): Promise<ToolExecutionResult> {
     }
 
     logger.info("apps", `Launching: ${normalizedAlias} → ${command}`);
-    Bun.spawn(["bash", "-c", command], { detached: true, stdio: ["ignore", "ignore", "ignore"] });
+    const args = command.split(/\s+/).filter(Boolean);
+    const proc = Bun.spawn(args, { detached: true, stdio: ["ignore", "ignore", "ignore"] });
+    proc.exited.then(code => {
+      if (code !== 0) logger.error("apps", `Launch failed: ${normalizedAlias} (exit ${code})`);
+    }).catch(err => logger.error("apps", `Spawn failed: ${(err as Error).message}`));
     return {
       tool: "app",
       result: `${normalizedAlias} launched`,

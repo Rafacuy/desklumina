@@ -139,7 +139,7 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
 
   // Extract title by getting everything before the first │
   const chatTitle = selected.split(" │ ")[0]?.replace("󰭹 ", "").trim();
-  const chat = chats.find((c: Chat) => c.title === chatTitle);
+  const chat = chats.find((c) => c.title === chatTitle);
   
   if (!chat) return null;
   return chat.id;

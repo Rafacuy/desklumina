@@ -247,7 +247,7 @@ export class ChatManager {
         if (messagesMatch?.[1]) {
           const contentMatches = messagesMatch[1].match(/"content":\s*"([^"]*)"/g);
           if (contentMatches && contentMatches.length > 0) {
-            const lastMatch = contentMatches[contentMatches.length - 1];
+            const lastMatch = contentMatches[contentMatches.length - 1]!;
             lastMessage = lastMatch.match(/"content":\s*"([^"]*)"/)?.[1] || "";
           }
         }
