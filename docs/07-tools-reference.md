@@ -10,6 +10,7 @@ Complete documentation for all available tools in DeskLumina's automation system
 - [Application Tool (app)](#application-tool-app)
 - [File Tool (file)](#file-tool-file)
 - [Media Tool (media)](#media-tool-media)
+- [Music Tool (music)](#music-tool-music)
 - [Clipboard Tool (clipboard)](#clipboard-tool-clipboard)
 - [Terminal Tool (terminal)](#terminal-tool-terminal)
 - [Notification Tool (notify)](#notification-tool-notify)
@@ -26,7 +27,7 @@ DeskLumina uses a modular tool-based architecture. The AI agent generates struct
 {"tool": "tool_name", "args": "arguments"}
 ```
 
-Tool calls are parsed from markdown code fences in the model output. The only registered tools are: `app`, `terminal`, `file`, `media`, `clipboard`, `notify` (see `src/tools/registry.ts`).
+Tool calls are parsed from markdown code fences in the model output. The registered tools are: `app`, `terminal`, `file`, `media`, `music`, `clipboard`, `notify` (see `src/tools/registry.ts`).
 
 ## BREAKING CHANGES
 
@@ -132,6 +133,77 @@ Control MPD via `mpc` (the tool shells out to `mpc ...`).
 - Natural-language requests like "volume up", "volume down", and "set volume to 30" are normalized internally.
 - The model should emit canonical tool args only: `volume <0-100 | +N | -N>`.
 - Invalid media actions fail fast with a validation error instead of being passed through to the shell.
+
+---
+
+## Music Tool (`music`)
+
+Manage your music library, playlists, and playback through MPD via `mpc`. The music tool handles library operations (search, list, playlist loading), whereas the media tool handles playback controls (play, pause, volume).
+
+**Path**: `src/tools/music.ts`  
+**Dependencies**: `mpc` (Music Player Daemon client), optional `ncmpcpp` (for status display enhancement)
+
+### Supported Actions:
+
+| Action | Arguments | Description |
+|--------|-----------|-------------|
+| `search` | `<query>` | Search tracks by name, artist, album, etc. Returns up to 50 matches. |
+| `play` | `<target>` | Play a specific track. Target can be a track number (queue index) or search query. If a query, searches and plays the first match. |
+| `playlist` | `<name>` | Load and play a saved playlist by name. Clears current queue first. |
+| `ls` or `list` | `music` or `playlists` | List all tracks in library or saved playlists. |
+| `queue` | (none) | Display current queue and now-playing track. |
+| `status` or `now` | (none) | Show current playback status. Uses `ncmpcpp --current-song` if available, falls back to `mpc current`. |
+| `update` | (none) | Refresh MPD's music database, then list library. |
+
+### Query Normalization
+
+User queries are normalized by stripping common natural-language prefixes:
+- Removed prefixes: `please`, `tolong`, `putar`, `play`, `search`, `find`, `cari`, `song`, `lagu`, `music`, `musik`
+- Removed suffixes: `song`, `lagu`, `music`, `musik`
+
+Examples:
+- "play music foo" → `play foo`
+- "search for song bar" → `search bar`
+
+### Playback Behavior
+
+**Search and Play**: When using `play <query>`:
+1. Searches library for the query
+2. If found, clears the current queue
+3. Adds the first match to queue
+4. Starts playback
+
+If the target is a numeric index (e.g., `play 3`), it skips the search and plays that position in the current queue directly.
+
+**Status Display**: The `status` action attempts to use `ncmpcpp --current-song` for enhanced display. If `ncmpcpp` is not installed, it falls back to `mpc current`. In both cases, it also appends the output of `mpc status` to show playback state (playing/paused/stopped) and time information.
+
+### UI Behavior
+
+Search results and playlists are returned as structured data in the tool result. The AI assistant formats and displays them as text. No interactive Rofi menu integration is currently implemented for music operations.
+
+### Error Handling
+
+- **Missing `mpc`**: Returns error code 127 if `mpc` is not installed (required for all operations).
+- **Empty Search**: Returns success with status `empty` if no tracks match the query.
+- **Track Not Found**: Returns a 404-style error when `play <query>` finds no results.
+- **Playlist Load Failure**: Returns the stderr from `mpc load` if the playlist doesn't exist.
+
+### Requirements
+
+- **Required**: `mpc` (from `mpc` package in your distro)
+- **Optional**: `ncmpcpp` (for enhanced status display; falls back to `mpc` if missing)
+- **Optional**: `rofi` (for music selection UI integration; not required for tool execution)
+
+### Example Tool Calls
+
+```json
+{"tool": "music", "args": "search pink floyd"}
+{"tool": "music", "args": "play wish you were here"}
+{"tool": "music", "args": "playlist my-favorites"}
+{"tool": "music", "args": "ls playlists"}
+{"tool": "music", "args": "queue"}
+{"tool": "music", "args": "status"}
+```
 
 ---
 

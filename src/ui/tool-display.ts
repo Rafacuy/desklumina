@@ -17,6 +17,7 @@ const TOOL_CONFIG: Record<string, ToolConfig> = {
   media: { icon: "🎵", label: "Controlling media", resultLabel: "Media controlled" },
   clipboard: { icon: "📋", label: "Clipboard operation", resultLabel: "Clipboard updated" },
   notify: { icon: "🔔", label: "Sending notification", resultLabel: "Notification sent" },
+  music: { icon: "🎶", label: "Music system operation", resultLabel: "Music controlled" },
 };
 
 /**
@@ -86,6 +87,16 @@ function formatFileResult(result: ToolResult): string[] {
 function summarizeResult(result: ToolResult): string[] {
   if (result.tool === "file") {
     return formatFileResult(result);
+  }
+
+  if (result.tool === "music") {
+    const lines: string[] = [];
+    const files = result.files || [];
+    if (files.length > 0) {
+      files.slice(0, 3).forEach((f) => lines.push(`    • ${f.name}`));
+      if (files.length > 3) lines.push(`    • +${files.length - 3} more`);
+    }
+    return lines;
   }
 
   if (result.success === false && result.stderr) {

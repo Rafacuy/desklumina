@@ -25,12 +25,13 @@ function formatFileToolResultForContext(result: ToolResult): string {
     result.summary?.filteredMatches !== undefined ? `filtered_matches=${result.summary.filteredMatches}` : "",
     result.selectedFile ? `selected_file=${result.selectedFile}` : "",
     files.length > 0 ? "matched_files:" : "",
-    ...files.slice(0, 10).map((file, index) => `${index + 1}. ${file.path}`),
+    ...files.slice(0, 3).map((file, index) => `${index + 1}. ${file.path}`),
+    files.length > 3 ? `... and ${files.length - 3} more` : "",
     result.preview?.path ? `preview_path=${result.preview.path}` : "",
-    result.preview?.content ? `preview_excerpt=${result.preview.content.slice(0, 400).trim()}` : "",
+    result.preview?.content ? `preview_excerpt=${result.preview.content.slice(0, 150).trim()}` : "",
     result.preview?.unavailableReason ? `preview_unavailable=${result.preview.unavailableReason}` : "",
-    result.stderr ? `stderr=${result.stderr.trim()}` : "",
-    result.success === false ? `message=${result.result.trim()}` : "",
+    result.stderr ? `stderr=${result.stderr.slice(0, 200).trim()}` : "",
+    result.success === false ? `message=${result.result.slice(0, 200).trim()}` : "",
   ].filter(Boolean);
 
   return lines.join("\n");
@@ -45,14 +46,15 @@ function formatToolResultForContext(result: ToolResult): string {
     `[TOOL RESULT] tool=${result.tool}`,
     `status=${result.success === false ? "failed" : "ok"}`,
     result.normalizedArg ? `args=${result.normalizedArg}` : "",
-    result.command ? `command=${result.command}` : "",
+    result.command ? `command=${result.command.slice(0, 200)}` : "",
     result.exitCode !== undefined ? `exit_code=${result.exitCode}` : "",
-    result.stdout ? `stdout=${result.stdout.trim()}` : "",
-    result.stderr ? `stderr=${result.stderr.trim()}` : "",
-    result.actions && result.actions.length > 0 ? `actions=${result.actions.join(",")}` : "",
+    result.stdout ? `stdout=${result.stdout.slice(0, 300).trim()}` : "",
+    result.stderr ? `stderr=${result.stderr.slice(0, 200).trim()}` : "",
+    result.actions && result.actions.length > 0 ? `actions=${result.actions.slice(0, 3).join(",")}` : "",
     result.selectedFile ? `selected_file=${result.selectedFile}` : "",
-    result.files && result.files.length > 0 ? `files=${result.files.map((file) => file.path).join(" | ")}` : "",
-    `message=${result.result.trim()}`,
+    result.files && result.files.length > 0 ? `files=${result.files.slice(0, 3).map((file) => file.path).join(" | ")}` : "",
+    result.files && result.files.length > 3 ? `... +${result.files.length - 3} more` : "",
+    `message=${result.result.slice(0, 200).trim()}`,
   ].filter(Boolean);
 
   return lines.join("\n");
@@ -67,13 +69,13 @@ function buildRetryMessages(
   const retryFeedback = failedResults.map(formatToolResultForContext).join("\n\n");
 
   return [
-    ...baseMessages,
+    baseMessages[0], // system prompt only
+    { role: "user", content: originalUserMessage },
     { role: "assistant", content: previousAssistantResponse },
     {
       role: "system",
       content: [
         "One or more tool calls failed.",
-        `Original user request: ${originalUserMessage}`,
         "Correct the failed tool invocation only.",
         "Reply with a short acknowledgement and a JSON markdown block.",
         "Use strict tool arguments. Do not repeat failed arguments if the feedback shows why they failed.",
@@ -92,13 +94,13 @@ function buildFollowUpMessages(
   const toolFeedback = toolResults.map(formatToolResultForContext).join("\n\n");
 
   return [
-    ...baseMessages,
+    baseMessages[0], // system prompt only
+    { role: "user", content: userMessage },
     { role: "assistant", content: cleanAssistantResponse(previousAssistantResponse) || previousAssistantResponse },
     {
       role: "system",
       content: [
         "Tool execution completed.",
-        `Original user request: ${userMessage}`,
         "Write the final answer using only the actual tool results below.",
         "If the tool failed or found nothing, say that explicitly.",
         "Do not copy raw tool fields like status labels, summaries, actions, or numbered machine lists verbatim.",

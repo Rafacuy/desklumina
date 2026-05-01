@@ -16,8 +16,8 @@ const TOOL_LABELS: Record<string, string> = {
 };
 
 const CHAT_DIR = join(homedir(), ".config/desklumina/chats");
-const MAX_CONTEXT_MESSAGES = 12;
-const MAX_SUMMARY_CHARS = 240;
+const MAX_CONTEXT_MESSAGES = 8;
+const MAX_SUMMARY_CHARS = 150;
 const MAX_CHATS = 100;
 
 type InternalMessage = ChatMessage & {

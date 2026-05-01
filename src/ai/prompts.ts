@@ -58,38 +58,42 @@ export function _resetPromptCache() {
 
 const EXAMPLES = {
   id: `User: "buka telegram"
-Balas singkat lalu panggil tool.
 \`\`\`json
 {"tool":"app","args":"telegram"}
 \`\`\`
 
 User: "set volume ke 30"
-Balas singkat lalu panggil tool.
 \`\`\`json
 {"tool":"media","args":"volume 30"}
 \`\`\`
 
 User: "volume naik"
-Balas singkat lalu panggil tool.
 \`\`\`json
 {"tool":"media","args":"volume +10"}
+\`\`\`
+
+User: "putar playlist chill"
+\`\`\`json
+{"tool":"music","args":"playlist chill"}
 \`\`\``,
   en: `User: "open telegram"
-Reply briefly, then call the tool.
 \`\`\`json
 {"tool":"app","args":"telegram"}
 \`\`\`
 
 User: "set volume to 30"
-Reply briefly, then call the tool.
 \`\`\`json
 {"tool":"media","args":"volume 30"}
 \`\`\`
 
 User: "volume up"
-Reply briefly, then call the tool.
 \`\`\`json
 {"tool":"media","args":"volume +10"}
+\`\`\`
+
+User: "play chill playlist"
+\`\`\`json
+{"tool":"music","args":"playlist chill"}
 \`\`\``,
 };
 
@@ -110,11 +114,11 @@ Live system context:
 ${systemContext}
 
 Response rules:
-1. Write a brief ${langName} assistant reply in 1-2 sentences.
-2. If using tools, include JSON inside a markdown \`\`\`json block.
-3. Tool JSON must use exactly: {"tool":"name","args":"value"}
-4. Never invent a tool name outside: app, terminal, file, media, clipboard, notify.
-5. If no tool is needed, answer normally with no JSON.
+1. EITHER: Reply with a JSON markdown block ONLY (if tools are needed).
+2. OR: Reply with a brief text message (if no tool is needed).
+3. NO mixed outputs (text + JSON).
+4. Tool JSON must use exactly: {"tool":"name","args":"value"}
+5. Never invent a tool name outside: app, terminal, file, media, music, clipboard, notify.
 
 Strict tool definitions:
 - app args: a configured app alias only. If no alias fits, use terminal instead.
@@ -138,18 +142,15 @@ Strict tool definitions:
   Use search_path when matching a known path fragment.
   Use search_pattern for explicit regex-style patterns only.
   Use key=value filters only. Do not invent flags or prose.
-- media args: one of
-  play
-  pause
-  toggle
-  stop
-  next
-  prev
-  current
-  queue
-  search <query>
-  volume <0-100 | +N | -N>
-  Do not use "up", "down", "louder", or "quieter" in tool args.
+- media args: pause | toggle | stop | next | prev | volume <0-100 | +N | -N>
+  Use ONLY for volume and basic playback control.
+- music args: search <query> | play <track|index> | playlist <name> | ls music|playlists | queue | status | update
+  Use for all library actions and starting playback. Use search before play if unsure.
+  Music rules:
+  - If user says 'play' -> music play <query>
+  - If user says 'find/search' -> music search <query>
+  - NEVER invent file names.
+  - ONLY ONE tool call per request.
 - clipboard args: get | list | clear | set <text>
 - notify args: <title>|<body>|<low|normal|critical>
 

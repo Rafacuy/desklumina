@@ -4,6 +4,16 @@ import { parseSSE } from "./stream";
 import { GROQ_API_ENDPOINT, MODEL_TEMPERATURE, MAX_TOKENS } from "../constants";
 import type { AIMessage } from "../types";
 
+const SAFE_TOKEN_LIMIT = 6000; // Conservative limit to prevent 413 errors
+
+/**
+ * Rough token estimation (1 token ≈ 4 chars)
+ */
+function estimateTokens(messages: AIMessage[]): number {
+  const totalChars = messages.reduce((sum, msg) => sum + msg.content.length, 0);
+  return Math.ceil(totalChars / 4);
+}
+
 export class GroqAPIError extends Error {
   constructor(
     public statusCode: number,
@@ -55,6 +65,13 @@ async function* streamWithModel(
   messages: AIMessage[],
   model: string
 ): AsyncGenerator<string> {
+  const estimatedTokens = estimateTokens(messages);
+  logger.debug("groq", `Estimated tokens: ${estimatedTokens} (limit: ${SAFE_TOKEN_LIMIT})`);
+
+  if (estimatedTokens > SAFE_TOKEN_LIMIT) {
+    logger.warn("groq", `Token count (${estimatedTokens}) exceeds safe limit (${SAFE_TOKEN_LIMIT}). Request may fail.`);
+  }
+
   logger.info("groq", `Sending request to Groq with model ${model}`);
 
   const response = await fetch(GROQ_API_ENDPOINT, {
