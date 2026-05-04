@@ -1,3 +1,4 @@
+import { t, tf } from "../utils";
 import { execute } from "./terminal";
 import { handleFileManagement, parseQuotedArgs } from "./file-management";
 import { logger } from "../logger";
@@ -66,17 +67,17 @@ export async function fileOp(operation: string): Promise<ToolExecutionResult> {
 
     const ops: Record<string, () => Promise<ToolExecutionResult>> = {
       create_dir: async () => {
-        if (!args[0]) return result("create_dir", "❌ Path not found", false, undefined, undefined, "Missing path", 2);
+        if (!args[0]) return result("create_dir", t("tool.result.invalid_request"), false, undefined, undefined, "Missing path", 2);
         const command = ["mkdir", "-p", args[0]!];
         const commandResult = await spawnSafe(command);
         const cmdStr = command.join(" ");
-        if (commandResult.exitCode !== 0) return result("create_dir", `❌ Failed: ${commandResult.stderr}`, false, cmdStr, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
-        return result("create_dir", `✓ Folder "${args[0]}" created`, true, cmdStr, commandResult.stdout, commandResult.stderr, 0);
+        if (commandResult.exitCode !== 0) return result("create_dir", tf("error.with_message", { message: commandResult.stderr }), false, cmdStr, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
+        return result("create_dir", tf("tool.result.folder_created", { path: args[0]! }), true, cmdStr, commandResult.stdout, commandResult.stderr, 0);
       },
       delete: async () => {
-        if (!args[0]) return result("delete", "❌ Path not found", false, undefined, undefined, "Missing path", 2);
+        if (!args[0]) return result("delete", t("tool.result.invalid_request"), false, undefined, undefined, "Missing path", 2);
         if (args[0] === "/" || args[0] === expandPath("~")) {
-          return result("delete", "❌ Dangerous operation cancelled (root or home)", false, undefined, undefined, "Dangerous operation cancelled", 2);
+          return result("delete", t("tool.result.invalid_request"), false, undefined, undefined, "Dangerous operation cancelled", 2);
         }
 
         if (isDangerousPath(args[0])) {
@@ -86,14 +87,14 @@ export async function fileOp(operation: string): Promise<ToolExecutionResult> {
         const command = ["rm", "-rf", args[0]!];
         const commandResult = await spawnSafe(command);
         const cmdStr = command.join(" ");
-        if (commandResult.exitCode !== 0) return result("delete", `❌ Failed: ${commandResult.stderr}`, false, cmdStr, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
-        return result("delete", `✓ "${args[0]}" deleted`, true, cmdStr, commandResult.stdout, commandResult.stderr, 0);
+        if (commandResult.exitCode !== 0) return result("delete", tf("error.with_message", { message: commandResult.stderr }), false, cmdStr, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
+        return result("delete", tf("tool.result.deleted", { path: args[0]! }), true, cmdStr, commandResult.stdout, commandResult.stderr, 0);
       },
       move: async () => {
-        if (args.length < 2) return result("move", "❌ Source and destination required", false, undefined, undefined, "Source and destination required", 2);
+        if (args.length < 2) return result("move", t("tool.result.invalid_request"), false, undefined, undefined, "Source and destination required", 2);
         const src = args[0]!;
         const dest = args[1]!;
-        if (!src || !dest) return result("move", "❌ Incomplete path", false, undefined, undefined, "Incomplete path", 2);
+        if (!src || !dest) return result("move", t("tool.result.invalid_request"), false, undefined, undefined, "Incomplete path", 2);
         if (isDangerousPath(src) || isDangerousPath(dest)) {
           await rofiConfirm("Move Operation", `From: ${src}\nTo: ${dest}\n\nInvolves critical system path!`, "high");
         }
@@ -101,16 +102,16 @@ export async function fileOp(operation: string): Promise<ToolExecutionResult> {
         const command = ["mv", src, dest];
         const commandResult = await spawnSafe(command);
         const cmdStr = command.join(" ");
-        if (commandResult.exitCode !== 0) return result("move", `❌ Failed: ${commandResult.stderr}`, false, cmdStr, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
-        return result("move", `✓ Moved to "${dest}"`, true, cmdStr, commandResult.stdout, commandResult.stderr, 0);
+        if (commandResult.exitCode !== 0) return result("move", tf("error.with_message", { message: commandResult.stderr }), false, cmdStr, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
+        return result("move", tf("tool.result.moved", { path: dest }), true, cmdStr, commandResult.stdout, commandResult.stderr, 0);
       },
       copy: async () => {
-        if (args.length < 2) return result("copy", "❌ Source and destination required", false, undefined, undefined, "Source and destination required", 2);
+        if (args.length < 2) return result("copy", t("tool.result.invalid_request"), false, undefined, undefined, "Source and destination required", 2);
         const command = ["cp", "-r", args[0]!, args[1]!];
         const commandResult = await spawnSafe(command);
         const cmdStr = command.join(" ");
-        if (commandResult.exitCode !== 0) return result("copy", `❌ Failed: ${commandResult.stderr}`, false, cmdStr, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
-        return result("copy", `✓ Copied to "${args[1]}"`, true, cmdStr, commandResult.stdout, commandResult.stderr, 0);
+        if (commandResult.exitCode !== 0) return result("copy", tf("error.with_message", { message: commandResult.stderr }), false, cmdStr, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
+        return result("copy", tf("tool.result.copied", { path: args[1]! }), true, cmdStr, commandResult.stdout, commandResult.stderr, 0);
       },
       list: async () => {
         const path = args[0] || ".";
@@ -121,30 +122,30 @@ export async function fileOp(operation: string): Promise<ToolExecutionResult> {
         return result("list", commandResult.stdout, true, cmdStr, commandResult.stdout, commandResult.stderr, 0);
       },
       read: async () => {
-        if (!args[0]) return result("read", "❌ Path not found", false, undefined, undefined, "Missing path", 2);
+        if (!args[0]) return result("read", t("tool.result.invalid_request"), false, undefined, undefined, "Missing path", 2);
         try {
           const file = Bun.file(args[0]);
-          if (!(await file.exists())) return result("read", "❌ File not found", false, undefined, undefined, "File not found", 404);
+          if (!(await file.exists())) return result("read", tf("error.with_message", { message: "File not found" }), false, undefined, undefined, "File not found", 404);
           const text = await file.text();
           return result("read", text, true, undefined, text, undefined, 0);
         } catch (error) {
           const err = error instanceof Error ? error : new Error(String(error));
           logger.error("files", `Read failed: ${err.message}`, err);
-          return result("read", `❌ Failed to read: ${err.message}`, false, undefined, undefined, err.message, 1);
+          return result("read", tf("error.with_message", { message: err.message }), false, undefined, undefined, err.message, 1);
         }
       },
       write: async () => {
-        if (args.length < 2) return result("write", "❌ Path and content required", false, undefined, undefined, "Path and content required", 2);
+        if (args.length < 2) return result("write", t("tool.result.invalid_request"), false, undefined, undefined, "Path and content required", 2);
         const path = args[0];
-        if (!path) return result("write", "❌ Path not found", false, undefined, undefined, "Missing path", 2);
+        if (!path) return result("write", t("tool.result.invalid_request"), false, undefined, undefined, "Missing path", 2);
         const content = allArgs.slice(2).join(" ");
         try {
           await Bun.write(path as string, content);
-          return result("write", `✓ File "${path}" written`, true, undefined, content, undefined, 0);
+          return result("write", tf("tool.result.file_written", { path }), true, undefined, content, undefined, 0);
         } catch (error) {
           const err = error instanceof Error ? error : new Error(String(error));
           logger.error("files", `Write failed: ${err.message}`, err);
-          return result("write", `❌ Failed to write: ${err.message}`, false, undefined, undefined, err.message, 1);
+          return result("write", tf("error.with_message", { message: err.message }), false, undefined, undefined, err.message, 1);
         }
       },
       find: async () => {
@@ -163,7 +164,7 @@ export async function fileOp(operation: string): Promise<ToolExecutionResult> {
 
     return result(
       operation.trim(),
-      "❌ Unknown file action. Supported actions: create_dir, delete, move, copy, list, read, write, find, search_name, search_path, search_pattern, preview, history, repeat_last.",
+      t("tool.result.invalid_request"),
       false,
       undefined,
       undefined,
@@ -176,6 +177,6 @@ export async function fileOp(operation: string): Promise<ToolExecutionResult> {
     }
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error("files", `File operation failed: ${err.message}`, err);
-    return result(operation.trim(), `❌ Error: ${err.message}`, false, undefined, undefined, err.message, 1);
+    return result(operation.trim(), tf("error.with_message", { message: err.message }), false, undefined, undefined, err.message, 1);
   }
 }

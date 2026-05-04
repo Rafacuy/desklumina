@@ -63,11 +63,28 @@ Update the **TOOLS** section so the model knows the tool name and expected `args
 
 ## Adding New i18n Strings
 
-1. Add your new string key to `src/locales/en.json` and `src/locales/id.json`.
-2. Use the `t()` helper in your code:
+DeskLumina uses a centralized i18n system located in `src/utils/i18n.ts`.
+
+1. Add your new string key to `src/locales/en.json` and `src/locales/id.json`. You can use nested objects for better organization:
+   ```json
+   {
+     "error": {
+       "not_found": "Path not found: {path}"
+     }
+   }
+   ```
+2. Use the `t()` helper for static strings or `tf()` for parameterized strings:
    ```typescript
-   import { t } from "../utils/i18n";
-   console.log(t("Your New Key"));
+   import { t, tf } from "../utils/i18n";
+
+   // Static translation
+   console.log(t("Settings")); 
+
+   // Nested key translation
+   console.log(t("error.not_found"));
+
+   // Parameterized translation
+   console.log(tf("error.not_found", { path: "/tmp" }));
    ```
 
 ---

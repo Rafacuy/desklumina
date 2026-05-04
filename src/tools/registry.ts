@@ -1,3 +1,4 @@
+import { t, tf } from "../utils";
 import { execute } from "./terminal";
 import { launch } from "./apps";
 import { fileOp } from "./files";
@@ -13,8 +14,8 @@ const tools: ToolRegistry = {
   terminal: async (cmd) => {
     const result = await execute(cmd);
     const message = result.exitCode === 0
-      ? (result.stdout || result.stderr || "Done")
-      : `❌ ${result.stderr || "Command failed"}`;
+      ? (result.stdout || result.stderr || t("tool.result.done"))
+      : `❌ ${result.stderr || t("tool.result.command_failed")}`;
     return {
       tool: "terminal",
       result: message,
@@ -43,7 +44,7 @@ export async function dispatch(toolName: string, arg: string): Promise<ToolExecu
     logger.warn("tools", `Tool not found: ${toolName}`);
     return {
       tool: toolName,
-      result: `⚠️ Tool '${toolName}' not found`,
+      result: tf("tool.result.not_found", { tool: toolName }),
       success: false,
       normalizedArg: arg.trim(),
       stderr: `Tool '${toolName}' not found`,
@@ -65,7 +66,7 @@ export async function dispatch(toolName: string, arg: string): Promise<ToolExecu
     logger.error("tools", `Error in ${toolName}: ${err.message}`, err);
     return {
       tool: toolName,
-      result: `❌ ${toolName} error: ${err.message}`,
+      result: tf("error.with_message", { message: err.message }),
       success: false,
       normalizedArg: arg.trim(),
       stderr: err.message,

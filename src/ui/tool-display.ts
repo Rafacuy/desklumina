@@ -1,5 +1,5 @@
 import type { ParsedToolCall, ToolResult } from "../types";
-import { t } from "../utils/i18n";
+import { t, tf } from "../utils/i18n";
 
 interface ToolConfig {
   icon: string;
@@ -11,20 +11,20 @@ interface ToolConfig {
  * Tool category mapping 
  */
 const TOOL_CONFIG: Record<string, ToolConfig> = {
-  app: { icon: "🚀", label: "Opening application", resultLabel: "Application opened" },
-  terminal: { icon: "💻", label: "Running terminal command", resultLabel: "Command executed" },
-  file: { icon: "📁", label: "Managing files", resultLabel: "File operation complete" },
-  media: { icon: "🎵", label: "Controlling media", resultLabel: "Media controlled" },
-  clipboard: { icon: "📋", label: "Clipboard operation", resultLabel: "Clipboard updated" },
-  notify: { icon: "🔔", label: "Sending notification", resultLabel: "Notification sent" },
-  music: { icon: "🎶", label: "Music system operation", resultLabel: "Music controlled" },
+  app: { icon: "🚀", label: "tool.opening_app", resultLabel: "tool.app_opened" },
+  terminal: { icon: "💻", label: "tool.running_terminal", resultLabel: "tool.command_executed" },
+  file: { icon: "📁", label: "tool.managing_files", resultLabel: "tool.file_op_complete" },
+  media: { icon: "🎵", label: "tool.controlling_media", resultLabel: "tool.media_controlled" },
+  clipboard: { icon: "📋", label: "tool.clipboard", resultLabel: "tool.clipboard_updated" },
+  notify: { icon: "🔔", label: "tool.sending_notification", resultLabel: "tool.notification_sent" },
+  music: { icon: "🎶", label: "tool.music_system", resultLabel: "tool.music_controlled" },
 };
 
 /**
  * Get label for a tool
  */
 function getToolLabel(tool: string): string {
-  const label = TOOL_CONFIG[tool]?.label || "Executing actions";
+  const label = TOOL_CONFIG[tool]?.label || "tool.executing_actions";
   return t(label);
 }
 
@@ -32,7 +32,7 @@ function getToolLabel(tool: string): string {
  * Get result label for a tool
  */
 function getToolResultLabel(tool: string): string {
-  const label = TOOL_CONFIG[tool]?.resultLabel || "Action complete";
+  const label = TOOL_CONFIG[tool]?.resultLabel || "tool.action_complete";
   return t(label);
 }
 
@@ -49,32 +49,33 @@ function formatFileResult(result: ToolResult): string[] {
 
   if (result.status === "search_complete") {
     const matchCount = files.length;
-    lines.push(`    Search complete: ${matchCount} match${matchCount === 1 ? "" : "es"}`);
+    lines.push(`    ${tf("tool.result.search_complete", { count: matchCount })}`);
   } else if (result.status === "no_matches") {
-    lines.push("    Search complete: no matches");
+    lines.push(`    ${t("tool.result.no_matches")}`);
   } else if (result.status === "preview_ready") {
-    lines.push("    Preview ready");
+    lines.push(`    ${t("tool.result.preview_ready")}`);
   } else if (result.status === "history_ready") {
-    lines.push(`    History entries: ${files.length}`);
+    lines.push(`    ${tf("tool.result.history_entries", { count: files.length })}`);
   } else if (result.status === "history_empty") {
-    lines.push("    Search history is empty");
+    lines.push(`    ${t("tool.result.history_empty")}`);
   } else if (result.status === "invalid_request") {
-    lines.push("    Invalid file request");
+    lines.push(`    ${t("tool.result.invalid_request")}`);
   }
 
   if (result.selectedFile) {
-    lines.push(`    Selected: ${result.selectedFile}`);
+    lines.push(`    ${tf("tool.result.selected", { path: result.selectedFile })}`);
   } else {
     files.slice(0, 3).forEach((file) => {
       lines.push(`    • ${file.path}`);
     });
     if (files.length > 3) {
-      lines.push(`    • +${files.length - 3} more`);
+      const moreWord = t("common.more") || "more";
+      lines.push(`    • +${files.length - 3} ${moreWord}`);
     }
   }
 
   if (result.preview?.path && result.preview.path !== result.selectedFile) {
-    lines.push(`    Preview: ${result.preview.path}`);
+    lines.push(`    ${tf("tool.result.preview", { path: result.preview.path })}`);
   }
 
   if (result.success === false && result.stderr) {
@@ -94,7 +95,10 @@ function summarizeResult(result: ToolResult): string[] {
     const files = result.files || [];
     if (files.length > 0) {
       files.slice(0, 3).forEach((f) => lines.push(`    • ${f.name}`));
-      if (files.length > 3) lines.push(`    • +${files.length - 3} more`);
+      if (files.length > 3) {
+        const moreWord = t("common.more") || "more";
+        lines.push(`    • +${files.length - 3} ${moreWord}`);
+      }
     }
     return lines;
   }
@@ -154,7 +158,8 @@ export class ToolDisplay {
   static formatRetryUpdate(attempt: number, tools: string[], reason: string): string {
     const uniqueTools = [...new Set(tools)];
     const labels = uniqueTools.map((tool) => getToolLabel(tool)).join(", ");
-    return `${this.SEPARATOR}\n  • Retrying (${attempt}) ${labels}\n  • ${reason}\n${this.SEPARATOR}`.trim();
+    const retryingWord = t("common.retrying") || "Retrying";
+    return `${this.SEPARATOR}\n  • ${retryingWord} (${attempt}) ${labels}\n  • ${reason}\n${this.SEPARATOR}`.trim();
   }
 
   /**
@@ -164,7 +169,7 @@ export class ToolDisplay {
     if (calls.length === 0) return "";
 
     const count = calls.length;
-    const actionWord = t("actions");
+    const actionWord = t("common.actions_count");
     return `🔧 ${count} ${actionWord}`;
   }
 
@@ -175,7 +180,7 @@ export class ToolDisplay {
     if (results.length === 0) return "";
 
     const count = results.length;
-    const completedWord = t("completed");
+    const completedWord = t("common.completed_count");
     return `✓ ${count} ${completedWord}`;
   }
 
@@ -203,7 +208,7 @@ export class ToolDisplay {
   static formatDetailed(calls: ParsedToolCall[]): string {
     if (calls.length === 0) return "";
 
-    let output = `${this.SEPARATOR}\n🔧 ${t("Executing actions")}\n${this.SEPARATOR}`;
+    let output = `${this.SEPARATOR}\n🔧 ${t("tool.executing_actions")}\n${this.SEPARATOR}`;
 
     calls.forEach((call) => {
       const icon = getToolIcon(call.tool);
@@ -221,7 +226,7 @@ export class ToolDisplay {
   static formatResultsDetailed(results: ToolResult[]): string {
     if (results.length === 0) return "";
 
-    let output = `${this.SEPARATOR}\n✓ ${t("Actions completed")}\n${this.SEPARATOR}`;
+    let output = `${this.SEPARATOR}\n✓ ${t("tool.actions_completed")}\n${this.SEPARATOR}`;
 
     results.forEach((r) => {
       const icon = getToolIcon(r.tool);

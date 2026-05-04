@@ -1,3 +1,4 @@
+import { t, tf } from "../utils";
 import { logger } from "../logger";
 import type { ToolExecutionResult } from "../types";
 
@@ -91,7 +92,7 @@ function parseVolume(action: string, parts: string[]): MediaAction {
   return {
     kind: "error",
     normalizedArg: action.trim(),
-    message: "❌ Invalid volume format. Use volume <0-100 | +N | -N>.",
+    message: t("tool.result.invalid_request"),
     stderr: "Invalid volume format",
     exitCode: 2,
   };
@@ -107,7 +108,7 @@ function normalizeAction(action: string): MediaAction {
     return {
       kind: "error",
       normalizedArg: "",
-      message: "❌ Media action is required.",
+      message: t("tool.result.invalid_request"),
       stderr: "Missing media action",
       exitCode: 2,
     };
@@ -137,7 +138,7 @@ function normalizeAction(action: string): MediaAction {
       return {
         kind: "error",
         normalizedArg: trimmed,
-        message: "❌ Search requires a query.",
+        message: t("tool.result.invalid_request"),
         stderr: "Missing media search query",
         exitCode: 2,
       };
@@ -164,7 +165,7 @@ function normalizeAction(action: string): MediaAction {
   return {
     kind: "error",
     normalizedArg: trimmed,
-    message: "❌ Unknown media action. Supported actions: play, pause, toggle, stop, next, prev, current, queue, search, volume <0-100 | +N | -N>.",
+    message: t("tool.result.invalid_request"),
     stderr: "Unknown media action",
     exitCode: 2,
   };
@@ -198,7 +199,7 @@ export async function media(action: string): Promise<ToolExecutionResult> {
     const commandResult = { stdout, stderr, exitCode: exitCode ?? 1 };
 
     if (commandResult.exitCode !== 0) {
-      const errorMessage = `❌ Error: ${commandResult.stderr || "Command failed"}`;
+      const errorMessage = tf("error.with_message", { message: commandResult.stderr || "Failed" });
       logger.warn("media", `Command failed: ${normalized.command} -> ${commandResult.stderr}`);
       return buildResult(
         normalized.normalizedArg,
@@ -211,7 +212,7 @@ export async function media(action: string): Promise<ToolExecutionResult> {
       );
     }
 
-    const output = commandResult.stdout?.trim() || "✓ Done";
+    const output = commandResult.stdout?.trim() || t("tool.result.done");
     return buildResult(
       normalized.normalizedArg,
       output,
@@ -224,6 +225,6 @@ export async function media(action: string): Promise<ToolExecutionResult> {
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error("media", `Media operation failed: ${err.message}`, err);
-    return buildResult(action.trim(), `❌ Error: ${err.message}`, false, undefined, undefined, err.message, 1);
+    return buildResult(action.trim(), tf("error.with_message", { message: err.message }), false, undefined, undefined, err.message, 1);
   }
 }

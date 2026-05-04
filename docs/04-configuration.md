@@ -49,6 +49,7 @@ DeskLumina stores user preferences in `~/.config/desklumina/settings.json`. You 
 ```
 
 - **`language`**: Primary language for the UI and AI. Supported: `"en"`, `"id"`.
+  - *Note*: Changing the language automatically updates the `tts.voiceId` to a matching natural voice (e.g., Gadis for Indonesian, Ava for English).
 - **`features.tts`**: Enable/disable text-to-speech output.
 - **`features.toolDisplay`**: Show/hide tool execution details in the UI.
 - **`features.dangerousCommandConfirmation`**: Require confirmation for critical commands.

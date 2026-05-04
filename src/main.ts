@@ -17,24 +17,24 @@ function appendCallbackText(target: string, callback?: ToolCallbackPayload): str
 }
 
 async function main() {
-  logger.info("main", t("Lumina started"));
+  logger.info("main", "Lumina started");
 
   const chatManager = new ChatManager();
   const lumina = new Lumina(chatManager);
 
   if (mode === "--daemon") {
-    console.log(t("🔧 Starting DeskLumina daemon..."));
+    console.log(t("daemon.starting"));
     const daemon = new DeskLuminaDaemon();
     await daemon.start();
-    console.log(t("✓ Daemon started successfully"));
-    console.log(t("Use 'lumina --send <command>' to send commands"));
+    console.log(t("daemon.started_success"));
+    console.log(t("daemon.send_usage"));
     
     // Keep process alive
     process.stdin.resume();
   } else if (mode === "--send") {
     const command = args.slice(1).join(" ");
     if (!command) {
-      console.error(t("Usage: lumina --send <command>"));
+      console.error(t("daemon.send_usage_bin"));
       process.exit(1);
     }
 
@@ -44,21 +44,21 @@ async function main() {
       console.log(response);
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
-      console.error(t(`Error: ${err.message}`));
+      console.error(tf("error.with_message", { message: err.message }));
       process.exit(1);
     }
   } else if (mode === "--daemon-status") {
     const client = new DaemonClient();
     if (await client.isDaemonRunning()) {
-      console.log(t("✓ Daemon is running"));
-      console.log(t(`Socket: ${client.getSocketPath()}`));
+      console.log(t("daemon.running"));
+      console.log(tf("daemon.socket", { path: client.getSocketPath() }));
     } else {
-      console.log(t("✗ Daemon is not running"));
-      console.log(t("Start with: lumina --daemon"));
+      console.log(t("daemon.not_running"));
+      console.log(t("daemon.start_command"));
     }
   } else if (mode === "--chat") {
-    console.log(t("💫 Lumina Terminal Chat Mode"));
-    console.log(t("Type 'exit' to quit, 'new' for new chat, 'list' to see chats\n"));
+    console.log(t("app.terminal_chat_mode"));
+    console.log(t("app.terminal_chat_help"));
 
     const readline = require("readline");
     const rl = readline.createInterface({
@@ -73,14 +73,14 @@ async function main() {
         const trimmed = input.trim();
 
         if (trimmed === "exit") {
-          console.log(t("Goodbye! 👋"));
+          console.log(t("app.goodbye"));
           rl.close();
           return;
         }
 
         if (trimmed === "new") {
           chatManager.createChat();
-          console.log(t("Started new chat.\n"));
+          console.log(t("app.new_chat_started"));
           prompt();
           return;
         }
@@ -88,13 +88,13 @@ async function main() {
         if (trimmed === "list") {
           const chats = chatManager.getAllChats();
           if (chats.length === 0) {
-            console.log(t("No chats yet.\n"));
+            console.log(t("app.no_chats"));
           } else {
             chats.forEach((chat, i) => {
               const active = chatManager.getCurrentChat()?.id === chat.id ? " *" : "";
               console.log(`${i + 1}. ${chat.title} (${chat.messageCount} msgs)${active}`);
             });
-            console.log(t("\nUse 'load <number>' to switch chats.\n"));
+            console.log(t("app.load_chat_usage"));
           }
           prompt();
           return;
@@ -110,7 +110,7 @@ async function main() {
             chatManager.loadChat(targetChat.id);
             console.log(`Loaded: ${targetChat.title}\n`);
           } else {
-            console.log(t("Invalid chat number.\n"));
+            console.log(t("app.invalid_chat_number"));
           }
           prompt();
           return;
@@ -146,7 +146,7 @@ async function main() {
   } else if (mode === "--exec") {
     const message = args.slice(1).join(" ");
     if (!message) {
-      console.error(t("Usage: lumina --exec <message>"));
+      console.error(t("app.usage_exec"));
       process.exit(1);
     }
 
@@ -167,7 +167,7 @@ async function main() {
     console.log(finalOutput);
   } else if (mode === "--version") {
     const version = await getAppVersion();
-    console.log(tf("Lumina v{version}", { version }));
+    console.log(tf("app.version", { version }));
     console.log(`Model: ${env.MODEL_NAME}`);
   } else {
     // Default: Rofi chat mode

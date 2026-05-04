@@ -1,3 +1,4 @@
+import { t, tf } from "../utils";
 import { logger } from "../logger";
 import type { ToolExecutionResult } from "../types";
 
@@ -32,7 +33,7 @@ export async function notify(args: string): Promise<ToolExecutionResult> {
     const urgency = (parts[2]?.trim() || "normal").toLowerCase();
 
     if (!["low", "normal", "critical"].includes(urgency)) {
-      return buildResult(args.trim(), "❌ Invalid urgency. Use low, normal, or critical.", false, undefined, undefined, "Invalid urgency", 2);
+      return buildResult(args.trim(), t("tool.result.invalid_urgency"), false, undefined, undefined, "Invalid urgency", 2);
     }
 
     const command = `dunstify -u ${urgency} -i lumina "${title}" "${body}"`;
@@ -49,13 +50,13 @@ export async function notify(args: string): Promise<ToolExecutionResult> {
 
     if (exitCode !== 0) {
       logger.warn("notify", `Notification failed: ${stderr}`);
-      return buildResult(args.trim(), `❌ Error: ${stderr || "Failed to send notification"}`, false, command, stdout, stderr, exitCode);
+      return buildResult(args.trim(), tf("error.with_message", { message: stderr || "Failed" }), false, command, stdout, stderr, exitCode);
     }
 
-    return buildResult(`${title}|${body}|${urgency}`, "✓ Notification sent", true, command, stdout, stderr, 0);
+    return buildResult(`${title}|${body}|${urgency}`, t("tool.result.notification_sent"), true, command, stdout, stderr, 0);
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
     logger.error("notify", `Notification failed: ${err.message}`, err);
-    return buildResult(args.trim(), `❌ Error: ${err.message}`, false, undefined, undefined, err.message, 1);
+    return buildResult(args.trim(), tf("error.with_message", { message: err.message }), false, undefined, undefined, err.message, 1);
   }
 }

@@ -69,7 +69,7 @@ function buildRetryMessages(
   const retryFeedback = failedResults.map(formatToolResultForContext).join("\n\n");
 
   return [
-    baseMessages[0], // system prompt only
+    baseMessages[0]!, // system prompt only
     { role: "user", content: originalUserMessage },
     { role: "assistant", content: previousAssistantResponse },
     {
@@ -94,7 +94,7 @@ function buildFollowUpMessages(
   const toolFeedback = toolResults.map(formatToolResultForContext).join("\n\n");
 
   return [
-    baseMessages[0], // system prompt only
+    baseMessages[0]!, // system prompt only
     { role: "user", content: userMessage },
     { role: "assistant", content: cleanAssistantResponse(previousAssistantResponse) || previousAssistantResponse },
     {
@@ -168,9 +168,9 @@ export class Lumina {
       const cleanResponse = cleanAssistantResponse(fullResponse);
 
       if (settings.features.tts) {
-        logger.debug("lumina", t("TTS enabled, triggering text-to-speech"));
+        logger.debug("lumina", "TTS enabled, triggering text-to-speech");
         textToSpeech(fullResponse).catch((err) => {
-          logger.error("lumina", t("TTS failed"), err instanceof Error ? err : new Error(String(err)));
+          logger.error("lumina", "TTS failed", err instanceof Error ? err : new Error(String(err)));
         });
       }
 
@@ -272,7 +272,7 @@ export class Lumina {
       }
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error("lumina", `Chat error: ${err.message}`, err);
-      const errorMsg = `❌ ${t("Error")}: ${err.message}`;
+      const errorMsg = `❌ ${t("common.error")}: ${err.message}`;
 
       if (!this.chatManager) {
         this.context.add("user", userMessage);
@@ -308,7 +308,7 @@ export class Lumina {
         const errMsg = logger.catchError(`tool:${call.tool}`, error);
         results.push({
           tool: call.tool,
-          result: `${t("Error")}: ${errMsg}`,
+          result: `${t("common.error")}: ${errMsg}`,
           success: false,
           normalizedArg: call.arg.trim(),
           stderr: errMsg,

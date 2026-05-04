@@ -10,6 +10,7 @@ A detailed reference for DeskLumina's internal APIs and tool signatures.
 - [Tool Handler Signature](#tool-handler-signature)
 - [Chat State API](#chat-state-api)
 - [Security Analysis API](#security-analysis-api)
+- [Internationalization API (i18n)](#internationalization-api-i18n)
 - [Daemon Socket Protocol](#daemon-socket-protocol)
 
 ---
@@ -92,6 +93,30 @@ Tool execution is persisted as dedicated chat messages and replayed back to the 
 ### `analyzeCommand(command: string): CommandAnalysis`
 
 See `src/security/dangerous-commands.ts` for the exact structure (`CommandAnalysis`) and severity selection (`highestSeverity`).
+
+---
+
+## Internationalization API (i18n)
+
+**File**: `src/utils/i18n.ts`
+
+### `t(key: string): string`
+Returns the translated string for the given key based on the current system language.
+
+- **`key`**: The translation key (supports dot notation for nested objects).
+- **Returns**: The translated string, or the key itself if no translation is found.
+
+### `tf(key: string, vars: Record<string, string | number>): string`
+Returns a translated string with parameter interpolation.
+
+- **`key`**: The translation key.
+- **`vars`**: An object containing key-value pairs to replace placeholders in the format `{varName}`.
+- **Returns**: The translated string with all placeholders replaced.
+
+### `setLang(lang: string): void`
+Sets the current system language.
+
+- **`lang`**: The language code (e.g., `"en"`, `"id"`).
 
 ---
 

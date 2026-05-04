@@ -1,14 +1,16 @@
+import { t } from "../utils";
+
 const MESSAGES = [
-  "🧠 Lumina is thinking hard...",
-  "🌀 Consulting the galaxy...",
-  "☕ Loading my intelligence, please wait...",
-  "🔮 Reading system traces...",
-  "🚀 Launching neurons into space...",
-  "🎲 Rolling quantum dice for an answer...",
-  "🦾 Flexing my flexible muscles, hold on...",
-  "🌌 Wrapping the cosmos to find your file...",
-  "🐱 cat /dev/wisdom | grep answer...",
-  "💫 sudo pacman -S brain...",
+  "ui.loader.thinking",
+  "ui.loader.galaxy",
+  "ui.loader.intelligence",
+  "ui.loader.traces",
+  "ui.loader.neurons",
+  "ui.loader.quantum",
+  "ui.loader.muscles",
+  "ui.loader.cosmos",
+  "ui.loader.wisdom",
+  "ui.loader.brain",
 ];
 
 let loaderInterval: Timer | null = null;
@@ -16,11 +18,11 @@ let currentIndex = 0;
 
 export function startLoader() {
   currentIndex = 0;
-  process.stdout.write(MESSAGES[currentIndex] ?? "");
+  process.stdout.write(t(MESSAGES[currentIndex] || ""));
   
   loaderInterval = setInterval(() => {
     currentIndex = (currentIndex + 1) % MESSAGES.length;
-    process.stdout.write(`\r${MESSAGES[currentIndex]}`);
+    process.stdout.write(`\r${t(MESSAGES[currentIndex] || "")}`);
   }, 1200);
 }
 

@@ -19,14 +19,14 @@ export async function rofiChatInput(
   if (isExpanded) {
     // Show management options in expanded mode
     if (historyPreview) {
-      menuItems.push(`── ${t("Recent Messages")} ──`);
+      menuItems.push(`── ${t("ui.recent_messages")} ──`);
       menuItems.push(historyPreview);
       menuItems.push("──────────────────");
     }
 
-    menuItems.push(`📂 ${t("Select Chat")}`);
-    menuItems.push(`⚙️ ${t("Settings")}`);
-    menuItems.push(`✕ ${t("Close")}`);
+    menuItems.push(`📂 ${t("ui.select_chat")}`);
+    menuItems.push(`⚙️ ${t("ui.settings.title")}`);
+    menuItems.push(`✕ ${t("common.close")}`);
   }
 
   const themeOverride = isExpanded 
@@ -34,14 +34,14 @@ export async function rofiChatInput(
     : "listview { enabled: false; } mainbox { children: [inputbar, message]; }";
     
     const hints = isExpanded
-    ? `󰌑 ${t("Send")} │ 󱊷 [ESC] ${t("Exit")} │ 󰌓 [TAB] ${t("Hide")}`
-    : `󰌑 ${t("Send")} │ 󱊷 [ESC] ${t("Exit")} │ 󰌓 [TAB] ${t("Expand")}`;
+    ? `󰌑 ${t("common.send")} │ 󱊷 [ESC] ${t("common.exit")} │ 󰌓 [TAB] ${t("common.hide")}`
+    : `󰌑 ${t("common.send")} │ 󱊷 [ESC] ${t("common.exit")} │ 󰌓 [TAB] ${t("common.expand")}`;
 
   const result = await rofiMenu(
     menuItems.join("\n"), 
     prompt,
     themeOverride,
-    t("Type your message..."),
+    t("ui.type_message"),
     hints
   );
 
@@ -56,23 +56,21 @@ export async function rofiChatInput(
   }
 
   if (isExpanded) {
-    if (input === `📂 ${t("Select Chat")}`) {
+    if (input === `📂 ${t("ui.select_chat")}`) {
       return { action: "select" };
     }
 
-    const settingsLabel = t("Settings");
-    if (input === `⚙️ ${settingsLabel}` || input === "⚙️ Settings" || input === "⚙️ Pengaturan") {
+    if (input === `⚙️ ${t("ui.settings.title")}`) {
       return { action: "settings" };
     }
 
-    const closeLabel = t("Close");
-    if (input === `✕ ${closeLabel}` || input === "✕ Close" || input === "✕ Tutup") {
+    if (input === `✕ ${t("common.close")}`) {
       return { action: "exit" };
     }
 
     if (input.startsWith("󱜙 You:") || input.startsWith("󱜙 Lumina:") || input.startsWith("──")) {
       // If user clicks a history item, treat it as wanting to send a new message
-      const message = await rofiSimpleInput(t("Message"), "");
+      const message = await rofiSimpleInput(t("common.message"), "");
       if (message) {
         return { action: "send", input: message };
       }
@@ -87,14 +85,14 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
   const chats = chatManager.getAllChats();
   
   if (chats.length === 0) {
-    await rofiDisplay(t("No chats yet.\nStart a new conversation!"));
+    await rofiDisplay(t("ui.no_chats_start"));
     return null;
   }
 
   const items: string[] = [];
   
   // Clean Header
-  items.push(`󰗋 ${t("Select Chat")}`);
+  items.push(`󰗋 ${t("ui.select_chat")}`);
   items.push("──────────────────");
   
   const chatItems = chats.map((chat: any) => {
@@ -104,7 +102,7 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
     });
     const preview = chat.lastMessage
       ? chat.lastMessage.substring(0, 30).replace(/\n/g, " ")
-      : t("Empty chat");
+      : t("ui.empty_chat");
       
     // Format: 󰭹 Title [Date] (Count) - Preview...
     return `󰭹 ${chat.title.padEnd(20)} │ 󰃭 ${date} │ 󰅒 ${chat.messageCount} │ ${preview}...`;
@@ -112,18 +110,18 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
   
   items.push(...chatItems);
   items.push("──────────────────");
-  items.push(`📝 ${t("New Chat")}`);
-  items.push(`✕ ${t("Cancel")}`);
+  items.push(`📝 ${t("ui.new_chat")}`);
+  items.push(`✕ ${t("common.cancel")}`);
 
   const result = await rofiMenu(
     items.join("\n"), 
-    t("Select Chat"), 
+    t("ui.select_chat"), 
     "listview { lines: 12; }",
-    t("Search chat..."),
-    `󰌑 ${t("Select")} │ 󱊷 ${t("Cancel")} │ 󰍉 ${t("Search")}`
+    t("ui.search_chat"),
+    `󰌑 ${t("common.select")} │ 󱊷 ${t("common.cancel")} │ 󰍉 ${t("common.search")}`
   );
 
-  if (!result.output || result.code !== 0 || result.output === `✕ ${t("Cancel")}` || result.output.includes(t("Select Chat"))) {
+  if (!result.output || result.code !== 0 || result.output === `✕ ${t("common.cancel")}` || result.output.includes(t("ui.select_chat"))) {
     return null;
   }
 
@@ -133,7 +131,7 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
     return rofiSelectChat(chatManager);
   }
 
-  if (selected === `📝 ${t("New Chat")}`) {
+  if (selected === `📝 ${t("ui.new_chat")}`) {
     return "__new__";
   }
 
@@ -257,10 +255,10 @@ export async function rofiExpandedResponse(fullMessage: string): Promise<void> {
 
   await rofiMenu(
     lines.join('\n'),
-    t("Full Response"),
+    t("ui.full_response"),
     themeOverride,
     "",
-    `󱊷 [ESC] ${t("Back")}`
+    `󱊷 [ESC] ${t("common.back")}`
   );
 }
 
@@ -298,14 +296,14 @@ export async function rofiResponsePanel(message: string): Promise<{ action: "rep
     : allLines;
 
   if (needsTruncation) {
-    displayLines.push("", "(… truncated · [TAB] Expand)");
+    displayLines.push("", t("ui.panel.truncated"));
   }
 
   const cleanMessage = displayLines.join('\n')
     .replace(/^━+$/gm, "")
     .trim();
 
-  const formattedMessage = `󱜙 ${t("Lumina")}\n${"─".repeat(40)}\n\n${cleanMessage}`;
+  const formattedMessage = `󱜙 ${t("common.lumina")}\n${"─".repeat(40)}\n\n${cleanMessage}`;
 
   const themeOverride = `
     window {
@@ -348,7 +346,7 @@ export async function rofiResponsePanel(message: string): Promise<{ action: "rep
       vertical-align: 0.5;
     }
     entry {
-      placeholder: "${t("Reply...")}";
+      placeholder: "${t("ui.reply_placeholder")}";
       placeholder-color: @text-muted;
       font: "JetBrainsMono Nerd Font 10";
       vertical-align: 0.5;
@@ -360,9 +358,9 @@ export async function rofiResponsePanel(message: string): Promise<{ action: "rep
 
   const result = await rofiMenu(
     "", 
-    t("Lumina"),
+    t("common.lumina"),
     themeOverride,
-    t("Type a reply..."),
+    t("ui.type_reply"),
     "",
     formattedMessage
   );
@@ -398,7 +396,7 @@ async function rofiDmenu(items: string, prompt: string = "Lumina"): Promise<stri
   const args = [
     "rofi", "-dmenu", "-i", "-p", prompt, 
     "-theme", THEME_PATH, 
-    "-mesg", `󰌑 ${t("Send")} │ 󱊷 ${t("Exit")} │ 󰍉 ${t("Search")}`
+    "-mesg", `󰌑 ${t("common.send")} │ 󱊷 ${t("common.exit")} │ 󰍉 ${t("common.search")}`
   ];
 
   const proc = spawn(args, {
@@ -445,7 +443,7 @@ export async function rofiDisplay(message: string): Promise<void> {
     .replace(/\n+$/, "")
     .trim();
 
-  const formattedMessage = `󱜙 ${t("Lumina")}\n${"─".repeat(40)}\n\n${cleanMessage}`;
+  const formattedMessage = `󱜙 ${t("common.lumina")}\n${"─".repeat(40)}\n\n${cleanMessage}`;
 
   const proc = spawn([
     "rofi", "-e", formattedMessage,
@@ -532,8 +530,7 @@ export async function rofiChatLoop(
             } catch (error) {
               const isCancellation = 
                 error instanceof CancellationError || 
-                (error && typeof error === 'object' && 'name' in error && error.name === "CancellationError") ||
-                (error instanceof Error && error.message.includes("cancelled by user"));
+                (error && typeof error === 'object' && 'name' in error && error.name === "CancellationError");
 
               if (isCancellation) {
                 logger.info("ui", "Cancellation detected, intercepting and hiding response panel");

@@ -1,4 +1,4 @@
-import { t, cleanAssistantResponse } from "../utils";
+import { t, tf, cleanAssistantResponse } from "../utils";
 import { Lumina, ChatManager } from "../core";
 import { logger } from "../logger";
 import { env } from "../config/env";
@@ -41,7 +41,7 @@ export class DeskLuminaDaemon {
 
   async start(): Promise<void> {
     if (this.isRunning) {
-      logger.warn("daemon", t("Daemon already running"));
+      logger.warn("daemon", "Daemon already running");
       return;
     }
 
@@ -151,7 +151,7 @@ export class DeskLuminaDaemon {
       }
 
       this.isRunning = true;
-      logger.info("daemon", t(`Daemon started on ${this.socketPath}`));
+      logger.info("daemon", tf("daemon.started", { path: this.socketPath }));
       
       // Handle graceful shutdown
       process.on("SIGINT", async () => {
@@ -193,7 +193,7 @@ export class DeskLuminaDaemon {
         logger.info("daemon", "Token file removed");
       }
 
-      logger.info("daemon", t("Daemon stopped"));
+      logger.info("daemon", "Daemon stopped");
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error("daemon", `Error stopping daemon: ${err.message}`, err);

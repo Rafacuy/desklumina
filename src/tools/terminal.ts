@@ -30,12 +30,12 @@ export async function execute(command: string): Promise<CommandResult> {
       );
 
       await rofiConfirm(
-        "Dangerous Command Detected",
+        "security.dangerous_command_title",
         `Command: ${command}\n\nReason: ${analysis.summary}`,
         severity
       );
 
-      logger.info("terminal", t("Dangerous command approved by user"));
+      logger.info("terminal", "Dangerous command approved by user");
     }
 
     const proc = Bun.spawn(["bash", "-c", command], {

@@ -7,12 +7,12 @@ import { logger } from "../logger";
 import { t, cleanAssistantResponse } from "../utils";
 
 const TOOL_LABELS: Record<string, string> = {
-  app: "Opening application",
-  terminal: "Running terminal command",
-  file: "Managing files",
-  media: "Controlling media",
-  clipboard: "Clipboard operation",
-  notify: "Sending notification",
+  app: "tool.opening_app",
+  terminal: "tool.running_terminal",
+  file: "tool.managing_files",
+  media: "tool.controlling_media",
+  clipboard: "tool.clipboard",
+  notify: "tool.sending_notification",
 };
 
 const CHAT_DIR = join(homedir(), ".config/desklumina/chats");
@@ -44,7 +44,7 @@ function generateTitle(firstMessage: string): string {
 }
 
 function getToolLabel(tool: string): string {
-  const label = TOOL_LABELS[tool] || "Executing actions";
+  const label = TOOL_LABELS[tool] || "tool.executing_actions";
   return t(label);
 }
 
@@ -353,7 +353,7 @@ export class ChatManager {
         continue;
       }
 
-      const prefix = msg.role === "user" ? `󱜙 ${t("You")}:` : `󱜙 ${t("Lumina")}:`;
+      const prefix = msg.role === "user" ? `󱜙 ${t("common.you")}:` : `󱜙 ${t("common.lumina")}:`;
       const content = cleanContent(msg.content);
       if (!content) continue;
 

@@ -1,5 +1,5 @@
 import { logger } from "../logger";
-import { t } from "../utils/i18n";
+import { t, tf } from "../utils/i18n";
 import type { ToolExecutionResult, FileMatch } from "../types";
 import { join, basename } from "path";
 
@@ -66,19 +66,19 @@ function parseAction(arg: string): MusicAction {
 
   if (cmd === "search") {
     const query = normalizeQuery(parts.slice(1).join(" "));
-    if (!query) return { kind: "error", message: "❌ Search query required", stderr: "Missing query" };
+    if (!query) return { kind: "error", message: t("tool.result.invalid_request"), stderr: "Missing query" };
     return { kind: "search", query };
   }
 
   if (cmd === "play") {
     const target = normalizeQuery(parts.slice(1).join(" "));
-    if (!target) return { kind: "error", message: "❌ Play target (file or index) required", stderr: "Missing target" };
+    if (!target) return { kind: "error", message: t("tool.result.invalid_request"), stderr: "Missing target" };
     return { kind: "play", target };
   }
 
   if (cmd === "playlist") {
     const name = parts.slice(1).join(" ");
-    if (!name) return { kind: "error", message: "❌ Playlist name required", stderr: "Missing name" };
+    if (!name) return { kind: "error", message: t("tool.result.invalid_request"), stderr: "Missing name" };
     return { kind: "playlist", name };
   }
 
@@ -113,7 +113,7 @@ export async function music(arg: string): Promise<ToolExecutionResult> {
   // Validate availability
   const hasMpc = await checkAvailability("mpc");
   if (!hasMpc) {
-    return buildResult(arg, "❌ Error: 'mpc' is not installed. Please install it to use the music system.", false, {
+    return buildResult(arg, tf("error.with_message", { message: "'mpc' is not installed" }), false, {
       stderr: "mpc missing",
       exitCode: 127,
     });
@@ -127,10 +127,10 @@ export async function music(arg: string): Promise<ToolExecutionResult> {
         let display = "";
         if (hasNcmpcpp) {
           const res = await spawnSafe(["ncmpcpp", "--current-song"]);
-          display = res.stdout || "No song playing";
+          display = res.stdout || t("tool.result.no_song");
         } else {
           const res = await spawnSafe(["mpc", "current"]);
-          display = res.stdout || "No song playing";
+          display = res.stdout || t("tool.result.no_song");
         }
         const statusRes = await spawnSafe(["mpc", "status"]);
         return buildResult(arg, `${display}\n\n${statusRes.stdout}`, true, {
@@ -142,11 +142,11 @@ export async function music(arg: string): Promise<ToolExecutionResult> {
       case "search": {
         const res = await spawnSafe(["mpc", "search", "any", action.query]);
         if (res.exitCode !== 0) {
-          return buildResult(arg, `❌ Search failed: ${res.stderr}`, false, { stderr: res.stderr, exitCode: res.exitCode });
+          return buildResult(arg, tf("error.with_message", { message: res.stderr }), false, { stderr: res.stderr, exitCode: res.exitCode });
         }
         const files = res.stdout.split("\n").filter(Boolean);
         if (files.length === 0) {
-          return buildResult(arg, "No results found.", true, { status: "empty" });
+          return buildResult(arg, t("tool.result.no_matches"), true, { status: "empty" });
         }
         const fileMatches: FileMatch[] = files.slice(0, 50).map(f => ({
           path: f,
@@ -155,7 +155,7 @@ export async function music(arg: string): Promise<ToolExecutionResult> {
           type: "file",
           hidden: false
         }));
-        return buildResult(arg, `Found ${files.length} track(s):\n${files.slice(0, 10).join("\n")}${files.length > 10 ? "\n..." : ""}`, true, {
+        return buildResult(arg, tf("tool.result.tracks_found", { count: files.length }) + `\n${files.slice(0, 10).join("\n")}${files.length > 10 ? "\n..." : ""}`, true, {
           files: fileMatches,
           summary: { totalMatches: files.length, returnedMatches: fileMatches.length }
         });
@@ -165,7 +165,7 @@ export async function music(arg: string): Promise<ToolExecutionResult> {
         // If it's a number, play that position in queue. Otherwise search and play first match.
         if (/^\d+$/.test(action.target)) {
           const res = await spawnSafe(["mpc", "play", action.target]);
-          return buildResult(arg, res.stdout || "✓ Playing track", res.exitCode === 0, {
+          return buildResult(arg, res.stdout || t("tool.result.playing_track"), res.exitCode === 0, {
             command: `mpc play ${action.target}`,
             exitCode: res.exitCode,
             stderr: res.stderr
@@ -175,12 +175,12 @@ export async function music(arg: string): Promise<ToolExecutionResult> {
           const searchRes = await spawnSafe(["mpc", "search", "any", action.target]);
           const firstFile = searchRes.stdout.split("\n")[0];
           if (!firstFile) {
-             return buildResult(arg, "❌ Track not found", false, { stderr: "Track not found", exitCode: 404 });
+             return buildResult(arg, tf("error.with_message", { message: "Track not found" }), false, { stderr: "Track not found", exitCode: 404 });
           }
           await spawnSafe(["mpc", "clear"]);
           await spawnSafe(["mpc", "add", firstFile]);
           const playRes = await spawnSafe(["mpc", "play"]);
-          return buildResult(arg, `✓ Playing: ${firstFile}`, playRes.exitCode === 0, {
+          return buildResult(arg, tf("tool.result.playing", { name: firstFile }), playRes.exitCode === 0, {
             command: `mpc add "${firstFile}" && mpc play`,
             exitCode: playRes.exitCode,
             stderr: playRes.stderr
@@ -192,13 +192,13 @@ export async function music(arg: string): Promise<ToolExecutionResult> {
         const res = await spawnSafe(["mpc", "clear"]);
         const loadRes = await spawnSafe(["mpc", "load", action.name]);
         if (loadRes.exitCode !== 0) {
-          return buildResult(arg, `❌ Failed to load playlist: ${loadRes.stderr}`, false, {
+          return buildResult(arg, tf("error.with_message", { message: loadRes.stderr }), false, {
             stderr: loadRes.stderr,
             exitCode: loadRes.exitCode
           });
         }
         const playRes = await spawnSafe(["mpc", "play"]);
-        return buildResult(arg, `✓ Playing playlist: ${action.name}`, playRes.exitCode === 0, {
+        return buildResult(arg, tf("tool.result.playing_playlist", { name: action.name }), playRes.exitCode === 0, {
           command: `mpc load "${action.name}" && mpc play`,
           exitCode: playRes.exitCode,
           stderr: playRes.stderr
@@ -211,17 +211,17 @@ export async function music(arg: string): Promise<ToolExecutionResult> {
         }
         if (action.type === "playlists") {
           const res = await spawnSafe(["mpc", "lsplaylists"]);
-          return buildResult(arg, res.stdout || "No playlists found.", true);
+          return buildResult(arg, res.stdout || t("tool.result.no_playlists"), true);
         } else {
           const res = await spawnSafe(["mpc", "ls"]);
-          return buildResult(arg, res.stdout || "Music library is empty.", true);
+          return buildResult(arg, res.stdout || t("tool.result.library_empty"), true);
         }
       }
 
       case "queue": {
         const res = await spawnSafe(["mpc", "playlist"]);
         const currentRes = await spawnSafe(["mpc", "current"]);
-        const message = `Current Queue:\n${res.stdout || "(empty)"}\n\nNow Playing: ${currentRes.stdout || "None"}`;
+        const message = `${t("tool.result.current_queue")}\n${res.stdout || "(empty)"}\n\n${t("tool.result.now_playing")} ${currentRes.stdout || "None"}`;
         return buildResult(arg, message, true, { stdout: res.stdout });
       }
     }

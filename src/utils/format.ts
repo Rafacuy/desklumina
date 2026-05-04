@@ -27,10 +27,10 @@ export function formatRelativeTime(date: Date): string {
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffSecs < 60) return t("baru saja");
-  if (diffMins < 60) return tf("{count} menit yang lalu", { count: diffMins });
-  if (diffHours < 24) return tf("{count} jam yang lalu", { count: diffHours });
-  if (diffDays < 7) return tf("{count} hari yang lalu", { count: diffDays });
+  if (diffSecs < 60) return t("format.just_now");
+  if (diffMins < 60) return tf("format.minutes_ago", { count: diffMins });
+  if (diffHours < 24) return tf("format.hours_ago", { count: diffHours });
+  if (diffDays < 7) return tf("format.days_ago", { count: diffDays });
 
   return date.toLocaleDateString();
 }

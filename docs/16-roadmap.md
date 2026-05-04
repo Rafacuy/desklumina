@@ -24,7 +24,10 @@ This file describes **non-implemented** ideas. Do not treat any item below as av
 - [x] **Remove Settings Manager Placeholder**: Removed the `features.windowContext` placeholder from settings and updated the documentation. (v1.1.2)
 - [x] **Advanced File Management**: Deep file searching is implemented with `locate` for indexed discovery, optional terminal-side `fzf` selection, preview support, and persisted search history. (v1.3.0)
 - [x] **Enhanced Callback System**: Structuren callback events now support multi-step responses with initial assistant text, tool display, and final response. (v1.3.0)
-- [ ] **Download & play songs**: Lumina can search and download specific songs with yt-dlp and play them.
+- [ ] **Multi-Provider API Support**: Add support for multiple LLM providers including Groq, OpenRouter, OpenAI, Google Gemini, Anthropic Claude, and more. Allow users to switch between providers dynamically.
+- [ ] **Japanese UI Localization**: Add Japanese (日本語) language support for the user interface.
+- [ ] **Enhanced Visual Tool Display**: Improve the visual presentation of tool outputs to be more aesthetically pleasing and user-friendly.
+- [ ] **Token Optimization**: Upgrade prompt engineering and system prompts to optimize token usage for better efficiency and cost reduction.
 - [ ] **Local LLM Integration**: Support for Ollama or Llama.cpp for privacy-conscious users.
 - [ ] **Enhanced TTS**: Add support for more natural voices and offline TTS engines (e.g., Piper).
 - [ ] **Long-Term Memory (LTM)**: Implement persistent memory using SQLite3 with robust storage and automatic cleaning. Capabilities include storing schedules, time checks, reminders, and related contextual data.

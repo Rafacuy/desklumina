@@ -2,6 +2,7 @@ import { spawn } from "bun";
 import { logger } from "../logger";
 import { settingsManager } from "../core/settings-manager";
 import { t } from "../utils/i18n";
+import { escapeHtml } from "../utils/format";
 import { CancellationError } from "../types";
 
 const THEME_PATH = `${process.env.HOME}/.config/desklumina/src/ui/themes/lumina.rasi`;
@@ -32,15 +33,15 @@ export async function rofiConfirm(
   const bgColor = 
     severity === "critical" ? "#fee2e2" : severity === "high" ? "#fef3c7" : "#dbeafe";
 
-  const hints = `<span size='small' foreground='#94a3b8'>\n\n󰌑   ${t("Select")}  │  󱊷   ${t("Cancel")}</span>`;
-  const mesg = `<span foreground='${iconColor}' size='xx-large'>${severityIcon}</span>\n<span weight='bold' size='large'>${t(title)}</span>\n\n${message}${hints}`;
+  const hints = `<span size='small' foreground='#94a3b8'>\n\n󰌑   ${t("common.select")}  │  󱊷   ${t("common.cancel")}</span>`;
+  const mesg = `<span foreground='${iconColor}' size='xx-large'>${severityIcon}</span>\n<span weight='bold' size='large'>${t(title)}</span>\n\n${escapeHtml(message)}${hints}`;
 
-  const proceedLabel = `󰄬 ${t("Proceed")}`;
-  const cancelLabel = `󰅖 ${t("Cancel")}`;
+  const proceedLabel = `󰄬 ${t("common.proceed")}`;
+  const cancelLabel = `󰅖 ${t("common.cancel")}`;
   const options = [proceedLabel, cancelLabel];
  
   if (!(await Bun.which("rofi"))) {
-    throw new Error(`${t("rofi is not installed")}. ${t("Please install it to use security confirmations")}.`);
+    throw new Error(`${t("security.rofi_not_installed")}. ${t("security.install_rofi_hint")}.`);
   }
 
   const themeOverride = [
@@ -59,7 +60,7 @@ export async function rofiConfirm(
       "rofi",
       "-dmenu",
       "-p",
-      `${severityIcon} ${t("Confirm")}`,
+      `${severityIcon} ${t("common.confirm")}`,
       "-mesg",
       mesg,
       "-markup-rows",
@@ -87,7 +88,7 @@ export async function rofiConfirm(
   logger.info("security", `Confirmation: "${title}" → Response: "${result}"`);
 
   if (result !== proceedLabel) {
-    throw new CancellationError(`${t("Operation cancelled by user")}: ${title}`);
+    throw new CancellationError(`${t("security.cancelled")}: ${title}`);
   }
 
   return true;
@@ -104,7 +105,7 @@ export async function rofiAlert(
   const severityIcon =
     severity === "error" ? "❌" : severity === "warning" ? "⚠️" : "ℹ️";
 
-  const fullMessage = `${severityIcon} ${title}\n\n${message}`;
+  const fullMessage = `${severityIcon} ${t(title)}\n\n${message}`;
 
   const themeOverride = [
     "window { width: 440px; border: 1px; border-radius: 16px; border-color: @accent-color; }",

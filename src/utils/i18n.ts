@@ -1,23 +1,43 @@
 import id from "../locales/id.json";
 import en from "../locales/en.json";
 
-const locales: Record<string, any> = {
-  id,
-  en,
+type LocaleTree = Record<string, unknown>;
+
+const locales: Record<string, LocaleTree> = {
+  id: id as LocaleTree,
+  en: en as LocaleTree,
 };
 
-// Default language
 let currentLang = "id";
 
-/**
- * Intelligent translation function
- * Returns the translated text if found, otherwise returns the original text.
- */
-export const t = (text: string): string => {
-  if (!text) return text;
+function resolvePath(tree: unknown, key: string): string | undefined {
+  if (!key) return undefined;
+  const parts = key.split(".").filter(Boolean);
+  let cur: unknown = tree;
+  for (const p of parts) {
+    if (cur === null || typeof cur !== "object" || Array.isArray(cur)) {
+      return undefined;
+    }
+    const rec = cur as Record<string, unknown>;
+    if (!Object.prototype.hasOwnProperty.call(rec, p)) return undefined;
+    cur = rec[p];
+  }
+  return typeof cur === "string" ? cur : undefined;
+}
+
+export const t = (key: string): string => {
+  if (!key) return key;
   const dictionary = locales[currentLang];
-  if (!dictionary) return text;
-  return dictionary[text] ?? text;
+  const resolved = dictionary ? resolvePath(dictionary, key) : undefined;
+
+  if (resolved === undefined) {
+    if (process.env.NODE_ENV !== "production") {
+      // console.warn(`[i18n] Missing key: "${key}" for locale: "${currentLang}"`);
+    }
+    return key;
+  }
+
+  return resolved;
 };
 
 export const tf = (
@@ -33,16 +53,10 @@ export const tf = (
   });
 };
 
-/**
- * Set current language
- */
 export const setLang = (lang: string) => {
   if (locales[lang]) {
     currentLang = lang;
   }
 };
 
-/**
- * Get current language
- */
 export const getLang = () => currentLang;

@@ -1,3 +1,4 @@
+import { t, tf } from "../utils/i18n";
 import { homedir } from "os";
 import { basename, dirname, extname, join } from "path";
 import { existsSync } from "fs";
@@ -108,7 +109,7 @@ function parseSearchRequest(
 ): SearchRequest | { error: string } {
   const [query, ...rest] = command.args;
   if (!query) {
-    return { error: "Search query required" };
+    return { error: t("tool.result.invalid_request") };
   }
 
   const filters: SearchFilters = {
@@ -334,24 +335,24 @@ async function previewPath(targetPath: string): Promise<FilePreview> {
 
 function formatPreview(preview: FilePreview): string {
   if (preview.type === "missing") {
-    return `Preview unavailable: ${preview.unavailableReason || "missing path"}`;
+    return `${t("tool.result.preview_unavailable")}: ${preview.unavailableReason || "missing path"}`;
   }
 
   if (preview.type === "directory") {
     const entries = preview.entries && preview.entries.length > 0 ? preview.entries.join("\n") : "(empty directory)";
     const suffix = preview.truncated ? "\n..." : "";
-    return `Directory preview: ${preview.path}\n${entries}${suffix}`;
+    return `${t("tool.result.preview")}: ${preview.path}\n${entries}${suffix}`;
   }
 
   if (preview.unavailableReason) {
-    return `Preview unavailable: ${preview.unavailableReason}`;
+    return `${t("tool.result.preview_unavailable")}: ${preview.unavailableReason}`;
   }
 
   return preview.content || "";
 }
 
 function formatMatches(matches: FileMatch[]): string {
-  if (matches.length === 0) return "No files matched the request.";
+  if (matches.length === 0) return t("tool.result.no_matches");
   return matches
     .map((match, index) => {
       const size = typeof match.size === "number" ? ` (${match.size} B)` : "";
@@ -493,7 +494,7 @@ export async function handleFileManagement(operation: string): Promise<ToolExecu
     }));
     return makeResult(
       `history ${limit}`,
-      history.slice(0, limit).map(historySummary).join("\n") || "No file search history.",
+      history.slice(0, limit).map(historySummary).join("\n") || t("tool.result.history_empty"),
       true,
       {
         status: "history_ready",
@@ -508,7 +509,7 @@ export async function handleFileManagement(operation: string): Promise<ToolExecu
     const history = await readHistory();
     const lastSearch = history.find((entry) => entry.mode && entry.query && entry.filters);
     if (!lastSearch || !lastSearch.mode || !lastSearch.query || !lastSearch.filters) {
-      return makeResult("repeat_last", "❌ No previous file search available", false, {
+      return makeResult("repeat_last", t("tool.result.history_empty"), false, {
         status: "history_empty",
         stderr: "No previous file search available",
         exitCode: 404,
@@ -530,7 +531,7 @@ export async function handleFileManagement(operation: string): Promise<ToolExecu
   if (parsed.action === "preview") {
     const target = parsed.args[0];
     if (!target) {
-      return makeResult("preview", "❌ Preview path required", false, {
+      return makeResult("preview", t("tool.result.invalid_request"), false, {
         status: "invalid_request",
         stderr: "Preview path required",
         exitCode: 2,
@@ -613,19 +614,16 @@ export async function handleFileManagement(operation: string): Promise<ToolExecu
   });
 
   const lines = [
-    `Status: ${matches.length > 0 ? "ok" : "empty"}`,
-    `Summary: ${formatSummary(summary)}`,
-    `Actions: ${actions.join(", ")}`,
-    `Results:`,
+    `${t("common.results")}:`,
     formatMatches(matches),
   ];
 
   if (selectedFile) {
-    lines.push(`Selected: ${selectedFile}`);
+    lines.push(tf("tool.result.selected", { path: selectedFile }));
   }
 
   if (preview) {
-    lines.push("Preview:");
+    lines.push(`${t("tool.result.preview_ready")}:`);
     lines.push(formatPreview(preview));
   }
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { t, tf } from "../utils";
 import { DaemonClient } from "../daemon";
 import { logger } from "../logger";
 
@@ -7,7 +8,7 @@ async function main() {
   const command = args.join(" ");
 
   if (!command) {
-    console.error("Usage: lumina-send <command>");
+    console.error(t("daemon.send_usage_bin"));
     process.exit(1);
   }
 
@@ -18,7 +19,7 @@ async function main() {
     console.log(response);
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
-    console.error(`Error: ${err.message}`);
+    console.error(tf("error.with_message", { message: err.message }));
     process.exit(1);
   }
 }

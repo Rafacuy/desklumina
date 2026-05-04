@@ -1,3 +1,4 @@
+import { t, tf } from "../utils";
 import { logger } from "../logger";
 import appsData from "../config/apps.json";
 import type { ToolExecutionResult } from "../types";
@@ -21,14 +22,14 @@ export async function launch(alias: string): Promise<ToolExecutionResult> {
     const command = lookup(normalizedAlias);
 
     if (!command) {
-      const message = `❌ Unknown application alias: ${alias}`;
-      logger.warn("apps", message);
+      const stderr = `Unknown application alias: ${alias}`;
+      logger.warn("apps", stderr);
       return {
         tool: "app",
-        result: `${message}. Use a configured alias or the terminal tool for shell commands.`,
+        result: tf("tool.result.unknown_alias", { alias }),
         success: false,
         normalizedArg: normalizedAlias,
-        stderr: message,
+        stderr,
         exitCode: 2,
       };
     }
@@ -41,7 +42,7 @@ export async function launch(alias: string): Promise<ToolExecutionResult> {
     }).catch(err => logger.error("apps", `Spawn failed: ${(err as Error).message}`));
     return {
       tool: "app",
-      result: `${normalizedAlias} launched`,
+      result: tf("tool.result.launched", { alias: normalizedAlias }),
       success: true,
       normalizedArg: normalizedAlias,
       command,
@@ -53,7 +54,7 @@ export async function launch(alias: string): Promise<ToolExecutionResult> {
     logger.error("apps", `Failed to launch ${normalizedAlias}: ${err.message}`, err);
     return {
       tool: "app",
-      result: `❌ Error: ${err.message}`,
+      result: tf("error.with_message", { message: err.message }),
       success: false,
       normalizedArg: normalizedAlias,
       stderr: err.message,

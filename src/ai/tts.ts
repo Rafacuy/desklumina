@@ -207,7 +207,7 @@ export async function textToSpeech(text: string): Promise<void> {
 
   const cleaned = cleanText(text);
   if (!cleaned || cleaned.length < 3) {
-    logger.warn("tts", t("Text too short or empty, skipping TTS"));
+    logger.warn("tts", "Text too short or empty, skipping TTS");
     return;
   }
 
@@ -294,7 +294,7 @@ export async function textToSpeech(text: string): Promise<void> {
       }
 
       await playbackPromise;
-      logger.info("tts", t("Playback complete"));
+      logger.info("tts", "Playback complete");
 
     } catch (error) {
       logger.error("tts", `Failed: ${error instanceof Error ? error.message : String(error)}`);
