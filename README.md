@@ -131,18 +131,18 @@ DeskLumina uses a modular design to separate intelligence from execution:
 
 ```mermaid
 flowchart TD
-    subgraph Frontend [User Interface]
-        UI[Rofi / Terminal / Daemon]
+    subgraph Frontend ["User Interface"]
+        UI["Rofi / Terminal / Daemon"]
     end
 
-    subgraph Logic [Core Orchestrator]
-        Core[Lumina / ChatManager / i18n]
+    subgraph Logic ["Core Orchestrator"]
+        Core["Lumina / ChatManager / i18n"]
     end
 
-    subgraph Backend [Execution & Intelligence]
-        AI[AI Layer - Groq]
-        Security[Security Layer]
-        Tools[Tools Layer - Desktop]
+    subgraph Backend ["Execution & Intelligence"]
+        AI["AI Layer - Groq"]
+        Security["Security Layer"]
+        Tools["Tools Layer - Desktop"]
     end
 
     UI --> Core
@@ -166,7 +166,7 @@ Detailed guides are available in the `docs/` folder:
 5.  🧠 [Architecture](docs/05-architecture.md)
 6.  🎮 [Usage Guide](docs/06-usage-guide.md)
 7.  🛠️ [Tools Reference](docs/07-tools-reference.md)
-8.  Plug [API Reference](docs/08-api-reference.md)
+8.  🔌 [API Reference](docs/08-api-reference.md)
 9.  🛡️ [Security Model](docs/09-security.md)
 10. 💻 [Development](docs/10-development.md)
 11. 🔄 [Daemon Mode](docs/11-daemon-mode.md)
