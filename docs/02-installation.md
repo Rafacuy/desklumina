@@ -28,7 +28,7 @@ Get DeskLumina up and running on your system. This guide covers all requirements
 
 - **[dunst](https://github.com/dunst-project/dunst)**: Required for the `notify` tool (`dunstify`).
 - **[clipcat](https://github.com/p0nce/clipcat)**: Required for the `clipboard` tool (`clipcatctl`).
-- **[mpd](https://www.musicpd.org/)** + **[mpc](https://www.musicpd.org/clients/mpc/)**: Required for the `media` tool (it shells out to `mpc`).
+- **[mpd](https://www.musicpd.org/)** + **[mpc](https://www.musicpd.org/clients/mpc/)**: Required for the `media` tool.
 
 ---
 
@@ -46,7 +46,7 @@ cd ~/.config/desklumina
 
 ### 2. Install Dependencies
 
-Use Bun to install the required Node.js/Bun dependencies:
+Use Bun to install the required Node.js and Bun dependencies:
 
 ```bash
 bun install
@@ -67,7 +67,7 @@ GROQ_API_KEY=gsk_your_actual_key_here
 MODEL_NAME=openai/gpt-oss-120b
 ```
 
-Both `GROQ_API_KEY` and `MODEL_NAME` are required — DeskLumina will exit with a fatal error if either is missing.
+Both `GROQ_API_KEY` and `MODEL_NAME` are required. DeskLumina will exit with a fatal error if either is missing.
 
 ---
 
@@ -79,7 +79,7 @@ DeskLumina stores user settings at `~/.config/desklumina/settings.json`. You can
 
 ### Rofi Theme
 
-DeskLumina includes a custom Rofi theme (`src/ui/themes/lumina.rasi`). To use it, ensure Rofi can locate the file (it's automatically referenced by the system).
+DeskLumina includes a custom Rofi theme at `src/ui/themes/lumina.rasi`. To use it, ensure Rofi can locate the file.
 
 ---
 
@@ -110,9 +110,9 @@ If Rofi appears and you can type a command, your installation is successful.
 
 ## Next Steps
 
-- 🚀 **[Quick Start](03-quick-start.md)** — Run your first commands.
-- ⚙️ **[Configuration Guide](04-configuration.md)** — Fine-tune your setup.
-- 🤖 **[Daemon Mode](11-daemon-mode.md)** — Set up the background service.
+- 🚀 **[Quick Start](03-quick-start.md)**: Run your first commands.
+- ⚙️ **[Configuration Guide](04-configuration.md)**: Fine-tune your setup.
+- 🤖 **[Daemon Mode](11-daemon-mode.md)**: Set up the background service.
 
 ---
 

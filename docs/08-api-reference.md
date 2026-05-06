@@ -25,10 +25,10 @@ The `Lumina` class is the main orchestrator.
 Processes user input, streams the AI response, executes tools, and returns the final assistant message.
 
 - **`userMessage`**: The user's natural language input.
-- **`onChunk`**: Optional callback invoked while streaming text. Receives `chunk` (text content) and optionally a structured callback payload. When callback data is provided, `chunk` will be empty.
+- **`onChunk`**: Optional callback invoked while streaming text. Receives `chunk` and optionally a structured callback payload.
 - **Returns**: The complete text response.
 
-`chat()` now always constructs the model payload from:
+`chat()` constructs the model payload from:
 
 ```ts
 [
@@ -39,7 +39,7 @@ Processes user input, streams the AI response, executes tools, and returns the f
 ```
 
 If tool execution fails, Lumina captures structured tool feedback and performs up to 2 correction retries.
-If tool execution succeeds, Lumina now performs a second model pass using the actual tool results so the same turn ends with a grounded final response instead of only the pre-tool acknowledgement.
+If tool execution succeeds, Lumina performs a second model pass using the tool results for a grounded final response.
 
 ### `ToolCallbackPayload`
 
@@ -56,7 +56,7 @@ interface ToolCallbackPayload {
 ```
 
 - `retry`: emitted when Lumina is correcting failed tool arguments.
-- `results`: emitted after tool execution completes; includes structured tool results for UI, terminal, or daemon consumers.
+- `results`: emitted after tool execution completes; includes structured tool results for consumers.
 
 ---
 
@@ -70,7 +70,7 @@ type ToolHandler = (arg: string) => Promise<string> | string;
 
 ### Return Values
 
-Tool handlers return a structured result object with a user-facing `result` string plus execution metadata such as `success`, `normalizedArg`, `stderr`, `exitCode`, and optional structured fields like matched files, selected file, preview data, actions, and summary counts.
+Tool handlers return a structured result object with a user-facing `result` string and execution metadata such as `success`, `normalizedArg`, `stderr`, and `exitCode`.
 
 ---
 
@@ -80,9 +80,9 @@ Tool handlers return a structured result object with a user-facing `result` stri
 
 ### Storage location
 
-Chats are saved under `~/.config/desklumina/chats/` as JSON files (see `src/core/chat-manager.ts`).
+Chats are saved under `~/.config/desklumina/chats/` as JSON files.
 
-Tool execution is persisted as dedicated chat messages and replayed back to the model as compact tool-result context. Successful tool results are also used immediately in a same-turn follow-up model pass so DeskLumina can answer with grounded data after execution. Chat export also prunes older messages into summaries to keep token growth bounded.
+Tool execution is persisted as dedicated chat messages and replayed back to the model as compact tool-result context. Successful tool results are used immediately in a same-turn follow-up model pass. Chat export prunes older messages into summaries to keep token growth bounded.
 
 ---
 
@@ -92,7 +92,7 @@ Tool execution is persisted as dedicated chat messages and replayed back to the 
 
 ### `analyzeCommand(command: string): CommandAnalysis`
 
-See `src/security/dangerous-commands.ts` for the exact structure (`CommandAnalysis`) and severity selection (`highestSeverity`).
+See `src/security/dangerous-commands.ts` for the exact structure and severity selection.
 
 ---
 
@@ -116,7 +116,7 @@ Returns a translated string with parameter interpolation.
 ### `setLang(lang: string): void`
 Sets the current system language.
 
-- **`lang`**: The language code (e.g., `"en"`, `"id"`, `"ja"`).
+- **`lang`**: The language code, such as `"en"`, `"id"`, or `"ja"`.
 
 ---
 
@@ -156,8 +156,8 @@ Sets the current system language.
 
 ## Next Steps
 
-- 🛠️ **[Development Guide](10-development.md)** — Learn how to use these APIs.
-- 🧪 **[Testing Guide](12-testing.md)** — Verify API behavior with unit tests.
+- 🛠️ **[Development Guide](10-development.md)**: Learn how to use these APIs.
+- 🧪 **[Testing Guide](12-testing.md)**: Verify API behavior with unit tests.
 
 ---
 

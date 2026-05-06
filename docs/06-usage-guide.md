@@ -25,23 +25,23 @@ DeskLumina's primary interface is built on **Rofi**.
 **Launch**: `bun run start`
 
 - **Type to Chat**: Type your natural language command and press `Enter`.
-- **Tool Display**: If enabled, tool execution summaries are appended under the assistant response.
+- **Tool Display**: If enabled, tool execution summaries appear under the assistant response.
 - **TTS Feedback**: If enabled, the assistant will speak its response concurrently.
 
 ### Chat History Preview
 
-**Access**: press `Tab` to expand, then select **Select Chat**.
+**Access**: Press `Tab` to expand, then select **Select Chat**.
 
-- Chats are persisted under `~/.config/desklumina/chats/` as JSON files.
+- Chats are saved under `~/.config/desklumina/chats/` as JSON files.
 
 ### Settings Menu
 
-**Access**: press `Tab` to expand, then select **Settings**.
+**Access**: Press `Tab` to expand, then select **Settings**.
 
 The settings menu allows you to customize DeskLumina's behavior without editing files:
-- **Toggle TTS**: Enable/disable voice output.
+- **Toggle TTS**: Enable or disable voice output.
 - **Language**: Switch between English and Indonesian.
-- **Tool Display**: Show/hide tool execution logs.
+- **Tool Display**: Show or hide tool execution logs.
 - **Security Confirmation**: Toggle interactive checks for dangerous commands.
 - **TTS Voice & Speed**: Choose a voice and adjust playback speed.
 
@@ -49,12 +49,12 @@ The settings menu allows you to customize DeskLumina's behavior without editing 
 
 ## Terminal Mode
 
-Ideal for development, debugging, or users who prefer the terminal environment.
+This mode is for development, debugging, or users who prefer the terminal environment.
 
 **Launch**: `bun run dev`
 
 - Provides a persistent chat loop directly in your shell.
-- Best for long-form conversations where you need to copy/paste text.
+- Best for long-form conversations where you need to copy and paste text.
 
 ### Terminal Chat Commands
 
@@ -78,13 +78,13 @@ DeskLumina supports several CLI flags for different use cases:
 | `--chat` | Start the terminal chat loop. |
 | `--daemon` | Start the background daemon service. |
 | `--daemon-status` | Check if the daemon is running. |
-| `--send "<message>"` | Send a command to the running daemon (requires a message argument). |
+| `--send "<message>"` | Send a command to the running daemon. |
 | `--exec "<message>"` | Execute a single message and print the assistant response. |
 | `--version` | Display the current version and configured model. |
 
-### How to pass flags via Bun scripts
+### Passing flags via Bun scripts
 
-`package.json` runs `src/main.ts` from the `start`/`dev`/`daemon` scripts. To pass flags to `src/main.ts`, use `--`:
+`package.json` runs `src/main.ts` from the `start`, `dev`, or `daemon` scripts. To pass flags to `src/main.ts`, use `--`:
 
 ```bash
 bun run start -- --version
@@ -104,15 +104,15 @@ You can execute a single desktop action directly from your terminal or a keyboar
 - `bun run start -- --exec "file list ~"`
 - `bun run start -- --exec "media current"`
 
-> **Pro Tip**: Bind these commands to your desktop's hotkeys (e.g., using `sxhkd` or `i3/sway` config) for instant access.
+> **Pro Tip**: Bind these commands to your desktop's hotkeys for instant access.
 
 ---
 
 ## Next Steps
 
-- 🔧 **[Tools Reference](07-tools-reference.md)** — Comprehensive list of what you can do.
-- 🛡️ **[Security](09-security.md)** — Understand how DeskLumina protects your system.
-- 🤖 **[Daemon Mode](11-daemon-mode.md)** — Learn about background execution.
+- 🔧 **[Tools Reference](07-tools-reference.md)**: Comprehensive list of what you can do.
+- 🛡️ **[Security](09-security.md)**: Understand how DeskLumina protects your system.
+- 🤖 **[Daemon Mode](11-daemon-mode.md)**: Learn about background execution.
 
 ---
 

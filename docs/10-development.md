@@ -26,10 +26,10 @@ A guide for developers looking to extend DeskLumina or contribute to the core pr
 
 ## Project Architecture
 
-DeskLumina's core is the **`Lumina` orchestrator** (`src/core/lumina.ts`). It follows a simple lifecycle for every user command:
-- **Build System Prompt**: Done in `src/ai/prompts.ts`.
-- **Stream Response**: Done in `src/ai/groq.ts`.
-- **Parse & Dispatch**: Done in `src/core/planner.ts` and `src/tools/registry.ts`.
+DeskLumina's core is the **`Lumina` orchestrator** at `src/core/lumina.ts`. It follows a simple lifecycle for every user command:
+- **Build System Prompt**: Handled in `src/ai/prompts.ts`.
+- **Stream Response**: Handled in `src/ai/groq.ts`.
+- **Parse & Dispatch**: Handled in `src/core/planner.ts` and `src/tools/registry.ts`.
 
 ---
 
@@ -38,7 +38,7 @@ DeskLumina's core is the **`Lumina` orchestrator** (`src/core/lumina.ts`). It fo
 Follow these steps to add a new desktop capability:
 
 ### 1. Create the Tool Logic
-Create a new file in `src/tools/`, e.g., `src/tools/my-tool.ts`:
+Create a new file in `src/tools/`, such as `src/tools/my-tool.ts`:
 
 ```typescript
 export async function myTool(arg: string): Promise<string> {
@@ -52,12 +52,10 @@ export async function myTool(arg: string): Promise<string> {
 ### 2. Register the Tool
 Add your tool to the central registry in `src/tools/registry.ts`:
 
-`src/tools/registry.ts` defines a `tools` object; add a new entry to that map and export any helpers you want from `src/tools/index.ts`.
+`src/tools/registry.ts` defines a `tools` object; add a new entry to that map and export any helpers from `src/tools/index.ts`.
 
 ### 3. Update the System Prompt
-To let the AI know about your new tool, add its definition to the prompt builder in `src/ai/prompts.ts`:
-
-Update the **TOOLS** section so the model knows the tool name and expected `args` format.
+To let the AI know about your new tool, add its definition to the prompt builder in `src/ai/prompts.ts`. Update the **TOOLS** section so the model knows the tool name and expected `args` format.
 
 ---
 
@@ -65,7 +63,7 @@ Update the **TOOLS** section so the model knows the tool name and expected `args
 
 DeskLumina uses a centralized i18n system located in `src/utils/i18n.ts`.
 
-1. Add your new string key to `src/locales/en.json` and `src/locales/id.json`. You can use nested objects for better organization:
+1. Add your new string key to `src/locales/en.json` and `src/locales/id.json`.
    ```json
    {
      "error": {
@@ -91,7 +89,7 @@ DeskLumina uses a centralized i18n system located in `src/utils/i18n.ts`.
 
 ## Version Management (Developer)
 
-DeskLumina uses **`package.json`** as the **single source of truth** for the app version.
+DeskLumina uses **`package.json`** as the single source of truth for the app version.
 
 ### Show the current version
 
@@ -107,7 +105,7 @@ The README version badge is generated from `package.json` and can be synced auto
 bun run version:sync
 ```
 
-### Set/bump the version (recommended)
+### Set or bump the version
 
 This updates `package.json` and the README version badge in one go:
 
@@ -115,7 +113,7 @@ This updates `package.json` and the README version badge in one go:
 bun run version:set 1.2.3
 ```
 
-Accepted formats include prerelease/build metadata (semver), for example:
+Accepted formats include prerelease or build metadata, for example:
 
 ```bash
 bun run version:set 1.2.3-beta.1
@@ -124,12 +122,12 @@ bun run version:set 1.2.3+build.5
 
 ### Implementation notes
 
-- **Runtime version**: `src/utils/version.ts` (`getAppVersion()` reads + caches `package.json` and falls back to `dev`).
-- **CLI output**: `src/main.ts` (`--version` prints `Lumina v{version}`).
-- **i18n template**: `src/utils/i18n.ts` provides `tf()` for `{var}` interpolation; locales define `Lumina v{version}`.
+- **Runtime version**: `src/utils/version.ts` reads and caches `package.json`.
+- **CLI output**: `src/main.ts` prints the current Lumina version.
+- **i18n template**: `src/utils/i18n.ts` provides `tf()` for variable interpolation.
 - **Scripts**:
-  - `scripts/sync-version.ts` (used by `bun run version:sync`)
-  - `scripts/bump-version.ts` (used by `bun run version:set`)
+  - `scripts/sync-version.ts`
+  - `scripts/bump-version.ts`
 
 ---
 
@@ -141,24 +139,24 @@ We use `bun test` for unit and integration testing.
 - **Watch mode**: `bun test --watch`
 - **Specific file**: `bun test tests/my-test.test.ts`
 
-When adding a new tool, please add a corresponding test in the `tests/` directory to ensure reliability.
+When adding a new tool, please add a corresponding test in the `tests/` directory.
 
 ---
 
 ## Coding Standards
 
-- **TypeScript First**: Use proper types and interfaces (defined in `src/types/`).
+- **TypeScript First**: Use proper types and interfaces defined in `src/types/`.
 - **Error Handling**: Always return user-friendly error strings starting with `❌`.
-- **Logging**: Use the built-in `logger` for internal debugging information.
-- **Asynchronicity**: Prefer `async/await` over raw Promises where possible.
+- **Logging**: Use the built-in `logger` for internal debugging.
+- **Asynchronicity**: Prefer `async/await` over raw Promises.
 
 ---
 
 ## Next Steps
 
-- 🧪 **[Testing Guide](12-testing.md)** — Deep dive into the test suite.
-- 🤖 **[Daemon Mode](11-daemon-mode.md)** — Integrating tools with background execution.
-- 📄 **[CONTRIBUTING.md](../CONTRIBUTING.md)** — How to submit a PR.
+- 🧪 **[Testing Guide](12-testing.md)**: Deep dive into the test suite.
+- 🤖 **[Daemon Mode](11-daemon-mode.md)**: Integrating tools with background execution.
+- 📄 **[CONTRIBUTING.md](../CONTRIBUTING.md)**: How to submit a PR.
 
 ---
 

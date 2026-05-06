@@ -16,13 +16,13 @@ Fine-tune DeskLumina's behavior to match your workflow. This guide covers enviro
 
 ## Environment Variables (.env)
 
-The `.env` file in the project root is used for sensitive credentials and core service configuration.
+The `.env` file in the project root stores sensitive credentials and core service configuration.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `GROQ_API_KEY` | **Yes** | Your API key from [Groq Console](https://console.groq.com/). |
-| `MODEL_NAME` | **Yes** | Primary Groq model name (read by `src/config/env.ts`). |
-| `FALLBACK_MODELS` | No | Comma-separated model list used when the primary model is unavailable. If unset, defaults are used (see `.env.example`). |
+| `MODEL_NAME` | **Yes** | Primary Groq model name. |
+| `FALLBACK_MODELS` | No | Comma-separated model list used when the primary model is unavailable. |
 
 ---
 
@@ -49,25 +49,25 @@ DeskLumina stores user preferences in `~/.config/desklumina/settings.json`. You 
 ```
 
 - **`language`**: Primary language for the UI and AI. Supported: `"en"`, `"id"`, `"ja"`.
-  - *Note*: Changing the language automatically updates the `tts.voiceId` to a matching natural voice (e.g., Gadis for Indonesian, Ava for English).
-- **`features.tts`**: Enable/disable text-to-speech output.
-- **`features.toolDisplay`**: Show/hide tool execution details in the UI.
+  - Changing the language automatically updates the `tts.voiceId` to a matching natural voice.
+- **`features.tts`**: Enable or disable text-to-speech output.
+- **`features.toolDisplay`**: Show or hide tool execution details in the UI.
 - **`features.dangerousCommandConfirmation`**: Require confirmation for critical commands.
 - **`tts.voiceId`**: The Edge TTS voice ID to use.
-- **`tts.speed`**: Voice playback speed (0.5 to 2.0).
+- **`tts.speed`**: Voice playback speed from 0.5 to 2.0.
 
 ### Storage & Retention Limits
 
 To ensure high performance and low memory usage, DeskLumina enforces the following limits:
 
-- **Chat Retention**: DeskLumina keeps only the **100 most recent chats** in `~/.config/desklumina/chats/`. When this limit is exceeded, the oldest chat files are automatically deleted during new chat creation or saving.
-- **Memory Optimization**: Metadata for the chat list is extracted efficiently using regex. Full chat message history is only loaded into memory when a specific chat is active, preventing latency even with dozens of stored conversations.
+- **Chat Retention**: DeskLumina keeps only the **100 most recent chats** in `~/.config/desklumina/chats/`. Oldest chat files are automatically deleted during new chat creation or saving.
+- **Memory Optimization**: Metadata for the chat list is extracted efficiently using regex. Full chat history is only loaded into memory when a specific chat is active, preventing latency even with many stored conversations.
 
 ---
 
 ## Interactive Settings (Rofi)
 
-You can adjust most settings without leaving the Rofi interface.
+You can adjust most settings within the Rofi interface.
 
 1. Launch DeskLumina: `bun run start`.
 2. Press `Tab` to expand the menu.
@@ -88,7 +88,7 @@ DeskLumina uses **Rofi** for its graphical interface. You can customize the appe
 
 ## Application Aliases (apps.json)
 
-The `src/config/apps.json` file contains a mapping of natural names (aliases) to system commands.
+The `src/config/apps.json` file contains a mapping of natural names to system commands.
 
 ```json
 {
@@ -111,9 +111,9 @@ The `src/config/apps.json` file contains a mapping of natural names (aliases) to
 
 ## Next Steps
 
-- 🔧 **[Tools Reference](07-tools-reference.md)** — Learn about all built-in tools.
-- 🧠 **[Architecture](05-architecture.md)** — Understand the internal design.
-- 🤖 **[Daemon Mode](11-daemon-mode.md)** — Optimize performance with background persistence.
+- 🔧 **[Tools Reference](07-tools-reference.md)**: Learn about all built-in tools.
+- 🧠 **[Architecture](05-architecture.md)**: Understand the internal design.
+- 🤖 **[Daemon Mode](11-daemon-mode.md)**: Optimize performance with background persistence.
 
 ---
 

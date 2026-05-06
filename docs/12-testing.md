@@ -16,7 +16,7 @@ Ensuring the reliability and correctness of DeskLumina's automation features.
 
 ## Testing Framework
 
-DeskLumina uses **[Bun's built-in test runner](https://bun.sh/docs/test/runner)**, which is highly compatible with Jest and provides extremely fast execution times.
+DeskLumina uses **[Bun's built-in test runner](https://bun.sh/docs/test/runner)**, which is compatible with Jest and provides fast execution times.
 
 ---
 
@@ -25,13 +25,13 @@ DeskLumina uses **[Bun's built-in test runner](https://bun.sh/docs/test/runner)*
 Our test suite is divided into several categories:
 
 ### 1. Unit Tests
-Located in `tests/`, these test individual functions and classes in isolation (e.g., `path.test.ts`, `constants.test.ts`).
+Located in `tests/`, these test individual functions and classes in isolation, such as `path.test.ts` and `constants.test.ts`.
 
 ### 2. Integration Tests
 Tests that verify the interaction between multiple modules, such as the `ChatManager` or the `Security` layer.
 
 ### 3. Edge-Case Tests
-Specifically designed to test TTS chunking and error handling (e.g., `tts-edge-cases.test.ts`).
+Specifically designed to test TTS chunking and error handling, such as `tts-edge-cases.test.ts`.
 
 ---
 
@@ -42,7 +42,7 @@ Specifically designed to test TTS chunking and error handling (e.g., `tts-edge-c
 bun test
 ```
 
-### Watch Mode (Recommended for Dev)
+### Watch Mode
 ```bash
 bun test --watch
 ```
@@ -61,8 +61,7 @@ bun test --coverage
 
 ## Writing New Tests
 
-All test files must reside in the `tests/` directory and follow the naming convention:  
-`[module_name].test.ts`
+All test files must reside in the `tests/` directory and follow the naming convention: `[module_name].test.ts`.
 
 ### Example Unit Test (`tests/path.test.ts`):
 
@@ -82,9 +81,9 @@ describe("Path Utils", () => {
 
 ## Next Steps
 
-- 🔧 **[Development Guide](10-development.md)** — Setting up your dev environment.
-- 🛡️ **[Security](09-security.md)** — Verifying security rules.
-- 🏁 **[Roadmap](16-roadmap.md)** — Future testing goals.
+- 🔧 **[Development Guide](10-development.md)**: Setting up your dev environment.
+- 🛡️ **[Security](09-security.md)**: Verifying security rules.
+- 🏁 **[Roadmap](16-roadmap.md)**: Future testing goals.
 
 ---
 

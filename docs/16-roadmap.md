@@ -15,30 +15,30 @@ The future of DeskLumina. This document outlines our planned features and vision
 
 ## Vision
 
-This file describes **non-implemented** ideas. Do not treat any item below as available functionality unless it is verified elsewhere in the repository.
+This file describes ideas that are not yet implemented. Do not treat any item below as available functionality unless it is verified elsewhere in the repository.
 
 ---
 
 ## Short-Term (v1.x)
 
-- [x] **Remove Settings Manager Placeholder**: Removed the `features.windowContext` placeholder from settings and updated the documentation. (v1.1.2)
-- [x] **Advanced File Management**: Deep file searching is implemented with `locate` for indexed discovery, optional terminal-side `fzf` selection, preview support, and persisted search history. (v1.3.0)
-- [x] **Enhanced Callback System**: Structuren callback events now support multi-step responses with initial assistant text, tool display, and final response. (v1.3.0)
-- [x] **Japanese UI Localization**: Now supports full Japanese UI localization for better accessibility to Japanese-speaking users. (v1.9.0)
+- [x] **Remove Settings Manager Placeholder**: Removed the `features.windowContext` placeholder from settings and updated the documentation.
+- [x] **Advanced File Management**: Deep file searching is implemented with `locate` for indexed discovery, optional terminal-side `fzf` selection, preview support, and persisted search history.
+- [x] **Enhanced Callback System**: Structured callback events now support multi-step responses with initial assistant text, tool display, and final response.
+- [x] **Japanese UI Localization**: Now supports full Japanese UI localization for better accessibility to Japanese-speaking users.
 - [ ] **Multi-Provider API Support**: Add support for multiple LLM providers including Groq, OpenRouter, OpenAI, Google Gemini, Anthropic Claude, and more. Allow users to switch between providers dynamically.
-- [ ] **Enhanced Visual Tool Display**: Improve the visual presentation of tool outputs to be more aesthetically pleasing and user-friendly.
-- [ ] **Token Optimization**: Upgrade prompt engineering and system prompts to optimize token usage for better efficiency and cost reduction.
+- [ ] **Enhanced Visual Tool Display**: Improve the visual presentation of tool outputs to be more user-friendly.
+- [ ] **Token Optimization**: Upgrade prompt engineering and system prompts to optimize token usage for better efficiency.
 - [ ] **Local LLM Integration**: Support for Ollama or Llama.cpp for privacy-conscious users.
-- [ ] **Enhanced TTS**: Add support for more natural voices and offline TTS engines (e.g., Piper).
-- [ ] **Long-Term Memory (LTM)**: Implement persistent memory using SQLite3 with robust storage and automatic cleaning. Capabilities include storing schedules, time checks, reminders, and related contextual data.
+- [ ] **Enhanced TTS**: Add support for more natural voices and offline TTS engines.
+- [ ] **Long-Term Memory (LTM)**: Implement persistent memory using SQLite3 with robust storage and automatic cleaning.
 
 ---
 
 ## Mid-Term (v2.x)
 
-- [ ] **Custom Plugin System**: Allow users to load custom JavaScript/TypeScript plugins without modifying the core.
+- [ ] **Custom Plugin System**: Allow users to load custom JavaScript or TypeScript plugins without modifying the core.
 - [ ] **Workflow Recording**: Record a series of desktop actions and replay them using a natural language command.
-- [ ] **Screen Awareness**: Allow the AI to "see" your screen and describe its contents or interact with visual elements.
+- [ ] **Screen Awareness**: Allow the AI to see your screen and describe its contents or interact with visual elements.
 
 ---
 
@@ -52,7 +52,7 @@ This file describes **non-implemented** ideas. Do not treat any item below as av
 
 ## Get Involved
 
-We are always looking for contributors to help us achieve this vision. If any of these features excite you, check out our **[Contributing Guide](15-contributing.md)**.
+We are looking for contributors to help us achieve this vision. If any of these features excite you, check out our **[Contributing Guide](15-contributing.md)**.
 
 ---
 

@@ -16,11 +16,11 @@ Quick fixes for common issues encountered while using or installing DeskLumina.
 
 ## AI & API Issues
 
-### `401 Unauthorized` / Invalid API Key
+### `401 Unauthorized` or Invalid API Key
 - **Symptom**: AI responses fail with an authorization error.
-- **Fix**: Check your `.env` file. Ensure `GROQ_API_KEY` is set correctly and has no leading/trailing spaces.
+- **Fix**: Check your `.env` file. Ensure `GROQ_API_KEY` is set correctly and has no leading or trailing spaces.
 
-### Slow Responses / High Latency
+### Slow Responses or High Latency
 - **Symptom**: The assistant takes several seconds to respond.
 - **Fix**: 
   - Check your internet connection.
@@ -30,11 +30,11 @@ Quick fixes for common issues encountered while using or installing DeskLumina.
 
 ## UI & Rofi Issues
 
-### Rofi Doesn't Appear
+### Rofi Does Not Appear
 - **Symptom**: Running `bun run start` returns to the terminal immediately.
 - **Fix**: 
   - Ensure `rofi` is installed: `which rofi`.
-  - Check for syntax errors in your `.rasi` theme file (`src/ui/themes/lumina.rasi`).
+  - Check for syntax errors in your `.rasi` theme file at `src/ui/themes/lumina.rasi`.
 
 ### Rofi Theme Looks Broken
 - **Symptom**: Colors are missing or the layout is shifted.
@@ -45,7 +45,7 @@ Quick fixes for common issues encountered while using or installing DeskLumina.
 ## Tool Execution Issues
 
 ### "Tool Not Found"
-- **Symptom**: AI says it's executing a tool, but nothing happens.
+- **Symptom**: AI says it is executing a tool, but nothing happens.
 - **Fix**: Check `src/tools/registry.ts` to ensure the tool is correctly registered.
 
 ### App alias rejected
@@ -54,17 +54,17 @@ Quick fixes for common issues encountered while using or installing DeskLumina.
 
 ### File action rejected
 - **Symptom**: A `file` request fails with "Unknown file action".
-- **Fix**: Use one of the supported `file` operations (`create_dir`, `delete`, `move`, `copy`, `list`, `read`, `write`, `find`). Shell commands now belong in `terminal`.
+- **Fix**: Use one of the supported `file` operations like `create_dir`, `delete`, or `move`. Shell commands now belong in `terminal`.
 
 ### Permission Denied (Terminal)
 - **Symptom**: Shell commands fail with "Permission Denied".
-- **Fix**: DeskLumina runs as your user. For commands requiring `sudo`, you must use a tool that specifically handles elevated privileges (not yet implemented for safety).
+- **Fix**: DeskLumina runs as your user. For commands requiring `sudo`, you must use a tool that handles elevated privileges.
 
 ---
 
 ## Daemon & Socket Issues
 
-### `EADDRINUSE` / Socket Already Exists
+### `EADDRINUSE` or Socket Already Exists
 - **Symptom**: The daemon fails to start with "Address already in use".
 - **Fix**: A stale socket file might be present. Run `rm ~/.config/desklumina/daemon.sock` and try again.
 
@@ -79,19 +79,19 @@ Quick fixes for common issues encountered while using or installing DeskLumina.
 ### No Audio Output
 - **Symptom**: The assistant responds in text, but you hear nothing.
 - **Fix**: 
-  - Check if `Text-to-Speech` is enabled in **Settings** (press `Tab` to expand, then select **Settings**).
+  - Check if `Text-to-Speech` is enabled in **Settings**.
   - Ensure your system volume is not muted.
   - Test if you can play audio using `mpv`. If `mpv` is unavailable, Lumina falls back to SoX `play`.
 
-### Distorted / Laggy Audio
+### Distorted or Laggy Audio
 - **Symptom**: Voice sounds robotic or cut-off.
-- **Fix**: Lower the `TTS Speed` in Settings. High speeds can sometimes cause artifacts with certain voices.
+- **Fix**: Lower the `TTS Speed` in Settings. High speeds can cause artifacts with certain voices.
 
 ---
 
 ## Next Steps
 
-- ⚙️ **[Configuration Guide](04-configuration.md)** — Proper setup helps avoid issues.
+- ⚙️ **[Configuration Guide](04-configuration.md)**: Proper setup helps avoid issues.
 - 🏁 **[Back to Introduction](01-introduction.md)**
 
 ---

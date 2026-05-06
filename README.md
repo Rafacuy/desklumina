@@ -20,15 +20,15 @@
 
 ## 📌 Overview
 
-**DeskLumina** is a powerful desktop automation agent built with **Bun** and **TypeScript**. It bridges the gap between human intent and system execution, allowing you to control your Linux environment using plain language. 
+DeskLumina automates your Linux desktop using Bun and TypeScript. It translates human intent into system execution, letting you control your environment through natural language.
 
-By leveraging the **Groq API** for near-instant inference and **Rofi** for a lightweight UI, DeskLumina provides a seamless, keyboard-centric experience for launching apps, managing files, controlling media, and more.
+By leveraging the Groq API for near-instant inference and Rofi for a lightweight UI, DeskLumina provides a seamless, keyboard-centric experience for launching apps, managing files, and controlling media.
 
 ---
 
 ## 🚀 Key Features
 
-- 🪟 **Rofi Integration**: A lightweight, keyboard-friendly UI that fits perfectly into tiling window managers (i3, bspwm, sway, etc.).
+- 🪟 **Rofi Integration**: A lightweight, keyboard-friendly UI that fits perfectly into tiling window managers like i3, bspwm, or sway.
 - 🔊 **Low-Latency TTS**: Near-instant voice responses using the `AdaptiveChunker` and Edge TTS.
 - 🤖 **Smart Daemon**: A persistent background service that eliminates startup overhead.
 - 🛡️ **Security Layer**: Automatic detection of dangerous commands with interactive confirmation.
@@ -58,7 +58,7 @@ By leveraging the **Groq API** for near-instant inference and **Rofi** for a lig
 - **[Rofi](https://github.com/davatorium/rofi)**: Standard Linux distribution package for the UI.
 
 ### Optional (Feature-dependent)
-- **[mpc](https://www.musicpd.org/clients/mpc/)**: For media control (`mpd` required).
+- **[mpc](https://www.musicpd.org/clients/mpc/)**: For media control (requires `mpd`).
 - **[clipcat](https://github.com/p0nce/clipcat)**: For clipboard management.
 - **[dunst](https://github.com/dunst-project/dunst)**: For system notifications (`dunstify`).
 
@@ -114,7 +114,7 @@ DeskLumina supports multiple ways to interact with your system:
 
 ## ⚙️ Configuration
 
-DeskLumina is highly customizable through three primary files:
+DeskLumina is customizable through three primary files:
 
 - **`.env`**: API keys and core model configuration.
 - **`settings.json`**: UI preferences, language, TTS settings, and security toggles.
@@ -130,23 +130,29 @@ DeskLumina is highly customizable through three primary files:
 DeskLumina uses a modular design to separate intelligence from execution:
 
 ```mermaid
-graph TD
-    UI["<b>User Interface</b><br/>(Rofi / Terminal / Daemon)"]
-    
-    Core["<b>Core Orchestrator</b><br/>(Lumina / ChatManager / i18n)"]
-    
-    AI["<b>AI Layer</b><br/>(Groq)"]
-    Security["<b>Security Layer</b>"]
-    Tools["<b>Tools Layer</b><br/>(Desktop)"]
+flowchart TD
+    subgraph Frontend [User Interface]
+        UI[Rofi / Terminal / Daemon]
+    end
+
+    subgraph Logic [Core Orchestrator]
+        Core[Lumina / ChatManager / i18n]
+    end
+
+    subgraph Backend [Execution & Intelligence]
+        AI[AI Layer - Groq]
+        Security[Security Layer]
+        Tools[Tools Layer - Desktop]
+    end
 
     UI --> Core
-    
     Core --> AI
     Core --> Security
     Core --> Tools
 
-    style UI fill:#f9f9f9,stroke:#333,stroke-width:2px
-    style Core fill:#f9f9f9,stroke:#333,stroke-width:2px
+    style Frontend fill:#f9f9f9,stroke:#333
+    style Logic fill:#f9f9f9,stroke:#333
+    style Backend fill:#f9f9f9,stroke:#333
 ```
 
 ## 📚 Documentation
@@ -160,7 +166,7 @@ Detailed guides are available in the `docs/` folder:
 5.  🧠 [Architecture](docs/05-architecture.md)
 6.  🎮 [Usage Guide](docs/06-usage-guide.md)
 7.  🛠️ [Tools Reference](docs/07-tools-reference.md)
-8.  🔌 [API Reference](docs/08-api-reference.md)
+8.  Plug [API Reference](docs/08-api-reference.md)
 9.  🛡️ [Security Model](docs/09-security.md)
 10. 💻 [Development](docs/10-development.md)
 11. 🔄 [Daemon Mode](docs/11-daemon-mode.md)

@@ -8,6 +8,7 @@ Optimize DeskLumina for instant response times with persistent background execut
 
 - [Introduction](#introduction)
 - [Why Daemon Mode?](#why-daemon-mode)
+- [Security & Authentication](#security--authentication)
 - [Quick Start](#quick-start)
 - [Systemd User Service](#systemd-user-service)
 - [Advanced Integration (sxhkd)](#advanced-integration-sxhkd)
@@ -18,13 +19,14 @@ Optimize DeskLumina for instant response times with persistent background execut
 ## Introduction
 
 Daemon mode runs DeskLumina as a persistent background process. The daemon stays active and listens for incoming commands over a **Unix Domain Socket** at `~/.config/desklumina/daemon.sock`.
+
 ---
 
 ## Why Daemon Mode?
 
 - Avoids starting a new Bun process for every command.
 - Provides a stable socket endpoint for hotkeys and scripts.
-- Each request is handled independently by the daemon (a new chat is created per command in the daemon handler).
+- Each request is handled independently by the daemon.
 
 ---
 
@@ -32,7 +34,40 @@ Daemon mode runs DeskLumina as a persistent background process. The daemon stays
 
 To prevent unauthorized access from other local processes, the daemon implements a token-based authentication system.
 
-1.  **Token Generation**: A unique session token is generated when the daemon starts and saved to `~/.config/desklumina/.daemon-token` with restricted permissions (`0600`).
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Daemon Client
+    participant F as .daemon-token
+    participant S as Unix Socket
+    participant D as Daemon Service
+
+    rect rgba(100, 149, 237, 0.08)
+        Note over F,D: Phase 1 — Initialization
+        D->>F: Generate session token
+        D->>F: Set permissions (chmod 0600)
+        D->>S: Bind & listen on socket
+    end
+
+    rect rgba(60, 179, 113, 0.08)
+        Note over C,S: Phase 2 — Client Request
+        C->>F: Read session token
+        C->>S: Send request + Bearer token
+        S->>D: Forward request & credentials
+    end
+
+    rect rgba(255, 165, 0, 0.08)
+        Note over C,D: Phase 3 — Authorization & Response
+        D->>D: Validate token
+        alt Authorized
+            D-->>C: Return command output
+        else Unauthorized
+            D-->>C: 401 Access Denied
+        end
+    end
+```
+
+1.  **Token Generation**: A unique session token is generated when the daemon starts and saved to `~/.config/desklumina/.daemon-token` with restricted permissions.
 2.  **Authorization**: All requests sent to the daemon socket must include this token in the `Authorization` header as a `Bearer` token.
 3.  **Client Handling**: The `DaemonClient` automatically retrieves this token from the configuration directory before sending commands.
 
@@ -42,10 +77,10 @@ To prevent unauthorized access from other local processes, the daemon implements
 
 ### 1. Start the Daemon
 ```bash
-# Start in the foreground (blocks terminal)
+# Start in the foreground
 bun run daemon
 
-# Start in the background (non-blocking, the script already includes &)
+# Start in the background
 bun run daemon:start
 ```
 
@@ -58,7 +93,7 @@ bun run daemon:status
 Once the daemon is running, use the `send` command to interact with it:
 ```bash
 bun run send "open telegram"
-bun run send "what's the current volume?"
+run send "what's the current volume?"
 ```
 
 ---
@@ -67,7 +102,7 @@ bun run send "what's the current volume?"
 
 Automate DeskLumina's startup with the provided service file: `systemd/desklumina-daemon@.service`.
 
-1.  **Verify Bun path**: the service file uses `/usr/bin/bun`. If your Bun lives elsewhere, update `ExecStart` accordingly.
+1.  **Verify Bun path**: The service file uses `/usr/bin/bun`. If your Bun lives elsewhere, update `ExecStart` accordingly.
 2.  **Install the Service**:
     ```bash
     # 1. Copy service file
@@ -87,7 +122,7 @@ Automate DeskLumina's startup with the provided service file: `systemd/desklumin
 
 ## Advanced Integration (sxhkd)
 
-For power users, daemon mode allows for instant "hotkey-driven" AI commands.
+For power users, daemon mode allows for instant hotkey-driven AI commands.
 
 Add these to your `~/.config/sxhkd/sxhkdrc`:
 
@@ -109,16 +144,16 @@ super + b
 
 ## Troubleshooting
 
-- **Socket Already in Use**: If the daemon crashes, the socket file might remain. The system now performs an automated **Health Check** by attempting to fetch `http://localhost/health`. If the socket is stale, it is automatically removed and refreshed.
-- **Connection Refused**: Ensure the daemon is actually running with `bun run daemon:status`.
+- **Socket Already in Use**: If the daemon crashes, the socket file might remain. The system performs an automated health check. If the socket is stale, it is automatically removed and refreshed.
+- **Connection Refused**: Ensure the daemon is running with `bun run daemon:status`.
 - **Logs**: Check `~/.config/desklumina/logs/general.log` and `~/.config/desklumina/logs/error.log`.
 
 ---
 
 ## Next Steps
 
-- ⚙️ **[Configuration](04-configuration.md)** — Customizing daemon behavior.
-- 🧪 **[Testing](12-testing.md)** — Verifying socket communication.
+- ⚙️ **[Configuration](04-configuration.md)**: Customizing daemon behavior.
+- 🧪 **[Testing](12-testing.md)**: Verifying socket communication.
 - 🏁 **[Back to Introduction](01-introduction.md)**
 
 ---

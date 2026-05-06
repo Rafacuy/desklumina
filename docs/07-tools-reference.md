@@ -27,7 +27,7 @@ DeskLumina uses a modular tool-based architecture. The AI agent generates struct
 {"tool": "tool_name", "args": "arguments"}
 ```
 
-Tool calls are parsed from markdown code fences in the model output. The registered tools are: `app`, `terminal`, `file`, `media`, `music`, `clipboard`, `notify` (see `src/tools/registry.ts`).
+Tool calls are parsed from markdown code fences in the model output. The registered tools are: `app`, `terminal`, `file`, `media`, `music`, `clipboard`, and `notify`.
 
 ## BREAKING CHANGES
 
@@ -54,7 +54,7 @@ Launch an application by alias. Aliases are defined in `src/config/apps.json`. I
 |-------|-------------|----------------|
 | `browser` | Web Browser | `xdg-open https://` |
 | `telegram`, `tg` | Telegram | `telegram-desktop` |
-| `term`, `terminal` | Terminal | `alacritty` (Default) |
+| `term`, `terminal` | Terminal | `alacritty` |
 | `neovim`, `nvim` | Text Editor | `alacritty -e nvim` |
 | `files`, `thunar` | File Manager | `thunar` |
 | `yazi` | TUI File Manager | `alacritty -e yazi` |
@@ -105,9 +105,9 @@ Advanced search operations use `locate` as the primary indexed backend and suppo
 ### Notes
 
 - Paths starting with `~` are expanded to `$HOME`.
-- File operations (`mkdir`, `rm`, `mv`, `cp`, `ls`) are executed via direct array-based spawning (`Bun.spawn`). This eliminates shell injection vulnerabilities by bypassing the shell entirely.
-- Some operations trigger a Rofi confirmation when they involve critical system paths (see `src/tools/files.ts`).
-- If the first token is not a supported operation, `file` now returns a validation error instead of executing shell commands. There is no fallback to arbitrary shell execution.
+- File operations like `mkdir`, `rm`, `mv`, `cp`, and `ls` are executed via direct array-based spawning. This eliminates shell injection vulnerabilities.
+- Some operations trigger a Rofi confirmation when they involve critical system paths.
+- If the first token is not a supported operation, `file` returns a validation error.
 - Advanced search results are structured: DeskLumina stores matched files, selected file, preview data, actions performed, and summary counts.
 - Preview returns file contents for readable text files and directory listings for folders; binary files return metadata without dumping raw bytes.
 - Search history is stored under `~/.config/desklumina/file-search-history.json`.
@@ -117,93 +117,72 @@ Advanced search operations use `locate` as the primary indexed backend and suppo
 
 ## Media Tool (`media`)
 
-Control MPD via `mpc` (the tool shells out to `mpc ...`).
+Control MPD via `mpc`.
 
 **Path**: `src/tools/media.ts`
 
 ### Supported Actions:
 - `play`, `pause`, `toggle`, `stop`
 - `next`, `prev`
-- `volume <level>` (e.g., `volume 50`, `volume +10`, `volume -10`)
-- `current` (Shows currently playing track info)
-- `search <query>` (Search within your music library)
-- `queue` (Print playlist via `mpc playlist`)
+- `volume <level>`, such as `volume 50`, `volume +10`, or `volume -10`.
+- `current`: Shows currently playing track info.
+- `search <query>`: Search within your music library.
+- `queue`: Print playlist via `mpc playlist`.
 
 ### Argument Rules
-- Natural-language requests like "volume up", "volume down", and "set volume to 30" are normalized internally.
-- The model should emit canonical tool args only: `volume <0-100 | +N | -N>`.
-- Invalid media actions fail fast with a validation error instead of being passed through to the shell.
+- Natural-language requests like "volume up" or "set volume to 30" are normalized internally.
+- The model emits canonical tool args: `volume <0-100 | +N | -N>`.
+- Invalid media actions fail with a validation error.
 
 ---
 
 ## Music Tool (`music`)
 
-Manage your music library, playlists, and playback through MPD via `mpc`. The music tool handles library operations (search, list, playlist loading), whereas the media tool handles playback controls (play, pause, volume).
+Manage your music library, playlists, and playback through MPD via `mpc`. The music tool handles library operations such as searching and playlist loading, while the media tool handles playback controls like play, pause, and volume.
 
 **Path**: `src/tools/music.ts`  
-**Dependencies**: `mpc` (Music Player Daemon client), optional `ncmpcpp` (for status display enhancement)
+**Dependencies**: `mpc`, and optional `ncmpcpp`.
 
 ### Supported Actions:
 
 | Action | Arguments | Description |
 |--------|-----------|-------------|
-| `search` | `<query>` | Search tracks by name, artist, album, etc. Returns up to 50 matches. |
-| `play` | `<target>` | Play a specific track. Target can be a track number (queue index) or search query. If a query, searches and plays the first match. |
-| `playlist` | `<name>` | Load and play a saved playlist by name. Clears current queue first. |
-| `ls` or `list` | `music` or `playlists` | List all tracks in library or saved playlists. |
+| `search` | `<query>` | Search tracks by name, artist, or album. |
+| `play` | `<target>` | Play a specific track. Target can be a track number or search query. |
+| `playlist` | `<name>` | Load and play a saved playlist by name. |
+| `ls` or `list` | `music` or `playlists` | List tracks in library or saved playlists. |
 | `queue` | (none) | Display current queue and now-playing track. |
-| `status` or `now` | (none) | Show current playback status. Uses `ncmpcpp --current-song` if available, falls back to `mpc current`. |
-| `update` | (none) | Refresh MPD's music database, then list library. |
+| `status` or `now` | (none) | Show current playback status. |
+| `update` | (none) | Refresh MPD's music database. |
 
 ### Query Normalization
 
 User queries are normalized by stripping common natural-language prefixes:
-- Removed prefixes: `please`, `tolong`, `putar`, `play`, `search`, `find`, `cari`, `song`, `lagu`, `music`, `musik`
-- Removed suffixes: `song`, `lagu`, `music`, `musik`
-
-Examples:
-- "play music foo" → `play foo`
-- "search for song bar" → `search bar`
+- Removed prefixes: `please`, `tolong`, `putar`, `play`, `search`, `find`, `cari`, `song`, `lagu`, `music`, `musik`.
+- Removed suffixes: `song`, `lagu`, `music`, `musik`.
 
 ### Playback Behavior
 
 **Search and Play**: When using `play <query>`:
-1. Searches library for the query
-2. If found, clears the current queue
-3. Adds the first match to queue
-4. Starts playback
+1. Searches library for the query.
+2. If found, clears the current queue.
+3. Adds the first match to queue.
+4. Starts playback.
 
-If the target is a numeric index (e.g., `play 3`), it skips the search and plays that position in the current queue directly.
+If the target is a numeric index, it plays that position in the current queue directly.
 
-**Status Display**: The `status` action attempts to use `ncmpcpp --current-song` for enhanced display. If `ncmpcpp` is not installed, it falls back to `mpc current`. In both cases, it also appends the output of `mpc status` to show playback state (playing/paused/stopped) and time information.
+**Status Display**: The `status` action attempts to use `ncmpcpp --current-song` for enhanced display. If `ncmpcpp` is missing, it falls back to `mpc current`.
 
 ### UI Behavior
 
-Search results and playlists are returned as structured data in the tool result. The AI assistant formats and displays them as text. No interactive Rofi menu integration is currently implemented for music operations.
+Search results and playlists are returned as structured data in the tool result. The AI assistant formats and displays them as text.
 
 ### Error Handling
 
-- **Missing `mpc`**: Returns error code 127 if `mpc` is not installed (required for all operations).
-- **Empty Search**: Returns success with status `empty` if no tracks match the query.
-- **Track Not Found**: Returns a 404-style error when `play <query>` finds no results.
-- **Playlist Load Failure**: Returns the stderr from `mpc load` if the playlist doesn't exist.
-
-### Requirements
-
-- **Required**: `mpc` (from `mpc` package in your distro)
-- **Optional**: `ncmpcpp` (for enhanced status display; falls back to `mpc` if missing)
-- **Optional**: `rofi` (for music selection UI integration; not required for tool execution)
-
-### Example Tool Calls
-
-```json
-{"tool": "music", "args": "search pink floyd"}
-{"tool": "music", "args": "play wish you were here"}
-{"tool": "music", "args": "playlist my-favorites"}
-{"tool": "music", "args": "ls playlists"}
-{"tool": "music", "args": "queue"}
-{"tool": "music", "args": "status"}
-```
+- **Missing `mpc`**: Returns error code 127 if `mpc` is not installed.
+- **Empty Search**: Returns success with status `empty` if no tracks match.
+- **Track Not Found**: Returns an error when `play <query>` finds no results.
+- **Playlist Load Failure**: Returns the stderr from `mpc load` if the playlist does not exist.
 
 ---
 
@@ -216,17 +195,17 @@ Manage your clipboard via `clipcatctl`.
 ### Supported Actions:
 - `get`: `clipcatctl get`
 - `list`: `clipcatctl list`
-- `set <text>`: `clipcatctl insert` (piped from `echo`)
+- `set <text>`: `clipcatctl insert`
 - `clear`: `clipcatctl clear`
 
 ### Limitations:
-- Maximum content size: 1MB (1,048,576 bytes). Content exceeding this limit will be rejected.
+- Maximum content size: 1MB. Content exceeding this limit will be rejected.
 
 ---
 
 ## Terminal Tool (`terminal`)
 
-Execute a shell command via `bash -c <command>`. Commands are analyzed for dangerous patterns; when matched, DeskLumina shows a Rofi confirmation prompt before execution.
+Execute a shell command via `bash -c <command>`. Commands are analyzed for dangerous patterns; if matched, DeskLumina shows a Rofi confirmation prompt before execution.
 
 **Path**: `src/tools/terminal.ts`
 
@@ -237,7 +216,7 @@ Execute a shell command via `bash -c <command>`. Commands are analyzed for dange
 ### Security:
 - **Command analysis**: `src/security/dangerous-commands.ts`
 - **Confirmation UI**: `src/security/confirmation.ts`
-- **Timeout**: 30 seconds (`COMMAND_TIMEOUT = 30000` in `src/constants/commands.ts`)
+- **Timeout**: 30 seconds.
 
 ---
 
@@ -262,9 +241,9 @@ Send desktop notifications to the user.
 
 ## Next Steps
 
-- 🛡️ **[Security Guide](09-security.md)** — Learn more about safe execution.
-- 🤖 **[Daemon Mode](11-daemon-mode.md)** — Optimize tool performance.
-- 🛠️ **[Development Guide](10-development.md)** — Learn how to create your own tools.
+- 🛡️ **[Security Guide](09-security.md)**: Learn more about safe execution.
+- 🤖 **[Daemon Mode](11-daemon-mode.md)**: Optimize tool performance.
+- 🛠️ **[Development Guide](10-development.md)**: Learn how to create your own tools.
 
 ---
 

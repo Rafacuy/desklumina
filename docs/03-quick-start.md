@@ -18,7 +18,7 @@ Get started with DeskLumina and run your first commands. This guide covers basic
 
 ## First Flight
 
-1. Ensure your `.env` file contains `GROQ_API_KEY` and `MODEL_NAME` (see `.env.example`).
+1. Ensure your `.env` file contains `GROQ_API_KEY` and `MODEL_NAME`.
 2. Open your terminal and run:
    ```bash
    bun run start
@@ -45,7 +45,7 @@ This is the recommended way to use DeskLumina for daily tasks. It provides a vis
 
 ### Terminal Mode
 
-Perfect for developers and power users who are already in the terminal.
+This mode is for developers and power users who prefer the terminal environment.
 
 - **Launch**: `bun run dev`
 - This mode starts a chat loop directly in your terminal with live streaming responses.
@@ -84,18 +84,18 @@ Try these commands to explore DeskLumina's capabilities:
 
 ## Getting Help
 
-DeskLumina is designed to understand natural language. If it doesn't understand a command:
-- Try rephrasing (e.g., instead of "kill browser", try "close chrome").
-- Use the **[Tools Reference](07-tools-reference.md)** to see precisely what's supported.
+DeskLumina is designed to understand natural language. If it does not understand a command:
+- Try rephrasing, such as using "close chrome" instead of "kill browser".
+- Use the **[Tools Reference](07-tools-reference.md)** to see precisely what is supported.
 - Check the **[Troubleshooting Guide](13-troubleshooting.md)** for common issues.
 
 ---
 
 ## Next Steps
 
-- ⚙️ **[Configuration Guide](04-configuration.md)** — Fine-tune your setup.
-- 🔧 **[Tools Reference](07-tools-reference.md)** — Detailed list of all capabilities.
-- 🧠 **[Architecture](05-architecture.md)** — Learn about the internal design.
+- ⚙️ **[Configuration Guide](04-configuration.md)**: Fine-tune your setup.
+- 🔧 **[Tools Reference](07-tools-reference.md)**: Detailed list of all capabilities.
+- 🧠 **[Architecture](05-architecture.md)**: Learn about the internal design.
 
 ---
 
