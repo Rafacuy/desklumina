@@ -38,7 +38,7 @@ class AdaptiveChunker {
   };
 
   private calculatePunctuationDensity(text: string): number {
-    const punctuation = text.match(/[.!?,;:]/g)?.length || 0;
+    const punctuation = text.match(/[.!?,;:。、！？]/g)?.length || 0;
     return punctuation / Math.max(text.length, 1);
   }
 
@@ -48,19 +48,19 @@ class AdaptiveChunker {
     const end = Math.min(text.length, targetPos + searchWindow);
     const segment = text.slice(start, end);
 
-    const strongBreaks = ['. ', '! ', '? '];
+    const strongBreaks = [". ", "! ", "? ", "。 ", "！ ", "？ ", "。", "！", "？"];
     for (const brk of strongBreaks) {
       const pos = segment.lastIndexOf(brk, targetPos - start);
       if (pos !== -1) return start + pos + brk.length;
     }
 
-    const weakBreaks = [', ', '; ', ': ', ' - '];
+    const weakBreaks = [", ", "; ", ": ", " - ", "、 ", "、"];
     for (const brk of weakBreaks) {
       const pos = segment.lastIndexOf(brk, targetPos - start);
       if (pos !== -1) return start + pos + brk.length;
     }
 
-    const spacePos = segment.lastIndexOf(' ', targetPos - start);
+    const spacePos = segment.lastIndexOf(" ", targetPos - start);
     if (spacePos !== -1) return start + spacePos + 1;
 
     return targetPos;
@@ -145,7 +145,7 @@ function cleanText(text: string): string {
     .replace(/[\u{1F300}-\u{1F9FF}]/gu, "")
     .replace(/\*\*/g, "")
     .replace(/\*/g, "")
-    .replace(/\n{2,}/g, ". ")
+    .replace(/\n{2,}/g, " ")
     .replace(/\n/g, " ")
     .replace(/\s{2,}/g, " ")
     .trim();
@@ -201,7 +201,9 @@ async function playAudio(file: string): Promise<boolean> {
 
 export async function textToSpeech(text: string): Promise<void> {
   const settings = settingsManager.get();
-  const voice = settings.tts.voiceId || "id-ID-GadisNeural";
+  const lang = settings.language;
+  const defaultVoice = lang === "ja" ? "ja-JP-NanamiNeural" : (lang === "en" ? "en-US-AvaNeural" : "id-ID-GadisNeural");
+  const voice = settings.tts.voiceId || defaultVoice;
   const speed = settings.tts.speed || 1.0;
   const rate = speed === 1.0 ? "+0%" : `${speed > 1 ? '+' : ''}${Math.round((speed - 1) * 100)}%`;
 
@@ -299,7 +301,6 @@ export async function textToSpeech(text: string): Promise<void> {
     } catch (error) {
       logger.error("tts", `Failed: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
-      // Robust cleanup of all temp files
       for (const job of jobs) {
         try {
           if (existsSync(job.audioFile)) {

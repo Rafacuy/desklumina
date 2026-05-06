@@ -61,6 +61,7 @@ const EXTRA_KEYS = [
 const rootDir = join(import.meta.dir, "..");
 const en = JSON.parse(readFileSync(join(rootDir, "src/locales/en.json"), "utf-8"));
 const id = JSON.parse(readFileSync(join(rootDir, "src/locales/id.json"), "utf-8"));
+const ja = JSON.parse(readFileSync(join(rootDir, "src/locales/ja.json"), "utf-8"));
 
 const used = new Set<string>();
 for (const file of walkTsFiles(join(rootDir, "src"))) {
@@ -77,10 +78,11 @@ const missing: string[] = [];
 for (const key of used) {
   if (resolvePath(en, key) === undefined) missing.push(`en missing: ${key}`);
   if (resolvePath(id, key) === undefined) missing.push(`id missing: ${key}`);
+  if (resolvePath(ja, key) === undefined) missing.push(`ja missing: ${key}`);
 }
 
 if (missing.length > 0) {
   console.error(missing.join("\n"));
   process.exit(1);
 }
-console.log(`OK: ${used.size} distinct keys resolve in en and id`);
+console.log(`OK: ${used.size} distinct keys resolve in en, id, and ja`);

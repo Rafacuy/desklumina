@@ -232,37 +232,23 @@ export class ChatManager {
     for (const file of files) {
       try {
         const data = readFileSync(file.path, "utf-8");
+        const chat = JSON.parse(data) as Chat;
         
-        // Extract metadata using regex to avoid parsing full message arrays
-        const id = data.match(/"id":\s*"([^"]*)"/)?.[1];
-        const title = data.match(/"title":\s*"([^"]*)"/)?.[1];
-        const updatedAt = parseInt(data.match(/"updatedAt":\s*(\d+)/)?.[1] || "0");
-        
-        // Count messages by counting occurrences of "role" field
-        const messageCount = (data.match(/"role":/g) || []).length;
-        
-        // Extract last message content (simplified)
-        const messagesMatch = data.match(/"messages":\s*\[([\s\S]*)\]/);
-        let lastMessage = "";
-        if (messagesMatch?.[1]) {
-          const contentMatches = messagesMatch[1].match(/"content":\s*"([^"]*)"/g);
-          if (contentMatches && contentMatches.length > 0) {
-            const lastMatch = contentMatches[contentMatches.length - 1]!;
-            lastMessage = lastMatch.match(/"content":\s*"([^"]*)"/)?.[1] || "";
-          }
-        }
-
-        if (id && title) {
+        if (chat.id && chat.title) {
+          const lastMsg = chat.messages.length > 0 
+            ? chat.messages[chat.messages.length - 1]?.content || ""
+            : "";
+            
           chats.push({
-            id,
-            title,
-            messageCount,
-            updatedAt: updatedAt || 0,
-            lastMessage,
+            id: chat.id,
+            title: chat.title,
+            messageCount: chat.messages.length,
+            updatedAt: chat.updatedAt || 0,
+            lastMessage: lastMsg,
           });
         }
       } catch (err) {
-        logger.error("chat-manager", `Failed to extract metadata from ${file.name}: ${err}`);
+        logger.error("chat-manager", `Failed to parse chat ${file.name}: ${err}`);
       }
     }
 
@@ -357,7 +343,8 @@ export class ChatManager {
       const content = cleanContent(msg.content);
       if (!content) continue;
 
-      const truncated = content.length > 100 ? `${content.slice(0, 100)}...` : content;
+      const chars = Array.from(content);
+      const truncated = chars.length > 100 ? `${chars.slice(0, 100).join("")}...` : content;
       const line = `${prefix} ${truncated}`;
 
       if (totalChars + line.length > maxChars) break;

@@ -95,10 +95,29 @@ User: "play chill playlist"
 \`\`\`json
 {"tool":"music","args":"playlist chill"}
 \`\`\``,
+  ja: `User: "telegramを開いて"
+\`\`\`json
+{"tool":"app","args":"telegram"}
+\`\`\`
+
+User: "音量を30にして"
+\`\`\`json
+{"tool":"media","args":"volume 30"}
+\`\`\`
+
+User: "音量を上げて"
+\`\`\`json
+{"tool":"media","args":"volume +10"}
+\`\`\`
+
+User: "チルなプレイリストを再生して"
+\`\`\`json
+{"tool":"music","args":"playlist chill"}
+\`\`\``,
 };
 
 export async function buildSystemPrompt(): Promise<string> {
-  const currentLang = getLang() as "id" | "en";
+  const currentLang = getLang() as "id" | "en" | "ja";
   const langName = getLangName(currentLang);
   const examples = EXAMPLES[currentLang] || EXAMPLES.en;
   const systemContext = await getSystemContext();

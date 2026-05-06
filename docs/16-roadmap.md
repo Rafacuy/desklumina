@@ -24,8 +24,8 @@ This file describes **non-implemented** ideas. Do not treat any item below as av
 - [x] **Remove Settings Manager Placeholder**: Removed the `features.windowContext` placeholder from settings and updated the documentation. (v1.1.2)
 - [x] **Advanced File Management**: Deep file searching is implemented with `locate` for indexed discovery, optional terminal-side `fzf` selection, preview support, and persisted search history. (v1.3.0)
 - [x] **Enhanced Callback System**: Structuren callback events now support multi-step responses with initial assistant text, tool display, and final response. (v1.3.0)
+- [x] **Japanese UI Localization**: Now supports full Japanese UI localization for better accessibility to Japanese-speaking users. (v1.9.0)
 - [ ] **Multi-Provider API Support**: Add support for multiple LLM providers including Groq, OpenRouter, OpenAI, Google Gemini, Anthropic Claude, and more. Allow users to switch between providers dynamically.
-- [ ] **Japanese UI Localization**: Add Japanese (日本語) language support for the user interface.
 - [ ] **Enhanced Visual Tool Display**: Improve the visual presentation of tool outputs to be more aesthetically pleasing and user-friendly.
 - [ ] **Token Optimization**: Upgrade prompt engineering and system prompts to optimize token usage for better efficiency and cost reduction.
 - [ ] **Local LLM Integration**: Support for Ollama or Llama.cpp for privacy-conscious users.

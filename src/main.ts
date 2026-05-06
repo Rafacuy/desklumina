@@ -69,7 +69,7 @@ async function main() {
     const prompt = () => {
       const currentChat = chatManager.getCurrentChat();
       const chatInfo = currentChat ? ` [${currentChat.title}]` : "";
-      rl.question(`You${chatInfo}: `, async (input: string) => {
+      rl.question(`${t("common.you")}${chatInfo}: `, async (input: string) => {
         const trimmed = input.trim();
 
         if (trimmed === "exit") {

@@ -31,7 +31,8 @@ export async function rofiSettings(): Promise<boolean> {
 
   // Localization
   menuItems.push("──────────────────");
-  menuItems.push(`🌐 ${t("ui.settings.language").padEnd(25)} │ ${currentLang === "id" ? "Indonesian" : "English"}`);
+  const langDisplay = currentLang === "id" ? "Indonesian" : currentLang === "en" ? "English" : "Japanese";
+  menuItems.push(`🌐 ${t("ui.settings.language").padEnd(25)} │ ${langDisplay}`);
   
   // TTS submenu
   if (settings.features.tts) {
@@ -66,6 +67,7 @@ export async function rofiSettings(): Promise<boolean> {
     const langs = [
       "Bahasa Indonesia (id)",
       "English (en)",
+      "日本語 (ja)",
       "──────────────────",
       `✕ ${t("common.back")}`
     ];
@@ -80,6 +82,7 @@ export async function rofiSettings(): Promise<boolean> {
     if (langRes.code === 0 && langSelection && !langSelection.includes(t("common.back")) && !langSelection.includes("──")) {
       if (langSelection.includes("(id)")) settingsManager.setLanguage("id");
       if (langSelection.includes("(en)")) settingsManager.setLanguage("en");
+      if (langSelection.includes("(ja)")) settingsManager.setLanguage("ja");
     }
     return rofiSettings();
   }
@@ -106,16 +109,24 @@ export async function rofiSettings(): Promise<boolean> {
 
   if (result.includes(t("ui.settings.change_tts_voice"))) {
     const currentLang = getLang();
-    const voices = currentLang === "id" 
-      ? [
-          "id-ID-GadisNeural - Gadis (Female)",
-          "id-ID-ArdiNeural - Ardi (Male)",
-        ]
-      : [
-          "en-US-AvaNeural - Ava (Female)",
-          "en-US-AndrewNeural - Andrew (Male)",
-          "en-GB-SoniaNeural - Sonia (Female)",
-        ];
+    let voices: string[] = [];
+    if (currentLang === "id") {
+      voices = [
+        "id-ID-GadisNeural - Gadis (Female)",
+        "id-ID-ArdiNeural - Ardi (Male)",
+      ];
+    } else if (currentLang === "en") {
+      voices = [
+        "en-US-AvaNeural - Ava (Female)",
+        "en-US-AndrewNeural - Andrew (Male)",
+        "en-GB-SoniaNeural - Sonia (Female)",
+      ];
+    } else if (currentLang === "ja") {
+      voices = [
+        "ja-JP-NanamiNeural - Nanami (Female)",
+        "ja-JP-KeitaNeural - Keita (Male)",
+      ];
+    }
     voices.push("──────────────────", `✕ ${t("common.back")}`);
         
     const voiceRes = await rofiMenu(

@@ -36,11 +36,12 @@ export function formatRelativeTime(date: Date): string {
 }
 
 /**
- * Truncate text with ellipsis
+ * Truncate text with ellipsis (Unicode-safe)
  */
 export function truncate(text: string, length: number): string {
-  if (text.length <= length) return text;
-  return text.slice(0, length) + "...";
+  const chars = Array.from(text);
+  if (chars.length <= length) return text;
+  return chars.slice(0, length).join("") + "...";
 }
 
 /**

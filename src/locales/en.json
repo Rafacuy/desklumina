@@ -34,6 +34,7 @@
     "proceed": "Proceed",
     "results": "Results",
     "retrying": "Retrying",
+    "attempt": "(attempt {count})",
     "save_exit": "Save & Exit",
     "search": "Search",
     "select": "Select",

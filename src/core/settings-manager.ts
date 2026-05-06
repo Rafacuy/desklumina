@@ -84,7 +84,7 @@ export class SettingsManager {
     this.save().catch(() => {});
   }
   
-  setLanguage(lang: "id" | "en") {
+  setLanguage(lang: "id" | "en" | "ja") {
     this.settings.language = lang;
     setLang(lang);
     
@@ -93,6 +93,8 @@ export class SettingsManager {
       this.settings.tts.voiceId = "id-ID-GadisNeural";
     } else if (lang === "en") {
       this.settings.tts.voiceId = "en-US-AvaNeural";
+    } else if (lang === "ja") {
+      this.settings.tts.voiceId = "ja-JP-NanamiNeural";
     }
     
     this.save().catch(() => {});

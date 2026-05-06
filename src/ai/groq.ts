@@ -4,7 +4,7 @@ import { parseSSE } from "./stream";
 import { GROQ_API_ENDPOINT, MODEL_TEMPERATURE, MAX_TOKENS } from "../constants";
 import type { AIMessage } from "../types";
 
-const SAFE_TOKEN_LIMIT = 6000; // Conservative limit to prevent 413 errors
+const SAFE_TOKEN_LIMIT = 6000;
 
 /**
  * Rough token estimation (1 token ≈ 4 chars)

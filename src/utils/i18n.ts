@@ -1,11 +1,13 @@
 import id from "../locales/id.json";
 import en from "../locales/en.json";
+import ja from "../locales/ja.json";
 
 type LocaleTree = Record<string, unknown>;
 
 const locales: Record<string, LocaleTree> = {
   id: id as LocaleTree,
   en: en as LocaleTree,
+  ja: ja as LocaleTree,
 };
 
 let currentLang = "id";

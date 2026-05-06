@@ -68,7 +68,7 @@ export async function rofiChatInput(
       return { action: "exit" };
     }
 
-    if (input.startsWith("󱜙 You:") || input.startsWith("󱜙 Lumina:") || input.startsWith("──")) {
+    if (input.startsWith(`󱜙 ${t("common.you")}:`) || input.startsWith(`󱜙 ${t("common.lumina")}:`) || input.startsWith("──")) {
       // If user clicks a history item, treat it as wanting to send a new message
       const message = await rofiSimpleInput(t("common.message"), "");
       if (message) {
@@ -100,9 +100,11 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
       month: 'short', 
       day: 'numeric' 
     });
-    const preview = chat.lastMessage
-      ? chat.lastMessage.substring(0, 30).replace(/\n/g, " ")
-      : t("ui.empty_chat");
+    const lastMsg = chat.lastMessage || "";
+    const previewChars = Array.from(lastMsg.replace(/\n/g, " "));
+    const preview = previewChars.length > 30 
+      ? previewChars.slice(0, 30).join("") + "..."
+      : previewChars.join("");
       
     // Format: 󰭹 Title [Date] (Count) - Preview...
     return `󰭹 ${chat.title.padEnd(20)} │ 󰃭 ${date} │ 󰅒 ${chat.messageCount} │ ${preview}...`;
@@ -158,7 +160,7 @@ export async function rofiMenu(
     "rofi", 
     "-dmenu", 
     "-i", 
-    "-p", prompt, 
+    "-p", prompt,
     "-theme", THEME_PATH,
     "-kb-mode-next", "",
     "-kb-row-tab", "",
@@ -197,59 +199,100 @@ export async function rofiMenu(
   };
 }
 
-export async function rofiExpandedResponse(fullMessage: string): Promise<void> {
-  const WRAP_WIDTH = 85; // Slightly wider for full view
+/**
+ * Smarter word-aware wrapping
+ * Respects spaces for word-based languages (English, Indonesian, etc.)
+ * while correctly wrapping individual characters for CJK
+ */
+function wrapLine(line: string, width: number): string[] {
+  if (!line) return [''];
   
-  const wrapText = (text: string, width: number) => {
-    const lines: string[] = [];
-    text.split('\n').forEach(line => {
-      if (line.length <= width) {
-        lines.push(line);
-      } else {
-        const words = line.split(' ');
-        let currentLine = '';
-        words.forEach(word => {
-          if ((currentLine + word).length > width) {
-            lines.push(currentLine.trim());
-            currentLine = word + ' ';
-          } else {
-            currentLine += word + ' ';
-          }
-        });
-        lines.push(currentLine.trim());
-      }
-    });
-    return lines;
-  };
+  const result: string[] = [];
+  let currentLine = '';
+  let currentWidth = 0;
 
-  const lines = wrapText(fullMessage, WRAP_WIDTH);
+  // Tokenize: CJK chars, non-space words, or whitespace
+  const tokens = line.match(/[\u4e00-\u9faf]|[\u3040-\u309f]|[\u30a0-\u30ff]|[\u3000-\u303f]|[^\s\u4e00-\u9faf\u3040-\u309f\u30a0-\u30ff\u3000-\u303f]+|\s+/g) || [];
+
+  for (const token of tokens) {
+    const tokenWidth = Array.from(token).reduce((sum, char) => 
+      sum + (/[^\x00-\xff]/.test(char) ? 2 : 1), 0);
+
+    if (currentWidth + tokenWidth > width) {
+      // Push current line if it has content
+      if (currentLine.trim()) result.push(currentLine.trimEnd());
+      
+      if (tokenWidth > width && !/^\s+$/.test(token)) {
+        // If a single word is too long, we must break it by character
+        const chars = Array.from(token);
+        currentLine = '';
+        currentWidth = 0;
+        for (const char of chars) {
+          const charW = /[^\x00-\xff]/.test(char) ? 2 : 1;
+          if (currentWidth + charW > width) {
+            result.push(currentLine);
+            currentLine = char;
+            currentWidth = charW;
+          } else {
+            currentLine += char;
+            currentWidth += charW;
+          }
+        }
+      } else {
+        // Start new line with token (skip if it's just whitespace)
+        if (/^\s+$/.test(token)) {
+          currentLine = '';
+          currentWidth = 0;
+        } else {
+          currentLine = token;
+          currentWidth = tokenWidth;
+        }
+      }
+    } else {
+      currentLine += token;
+      currentWidth += tokenWidth;
+    }
+  }
+
+  if (currentLine.trim()) result.push(currentLine.trimEnd());
+  return result.length > 0 ? result : [line];
+}
+
+export async function rofiExpandedResponse(fullMessage: string): Promise<void> {
+  const WRAP_WIDTH = 62;
+  const formattedMessage = fullMessage.split('\n\n')
+    .map(p => p.trim())
+    .filter(Boolean)
+    .join('\n\n');
+
+  const lines = formattedMessage.split('\n').flatMap(line => wrapLine(line, WRAP_WIDTH));
 
   const themeOverride = `
     window {
-      width: 800px;
-      height: 700px;
-      border-radius: 16px;
+      width: 750px;
+      height: 750px;
+      border-radius: 20px;
       border: 1px solid;
       border-color: @border-subtle;
       background-color: @bg;
     }
     mainbox {
       children: [listview];
-      padding: 24px;
+      padding: 30px;
     }
     listview {
-      lines: 40;
       scrollbar: true;
       fixed-height: false;
+      dynamic: true;
     }
     element {
-      padding: 2px 0px;
+      padding: 6px 16px;
       text-color: @text-primary;
-      font: "JetBrainsMono Nerd Font 8";
+      font: "JetBrainsMono Nerd Font 10.5";
     }
     element selected.normal {
-      background-color: transparent;
-      text-color: @text-primary;
+      background-color: @accent-light;
+      text-color: @accent-color;
     }
   `;
 
@@ -263,32 +306,10 @@ export async function rofiExpandedResponse(fullMessage: string): Promise<void> {
 }
 
 export async function rofiResponsePanel(message: string): Promise<{ action: "reply" | "expand" | "exit"; input?: string }> {
-  const MAX_LINES = 12; // Reduced slightly to ensure indicator visibility
-  const WRAP_WIDTH = 55;
-
-  const wrapText = (text: string, width: number) => {
-    const lines: string[] = [];
-    text.split('\n').forEach(line => {
-      if (line.length <= width) {
-        lines.push(line);
-      } else {
-        const words = line.split(' ');
-        let currentLine = '';
-        words.forEach(word => {
-          if ((currentLine + word).length > width) {
-            lines.push(currentLine.trim());
-            currentLine = word + ' ';
-          } else {
-            currentLine += word + ' ';
-          }
-        });
-        lines.push(currentLine.trim());
-      }
-    });
-    return lines;
-  };
-
-  const allLines = wrapText(message, WRAP_WIDTH);
+  const MAX_LINES = 12;
+  const WRAP_WIDTH = 50;
+  
+  const allLines = message.split('\n').flatMap(line => wrapLine(line, WRAP_WIDTH));
   const needsTruncation = allLines.length > MAX_LINES;
   
   const displayLines = needsTruncation 
@@ -307,7 +328,7 @@ export async function rofiResponsePanel(message: string): Promise<{ action: "rep
 
   const themeOverride = `
     window {
-      width: 500px;
+      width: 600px;
       height: 550px;
       border-radius: 16px;
       border: 1px solid;
@@ -413,7 +434,6 @@ async function rofiDmenu(items: string, prompt: string = "Lumina"): Promise<stri
   return output.trim();
 }
 
-// Rofi dmenu without prompt bar - only shows listview
 async function rofiDmenuNoPrompt(items: string): Promise<string> {
   const themeStr = 'mainbox { children: [listview]; }';
   
@@ -436,7 +456,6 @@ async function rofiDmenuNoPrompt(items: string): Promise<string> {
 }
 
 export async function rofiDisplay(message: string): Promise<void> {
-  // Clean up the message - remove any existing separators for consistent formatting
   const cleanMessage = message
     .replace(/^━+$/gm, "")
     .replace(/^\n+/, "")

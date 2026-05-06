@@ -116,7 +116,7 @@ Returns a translated string with parameter interpolation.
 ### `setLang(lang: string): void`
 Sets the current system language.
 
-- **`lang`**: The language code (e.g., `"en"`, `"id"`).
+- **`lang`**: The language code (e.g., `"en"`, `"id"`, `"ja"`).
 
 ---
 

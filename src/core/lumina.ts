@@ -69,7 +69,7 @@ function buildRetryMessages(
   const retryFeedback = failedResults.map(formatToolResultForContext).join("\n\n");
 
   return [
-    baseMessages[0]!, // system prompt only
+    baseMessages[0]!, 
     { role: "user", content: originalUserMessage },
     { role: "assistant", content: previousAssistantResponse },
     {

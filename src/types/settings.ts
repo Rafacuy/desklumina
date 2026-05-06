@@ -6,7 +6,7 @@ export interface FeatureFlags {
 }
 
 export interface Settings {
-  language: "id" | "en";
+  language: "id" | "en" | "ja";
   features: FeatureFlags;
   tts: {
     voiceId: string;

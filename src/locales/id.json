@@ -34,6 +34,7 @@
     "proceed": "Lanjutkan",
     "results": "Hasil",
     "retrying": "Mencoba kembali",
+    "attempt": "(percobaan {count})",
     "save_exit": "Simpan & Keluar",
     "search": "Cari",
     "select": "Pilih",

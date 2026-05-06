@@ -143,7 +143,7 @@ export class ToolDisplay {
     results.forEach((result) => {
       const label = getToolLabel(result.tool);
       const mark = result.success === false ? "✕" : "✓";
-      const attemptSuffix = result.attempt && result.attempt > 1 ? ` (attempt ${result.attempt})` : "";
+      const attemptSuffix = result.attempt && result.attempt > 1 ? ` ${tf("common.attempt", { count: result.attempt })}` : "";
       output += `  • ${label} ${mark}${attemptSuffix}\n`;
       const summaryLines = summarizeResult(result);
       if (summaryLines.length > 0) {
