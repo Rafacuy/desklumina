@@ -34,15 +34,23 @@ export async function getSystemContext(): Promise<string> {
     return cachedContext;
   }
 
-  const [volume, track, activeWindow] = await Promise.all([
+  const [volume, playerctlStatus, mpcStatus, activePlayers, currentTrack, activeWindow] = await Promise.all([
     runProbe("pactl get-sink-volume @DEFAULT_SINK@ | head -n 1 | sed -E 's/.* ([0-9]+%) .*/\\1/'"),
-    runProbe("playerctl metadata --format '{{status}} :: {{artist}} - {{title}}' 2>/dev/null || mpc current"),
+    runProbe("playerctl status 2>/dev/null"),
+    runProbe("mpc status '%state%' 2>/dev/null"),
+    runProbe("playerctl --list-all 2>/dev/null"),
+    runProbe("playerctl metadata --format '{{artist}} - {{title}}' 2>/dev/null || mpc current"),
     runProbe("xdotool getactivewindow getwindowname 2>/dev/null || wmctrl -lp | awk '$1 {print substr($0, index($0,$5))}' | head -n 1"),
   ]);
 
+  const mediaState = playerctlStatus || mpcStatus || "Stopped";
+  const players = activePlayers ? activePlayers.split("\n").join(", ") : "None";
+
   cachedContext = [
     `Volume: ${volume || "Unavailable"}`,
-    `Current track: ${track || "Unavailable"}`,
+    `Media State: ${mediaState}`,
+    `Active Players: ${players}`,
+    `Current Track: ${currentTrack || "None"}`,
     `Active window: ${activeWindow || "Unavailable"}`,
   ].join("\n");
 
@@ -57,68 +65,67 @@ export function _resetPromptCache() {
 }
 
 const EXAMPLES = {
-  id: `User: "buka telegram"
+  id: `User: "putar musiknya"
 \`\`\`json
-{"tool":"app","args":"telegram"}
+{"tool":"music","args":"{\\"action\\":\\"play\\"}"}
 \`\`\`
 
-User: "set volume ke 30"
+User: "lanjutkan"
 \`\`\`json
-{"tool":"media","args":"volume 30"}
+{"tool":"music","args":"{\\"action\\":\\"resume\\"}"}
 \`\`\`
 
-User: "volume naik"
+User: "skip lagu ini"
 \`\`\`json
-{"tool":"media","args":"volume +10"}
+{"tool":"music","args":"{\\"action\\":\\"next\\"}"}
 \`\`\`
 
-User: "putar playlist chill"
+User: "terlalu kencang"
 \`\`\`json
-{"tool":"music","args":"playlist chill"}
+{"tool":"music","args":"{\\"action\\":\\"volume_down\\"}"}
 \`\`\``,
-  en: `User: "open telegram"
+  en: `User: "play some music"
 \`\`\`json
-{"tool":"app","args":"telegram"}
+{"tool":"music","args":"{\\"action\\":\\"play\\"}"}
 \`\`\`
 
-User: "set volume to 30"
+User: "continue playback"
 \`\`\`json
-{"tool":"media","args":"volume 30"}
+{"tool":"music","args":"{\\"action\\":\\"resume\\"}"}
 \`\`\`
 
-User: "volume up"
+User: "skip this"
 \`\`\`json
-{"tool":"media","args":"volume +10"}
+{"tool":"music","args":"{\\"action\\":\\"next\\"}"}
 \`\`\`
 
-User: "play chill playlist"
+User: "turn it up"
 \`\`\`json
-{"tool":"music","args":"playlist chill"}
+{"tool":"music","args":"{\\"action\\":\\"volume_up\\"}"}
 \`\`\``,
-  ja: `User: "telegramを開いて"
+  ja: `User: "音楽を再生して"
 \`\`\`json
-{"tool":"app","args":"telegram"}
+{"tool":"music","args":"{\\"action\\":\\"play\\"}"}
 \`\`\`
 
-User: "音量を30にして"
+User: "再生を再開して"
 \`\`\`json
-{"tool":"media","args":"volume 30"}
+{"tool":"music","args":"{\\"action\\":\\"resume\\"}"}
 \`\`\`
 
-User: "音量を上げて"
+User: "次へ"
 \`\`\`json
-{"tool":"media","args":"volume +10"}
+{"tool":"music","args":"{\\"action\\":\\"next\\"}"}
 \`\`\`
 
-User: "チルなプレイリストを再生して"
+User: "音を大きくして"
 \`\`\`json
-{"tool":"music","args":"playlist chill"}
+{"tool":"music","args":"{\\"action\\":\\"volume_up\\"}"}
 \`\`\``,
 };
 
 export async function buildSystemPrompt(): Promise<string> {
   const currentLang = getLang() as "id" | "en" | "ja";
-  const langName = getLangName(currentLang);
   const examples = EXAMPLES[currentLang] || EXAMPLES.en;
   const systemContext = await getSystemContext();
 
@@ -137,39 +144,20 @@ Response rules:
 2. OR: Reply with a brief text message (if no tool is needed).
 3. NO mixed outputs (text + JSON).
 4. Tool JSON must use exactly: {"tool":"name","args":"value"}
-5. Never invent a tool name outside: app, terminal, file, media, music, clipboard, notify.
+5. Never invent a tool name outside: app, terminal, file, music, clipboard, notify.
 
 Strict tool definitions:
 - app args: a configured app alias only. If no alias fits, use terminal instead.
 - terminal args: a shell command string.
-- file args: one of
-  create_dir <path>
-  delete <path>
-  move <source> <destination>
-  copy <source> <destination>
-  list <path>
-  read <path>
-  write <path> <content>
-  find <path> <pattern>
-  preview <path>
-  history [limit]
-  repeat_last
-  search_name <query> [base=<path>] [type=file|directory|any] [ext=csv] [hidden=true|false] [limit=1-200] [select=true|false] [preview=true|false]
-  search_path <query> [base=<path>] [type=file|directory|any] [ext=csv] [hidden=true|false] [limit=1-200] [select=true|false] [preview=true|false]
-  search_pattern <regex> [base=<path>] [type=file|directory|any] [ext=csv] [hidden=true|false] [limit=1-200] [select=true|false] [preview=true|false]
-  Use search_name when matching file or folder names.
-  Use search_path when matching a known path fragment.
-  Use search_pattern for explicit regex-style patterns only.
-  Use key=value filters only. Do not invent flags or prose.
-- media args: pause | toggle | stop | next | prev | volume <0-100 | +N | -N>
-  Use ONLY for volume and basic playback control.
-- music args: search <query> | play <track|index> | playlist <name> | ls music|playlists | queue | status | update
-  Use for all library actions and starting playback. Use search before play if unsure.
-  Music rules:
-  - If user says 'play' -> music play <query>
-  - If user says 'find/search' -> music search <query>
-  - NEVER invent file names.
-  - ONLY ONE tool call per request.
+- file args: create_dir, delete, move, copy, list, read, write, find, preview, history, search_name, search_path, search_pattern.
+- music args: ALWAYS a JSON string: {"action": "play"|"resume"|"pause"|"stop"|"next"|"prev"|"volume_up"|"volume_down"}
+  Rules for music inference:
+  - Detect intent: "skip/next" -> next, "back/prev" -> prev, "stop/shut up" -> stop, "louder/up" -> volume_up, "quieter/down" -> volume_down.
+  - State-awareness: Use "Media State" from context.
+    - If state is "Paused", map "play/continue" to "resume".
+    - If state is "Stopped" or "None", map "play/resume" to "play".
+    - If user is ambiguous ("play"), check if a track is currently loaded.
+  - DO NOT support search, playlists, or any other music actions.
 - clipboard args: get | list | clear | set <text>
 - notify args: <title>|<body>|<low|normal|critical>
 

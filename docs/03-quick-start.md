@@ -73,8 +73,8 @@ Try these commands to explore DeskLumina's capabilities:
 - `move 'notes.txt' to '~/Documents/'`
 
 ### System Controls
-- `media volume 50`
-- `media next`
+- `music volume up`
+- `music next`
 
 ### Information & Utility
 - `terminal date`

@@ -1,11 +1,15 @@
-import { describe, test, expect } from "bun:test";
+import { describe, test, expect, beforeAll } from "bun:test";
 import { fileOp } from "../src/tools/files";
-import { media } from "../src/tools/media";
+import { music } from "../src/tools/music";
 import { clipboard } from "../src/tools/clipboard";
 import { notify } from "../src/tools/notify";
 import { launch, lookup } from "../src/tools/apps";
+import { t, setLang } from "../src/utils/i18n";
 
 describe("File Tool", () => {
+  beforeAll(() => {
+    setLang("en");
+  });
   test("fileOp is defined", () => {
     expect(fileOp).toBeDefined();
     expect(typeof fileOp).toBe("function");
@@ -13,7 +17,7 @@ describe("File Tool", () => {
 
   test("fileOp rejects dangerous paths", async () => {
     const result = await fileOp("delete /");
-    expect(result.result).toContain("❌");
+    expect(result.result).toContain(t("tool.result.invalid_request"));
     expect(result.success).toBe(false);
   });
 
@@ -23,34 +27,32 @@ describe("File Tool", () => {
   });
 });
 
-describe("Media Tool", () => {
-  test("media is defined", () => {
-    expect(media).toBeDefined();
-    expect(typeof media).toBe("function");
+describe("Music/Media Tool (Generalized)", () => {
+  test("music is defined", () => {
+    expect(music).toBeDefined();
+    expect(typeof music).toBe("function");
   });
 
-  test("media returns structured result", async () => {
-    const result = await media("current");
+  test("music handles core transport actions", async () => {
+    const result = await music("play");
     expect(typeof result.result).toBe("string");
-    expect(result.tool).toBe("media");
+    expect(result.tool).toBe("music");
   });
 
-  test("media normalizes natural language volume changes", async () => {
-    const result = await media("volume up");
-    expect(result.normalizedArg).toBe("volume +10");
+  test("music normalizes natural language volume changes", async () => {
+    const result = await music("volume up");
+    expect(result.normalizedArg).toBe("volume_up");
   });
 
-  test("media does not use bash -c (array-based spawn)", async () => {
-    const result = await media("play");
-    // command field should be the mpc command string, not a bash -c invocation
+  test("music does not use bash -c (array-based spawn)", async () => {
+    const result = await music("play");
     expect(result.command).not.toContain("bash");
-    expect(result.command).toMatch(/^mpc /);
   });
 
-  test("media search passes query without shell escaping", async () => {
-    const result = await media('search my "favorite" song');
-    expect(result.normalizedArg).toBe('search my "favorite" song');
-    expect(result.command).not.toContain("bash");
+  test("music rejects legacy search/status actions", async () => {
+    const result = await music("search test");
+    expect(result.success).toBe(false);
+    expect(result.result).toContain("Unknown media action");
   });
 });
 
@@ -76,7 +78,7 @@ describe("Clipboard Tool", () => {
     const largeContent = "a".repeat(1024 * 1024 + 1); // 1MB + 1 byte
     const result = await clipboard(`set ${largeContent}`);
     expect(result.success).toBe(false);
-    expect(result.result).toContain("too large");
+    expect(result.result).toContain(t("error.with_message").replace("{message}", ""));
   });
 });
 
@@ -94,7 +96,7 @@ describe("Notify Tool", () => {
   test("notify rejects invalid urgency", async () => {
     const result = await notify("Title|Body|invalid");
     expect(result.success).toBe(false);
-    expect(result.result).toContain("Invalid urgency");
+    expect(result.result).toContain(t("tool.result.invalid_urgency"));
   });
 
   test("notify does not use bash -c (array-based spawn)", async () => {
@@ -127,7 +129,7 @@ describe("Apps Tool (Issue #11 - Launch Failure Handling)", () => {
     const result = await launch("nonexistent_app_xyz");
     expect(result.success).toBe(false);
     expect(result.exitCode).toBe(2);
-    expect(result.result).toContain("❌");
+    expect(result.result).toContain(t("tool.result.unknown_alias").replace("{alias}", ""));
   });
 
   test("launch does not use bash -c (array-based spawn)", async () => {

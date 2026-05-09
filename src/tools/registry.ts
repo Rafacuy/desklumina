@@ -2,7 +2,6 @@ import { t, tf } from "../utils";
 import { execute } from "./terminal";
 import { launch } from "./apps";
 import { fileOp } from "./files";
-import { media } from "./media";
 import { music } from "./music";
 import { clipboard } from "./clipboard";
 import { notify } from "./notify";
@@ -29,7 +28,8 @@ const tools: ToolRegistry = {
   },
   app: (alias) => launch(alias),
   file: (op) => fileOp(op),
-  media: (action) => media(action),
+  // Legacy alias for the canonical music tool.
+  media: (action) => music(action),
   music: (arg) => music(arg),
   clipboard: (action) => clipboard(action),
   notify: (args) => notify(args),

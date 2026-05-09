@@ -9,7 +9,6 @@ Complete documentation for all available tools in DeskLumina's automation system
 - [Overview](#overview)
 - [Application Tool (app)](#application-tool-app)
 - [File Tool (file)](#file-tool-file)
-- [Media Tool (media)](#media-tool-media)
 - [Music Tool (music)](#music-tool-music)
 - [Clipboard Tool (clipboard)](#clipboard-tool-clipboard)
 - [Terminal Tool (terminal)](#terminal-tool-terminal)
@@ -27,13 +26,9 @@ DeskLumina uses a modular tool-based architecture. The AI agent generates struct
 {"tool": "tool_name", "args": "arguments"}
 ```
 
-Tool calls are parsed from markdown code fences in the model output. The registered tools are: `app`, `terminal`, `file`, `media`, `music`, `clipboard`, and `notify`.
+Tool calls are parsed from markdown code fences in the model output. The canonical tools are: `app`, `terminal`, `file`, `music`, `clipboard`, and `notify`.
 
-## BREAKING CHANGES
-
-- `app` rejects unknown aliases instead of executing them through `bash -c`.
-- `file` rejects unknown actions instead of falling through to shell execution.
-- `media` arguments are normalized and validated before execution. Canonical volume syntax is `volume <0-100 | +N | -N>`.
+`media` is accepted as a legacy alias for `music` for backward compatibility. New prompts, examples, and integrations should use `music`.
 
 ---
 
@@ -115,74 +110,31 @@ Advanced search operations use `locate` as the primary indexed backend and suppo
 
 ---
 
-## Media Tool (`media`)
-
-Control MPD via `mpc`.
-
-**Path**: `src/tools/media.ts`
-
-### Supported Actions:
-- `play`, `pause`, `toggle`, `stop`
-- `next`, `prev`
-- `volume <level>`, such as `volume 50`, `volume +10`, or `volume -10`.
-- `current`: Shows currently playing track info.
-- `search <query>`: Search within your music library.
-- `queue`: Print playlist via `mpc playlist`.
-
-### Argument Rules
-- Natural-language requests like "volume up" or "set volume to 30" are normalized internally.
-- The model emits canonical tool args: `volume <0-100 | +N | -N>`.
-- Invalid media actions fail with a validation error.
-
----
-
 ## Music Tool (`music`)
 
-Manage your music library, playlists, and playback through MPD via `mpc`. The music tool handles library operations such as searching and playlist loading, while the media tool handles playback controls like play, pause, and volume.
+A generalized media transport controller that provides a media-agnostic interface for playback and volume control. It prioritizes MPC/MPD for local music but intelligently falls back to `playerctl` (MPRIS) for applications like Spotify, VLC, and browsers.
 
 **Path**: `src/tools/music.ts`  
-**Dependencies**: `mpc`, and optional `ncmpcpp`.
+**Backends**: `mpc` (primary), `playerctl` (fallback).
 
 ### Supported Actions:
 
-| Action | Arguments | Description |
-|--------|-----------|-------------|
-| `search` | `<query>` | Search tracks by name, artist, or album. |
-| `play` | `<target>` | Play a specific track. Target can be a track number or search query. |
-| `playlist` | `<name>` | Load and play a saved playlist by name. |
-| `ls` or `list` | `music` or `playlists` | List tracks in library or saved playlists. |
-| `queue` | (none) | Display current queue and now-playing track. |
-| `status` or `now` | (none) | Show current playback status. |
-| `update` | (none) | Refresh MPD's music database. |
+| Action | Description |
+|--------|-------------|
+| `play` | Start or resume playback. |
+| `resume` | Resume playback (alias for `play`). |
+| `pause` | Pause playback. |
+| `stop` | Stop playback. |
+| `next` | Skip to the next track. |
+| `prev` | Skip to the previous track. |
+| `volume up` | Increase volume by 5% (alias: `vol up`). |
+| `volume down` | Decrease volume by 5% (alias: `vol down`). |
 
-### Query Normalization
+### Fallback Behavior
 
-User queries are normalized by stripping common natural-language prefixes:
-- Removed prefixes: `please`, `tolong`, `putar`, `play`, `search`, `find`, `cari`, `song`, `lagu`, `music`, `musik`.
-- Removed suffixes: `song`, `lagu`, `music`, `musik`.
-
-### Playback Behavior
-
-**Search and Play**: When using `play <query>`:
-1. Searches library for the query.
-2. If found, clears the current queue.
-3. Adds the first match to queue.
-4. Starts playback.
-
-If the target is a numeric index, it plays that position in the current queue directly.
-
-**Status Display**: The `status` action attempts to use `ncmpcpp --current-song` for enhanced display. If `ncmpcpp` is missing, it falls back to `mpc current`.
-
-### UI Behavior
-
-Search results and playlists are returned as structured data in the tool result. The AI assistant formats and displays them as text.
-
-### Error Handling
-
-- **Missing `mpc`**: Returns error code 127 if `mpc` is not installed.
-- **Empty Search**: Returns success with status `empty` if no tracks match.
-- **Track Not Found**: Returns an error when `play <query>` finds no results.
-- **Playlist Load Failure**: Returns the stderr from `mpc load` if the playlist does not exist.
+1. **MPC First**: The tool attempts to execute the action via `mpc`. If `mpc` is missing, disconnected, or fails (e.g., empty playlist), it moves to the next backend.
+2. **Playerctl Fallback**: If MPC fails, it attempts the action via `playerctl`. This covers Spotify, Chromium, Firefox, VLC, and any other MPRIS-compatible player.
+3. **Graceful Failure**: If no backends are available or all fail, a structured error is returned without crashing.
 
 ---
 

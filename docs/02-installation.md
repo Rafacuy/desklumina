@@ -28,7 +28,7 @@ Get DeskLumina up and running on your system. This guide covers all requirements
 
 - **[dunst](https://github.com/dunst-project/dunst)**: Required for the `notify` tool (`dunstify`).
 - **[clipcat](https://github.com/p0nce/clipcat)**: Required for the `clipboard` tool (`clipcatctl`).
-- **[mpd](https://www.musicpd.org/)** + **[mpc](https://www.musicpd.org/clients/mpc/)**: Required for the `media` tool.
+- **[mpd](https://www.musicpd.org/)** + **[mpc](https://www.musicpd.org/clients/mpc/)**: Required for the `music` tool's MPC backend.
 
 ---
 

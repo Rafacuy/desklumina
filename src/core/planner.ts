@@ -1,6 +1,7 @@
 import { logger } from "../logger";
 import type { ParsedToolCall } from "../types";
 
+// "media" is retained as a legacy alias for older model outputs.
 const VALID_TOOLS = new Set(["app", "terminal", "file", "media", "music", "clipboard", "notify"]);
 
 const MAX_JSON_LENGTH = 50000; // 50KB limit
@@ -94,5 +95,5 @@ export function parseToolCalls(text: string): ParsedToolCall[] {
   }
 
   logger.debug("planner", `Found ${calls.length} tool calls`);
-  return calls.slice(0, 1);
+  return calls;
 }

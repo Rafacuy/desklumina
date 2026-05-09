@@ -42,7 +42,7 @@ The system analyzes every command for safety. Destructive or sensitive operation
 > **DeskLumina:** (executes tool call `file` with `create_dir ~/Desktop/...`)
 
 > **User:** "play music"
-> **DeskLumina:** (executes tool call `media` with `play`)
+> **DeskLumina:** (executes tool call `music` with `play`)
 
 ---
 

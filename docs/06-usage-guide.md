@@ -102,7 +102,7 @@ You can execute a single desktop action directly from your terminal or a keyboar
 ### Examples:
 - `bun run start -- --exec "open telegram"`
 - `bun run start -- --exec "file list ~"`
-- `bun run start -- --exec "media current"`
+- `bun run start -- --exec "music next"`
 
 > **Pro Tip**: Bind these commands to your desktop's hotkeys for instant access.
 
