@@ -8,8 +8,27 @@
 export function cleanAssistantResponse(text: string): string {
   if (!text) return "";
 
-  return text
-    .replace(/```json\s*\n[\s\S]*?\n```/g, "")
+  let cleaned = text;
+
+  // 1. Remove markdown tool calls (lenient: optional json tag, optional newlines)
+  cleaned = cleaned.replace(/```(?:json|JSON)?\s*([\s\S]*?)\s*```/g, (match, content) => {
+    // Only remove if it looks like a tool call to avoid removing random code/text blocks
+    if (content.includes('"tool"') || content.includes('"args"')) {
+      return "";
+    }
+    return match;
+  });
+
+  // 2. Remove raw JSON tool calls (when not in code blocks)
+  // We use a similar heuristic to the planner
+  cleaned = cleaned.replace(/\{(?:[^{}]|\{[^{}]*\})*\}/g, (match) => {
+    if (match.includes('"tool"') && (match.includes('"args"') || match.includes('"action"'))) {
+      return "";
+    }
+    return match;
+  });
+
+  return cleaned
     .replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "")
     .replace(/\n?Status:\s.*?(?=\n\n|$)/gis, "")
     .replace(/\n?Summary:\s.*?(?=\n|$)/gis, "")

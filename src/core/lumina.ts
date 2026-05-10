@@ -272,7 +272,7 @@ export class Lumina {
       }
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error("lumina", `Chat error: ${err.message}`, err);
-      const errorMsg = `❌ ${t("common.error")}: ${err.message}`;
+      const errorMsg = `${t("common.error")}.`;
 
       if (!this.chatManager) {
         this.context.add("user", userMessage);

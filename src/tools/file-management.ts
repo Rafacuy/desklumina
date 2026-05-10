@@ -565,7 +565,7 @@ export async function handleFileManagement(operation: string): Promise<ToolExecu
       : parseSearchRequest(parsed);
 
   if ("error" in request) {
-    return makeResult(operation.trim(), `❌ ${request.error}`, false, {
+    return makeResult(operation.trim(), t("tool.result.invalid_request"), false, {
       status: "invalid_request",
       stderr: request.error,
       exitCode: 2,

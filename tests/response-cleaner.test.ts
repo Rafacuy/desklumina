@@ -1,7 +1,7 @@
 import { describe, test, expect } from "bun:test";
 import { cleanAssistantResponse } from "../src/utils/response-cleaner";
 
-describe("Response Cleaner (Issue #9 - Duplicate Logic)", () => {
+describe("Response Cleaner (Duplicate Logic)", () => {
   test("removes JSON code blocks", () => {
     const input = 'Some text\n```json\n{"tool":"app","args":"test"}\n```\nMore text';
     const result = cleanAssistantResponse(input);
@@ -73,5 +73,36 @@ Final text`;
     expect(result).not.toContain("<tool:");
     expect(result).not.toContain("Summary:");
     expect(result).not.toContain("━");
+  });
+
+  describe("Robustness - Tool Call Removal", () => {
+    test("removes lenient JSON blocks (missing newlines)", () => {
+      const input = 'Text ```json\n{"tool":"music","args":"stop"}``` Text';
+      const result = cleanAssistantResponse(input);
+      expect(result).toBe("Text  Text");
+    });
+
+    test("removes raw JSON tool calls from text", () => {
+      const input = 'I will help. {"tool":"music","args":"stop"} Done.';
+      const result = cleanAssistantResponse(input);
+      expect(result).toBe("I will help.  Done.");
+    });
+
+    test("removes multiline raw JSON tool calls", () => {
+      const input = `Sure!
+{
+  "tool": "music",
+  "args": "stop"
+}
+Okay.`;
+      const result = cleanAssistantResponse(input);
+      expect(result).toBe("Sure!\n\nOkay.");
+    });
+
+    test("preserves non-tool JSON blocks", () => {
+      const input = 'Here is a config: ```json\n{"theme":"dark"}\n```';
+      const result = cleanAssistantResponse(input);
+      expect(result).toBe('Here is a config: ```json\n{"theme":"dark"}\n```');
+    });
   });
 });

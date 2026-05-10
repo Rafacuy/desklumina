@@ -102,4 +102,52 @@ ${JSON.stringify(deepJson)}
     expect(calls[0].tool).toBe("notify");
     expect(calls[1].tool).toBe("clipboard");
   });
+
+  describe("Robustness", () => {
+    test("should handle missing newline before closing backticks", () => {
+      const text = "```json\n{\"tool\":\"music\",\"args\":\"{\\\"action\\\":\\\"stop\\\"}\"}```";
+      const calls = parseToolCalls(text);
+      expect(calls).toHaveLength(1);
+    });
+
+    test("should handle missing newline after json tag", () => {
+      const text = "```json{\"tool\":\"music\",\"args\":\"{\\\"action\\\":\\\"stop\\\"}\"}```";
+      const calls = parseToolCalls(text);
+      expect(calls).toHaveLength(1);
+    });
+
+    test("should handle raw JSON without backticks", () => {
+      const text = "Check this: {\"tool\": \"music\", \"args\": \"{\\\"action\\\":\\\"pause\\\"}\"}";
+      const calls = parseToolCalls(text);
+      expect(calls).toHaveLength(1);
+      expect(calls[0].tool).toBe("music");
+    });
+
+    test("should handle multiline raw JSON", () => {
+      const text = `
+Here is the tool:
+{
+  "tool": "music",
+  "args": {
+    "action": "stop"
+  }
+}
+`;
+      const calls = parseToolCalls(text);
+      expect(calls).toHaveLength(1);
+      expect(calls[0].tool).toBe("music");
+    });
+
+    test("should handle multiple raw tool calls in text", () => {
+      const text = "First: {\"tool\":\"notify\",\"args\":\"hi\"} and Second: {\"tool\":\"clipboard\",\"args\":\"set x\"}";
+      const calls = parseToolCalls(text);
+      expect(calls).toHaveLength(2);
+    });
+
+    test("should not duplicate calls found in both markdown and raw search", () => {
+      const text = "```json\n{\"tool\":\"music\",\"args\":\"stop\"}\n```";
+      const calls = parseToolCalls(text);
+      expect(calls).toHaveLength(1);
+    });
+  });
 });

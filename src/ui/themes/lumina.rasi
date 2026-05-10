@@ -1,5 +1,5 @@
 * {
-    // Modern & Clean Color Palette
+    /* Color palette */
     white: #ffffff;
     surface: #f8fafc;
     border-subtle: #e2e8f0;

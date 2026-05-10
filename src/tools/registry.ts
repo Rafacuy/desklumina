@@ -14,7 +14,7 @@ const tools: ToolRegistry = {
     const result = await execute(cmd);
     const message = result.exitCode === 0
       ? (result.stdout || result.stderr || t("tool.result.done"))
-      : `❌ ${result.stderr || t("tool.result.command_failed")}`;
+      : t("tool.result.command_failed");
     return {
       tool: "terminal",
       result: message,

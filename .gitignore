@@ -37,6 +37,9 @@ chats
 # bun cache
 .bun
 
+# daemon cache
+.daemon-token
+
 # eslint cache
 .eslintcache
 

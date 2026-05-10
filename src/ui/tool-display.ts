@@ -78,8 +78,8 @@ function formatFileResult(result: ToolResult): string[] {
     lines.push(`    ${tf("tool.result.preview", { path: result.preview.path })}`);
   }
 
-  if (result.success === false && result.stderr) {
-    lines.push(`    ${result.stderr}`);
+  if (result.success === false) {
+    lines.push(`    ${t("tool.result.failed")}`);
   }
 
   return lines;
@@ -103,8 +103,8 @@ function summarizeResult(result: ToolResult): string[] {
     return lines;
   }
 
-  if (result.success === false && result.stderr) {
-    return [`    ${result.stderr}`];
+  if (result.success === false) {
+    return [`    ${t("tool.result.failed")}`];
   }
 
   return [];
@@ -155,11 +155,11 @@ export class ToolDisplay {
     return output.trim();
   }
 
-  static formatRetryUpdate(attempt: number, tools: string[], reason: string): string {
+  static formatRetryUpdate(attempt: number, tools: string[], _reason: string): string {
     const uniqueTools = [...new Set(tools)];
     const labels = uniqueTools.map((tool) => getToolLabel(tool)).join(", ");
     const retryingWord = t("common.retrying") || "Retrying";
-    return `${this.SEPARATOR}\n  • ${retryingWord} (${attempt}) ${labels}\n  • ${reason}\n${this.SEPARATOR}`.trim();
+    return `${this.SEPARATOR}\n  • ${retryingWord} (${attempt}) ${labels}\n${this.SEPARATOR}`.trim();
   }
 
   /**

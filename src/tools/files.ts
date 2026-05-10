@@ -118,7 +118,7 @@ export async function fileOp(operation: string): Promise<ToolExecutionResult> {
         const command = ["ls", "-la", path];
         const commandResult = await spawnSafe(command);
         const cmdStr = command.join(" ");
-        if (commandResult.exitCode !== 0) return result("list", `❌ Failed: ${commandResult.stderr}`, false, cmdStr, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
+        if (commandResult.exitCode !== 0) return result("list", tf("error.with_message", { message: commandResult.stderr.trim() || t("tool.result.command_failed") }), false, cmdStr, commandResult.stdout, commandResult.stderr, commandResult.exitCode);
         return result("list", commandResult.stdout, true, cmdStr, commandResult.stdout, commandResult.stderr, 0);
       },
       read: async () => {
@@ -153,7 +153,7 @@ export async function fileOp(operation: string): Promise<ToolExecutionResult> {
         if (legacy) {
           return legacy;
         }
-        return result("find", "❌ Path and pattern required", false, undefined, undefined, "Path and pattern required", 2);
+        return result("find", t("tool.result.invalid_request"), false, undefined, undefined, "Path and pattern required", 2);
       },
     };
 
