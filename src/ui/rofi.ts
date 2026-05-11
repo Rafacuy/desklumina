@@ -3,6 +3,7 @@ import type { ChatManager, Chat } from "../core/chat-manager";
 import { t } from "../utils/i18n";
 import { CancellationError } from "../types";
 import { logger } from "../logger";
+import { escapeHtml } from "../utils/format";
 
 const THEME_PATH = `${process.env.HOME}/.config/desklumina/src/ui/themes/lumina.rasi`;
 
@@ -170,7 +171,7 @@ export async function rofiMenu(
   
   const finalMessage = message || hints;
   if (finalMessage) {
-    args.push("-mesg", finalMessage);
+    args.push("-mesg", escapeHtml(finalMessage));
   }
   
   let finalTheme = themeOverride;
@@ -417,7 +418,7 @@ async function rofiDmenu(items: string, prompt: string = "Lumina"): Promise<stri
   const args = [
     "rofi", "-dmenu", "-i", "-p", prompt, 
     "-theme", THEME_PATH, 
-    "-mesg", `󰌑 ${t("common.send")} │ 󱊷 ${t("common.exit")} │ 󰍉 ${t("common.search")}`
+    "-mesg", escapeHtml(`󰌑 ${t("common.send")} │ 󱊷 ${t("common.exit")} │ 󰍉 ${t("common.search")}`)
   ];
 
   const proc = spawn(args, {
@@ -465,7 +466,7 @@ export async function rofiDisplay(message: string): Promise<void> {
   const formattedMessage = `󱜙 ${t("common.lumina")}\n${"─".repeat(40)}\n\n${cleanMessage}`;
 
   const proc = spawn([
-    "rofi", "-e", formattedMessage,
+    "rofi", "-e", escapeHtml(formattedMessage),
     "-theme", THEME_PATH,
     "-theme-str", `
       window {

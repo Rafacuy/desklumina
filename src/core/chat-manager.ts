@@ -5,6 +5,7 @@ import type { AIMessage, AIRequestContext, Chat, ChatMessage, ToolCall, ToolResu
 import { settingsManager } from "./settings-manager";
 import { logger } from "../logger";
 import { t, cleanAssistantResponse } from "../utils";
+import { tokenManager } from "./token-manager";
 
 const TOOL_LABELS: Record<string, string> = {
   app: "tool.opening_app",
@@ -16,8 +17,7 @@ const TOOL_LABELS: Record<string, string> = {
 };
 
 const CHAT_DIR = join(homedir(), ".config/desklumina/chats");
-const MAX_CONTEXT_MESSAGES = 8;
-const MAX_SUMMARY_CHARS = 150;
+const MAX_HISTORY_TOKENS = 4000;
 const MAX_CHATS = 100;
 
 type InternalMessage = ChatMessage & {
@@ -57,14 +57,9 @@ function formatToolContext(result: ToolResult): string {
   const segments = [
     `[TOOL RESULT] ${result.tool} ${status}`,
     result.normalizedArg ? `args=${result.normalizedArg}` : "",
-    result.command ? `command=${result.command}` : "",
-    result.exitCode !== undefined ? `exit_code=${result.exitCode}` : "",
-    result.stdout ? `stdout=${result.stdout.trim()}` : "",
-    result.stderr ? `stderr=${result.stderr.trim()}` : "",
-    result.actions && result.actions.length > 0 ? `actions=${result.actions.join(",")}` : "",
-    result.selectedFile ? `selected_file=${result.selectedFile}` : "",
-    result.files && result.files.length > 0 ? `files=${result.files.map((file) => file.path).join(" | ")}` : "",
-    `message=${result.result.trim()}`,
+    result.stdout ? `stdout=${result.stdout.slice(0, 200).trim()}` : "",
+    result.stderr ? `stderr=${result.stderr.slice(0, 150).trim()}` : "",
+    `msg=${result.result.slice(0, 150).trim()}`,
   ].filter(Boolean);
 
   return segments.join("\n");
@@ -75,15 +70,15 @@ function summarizeMessage(message: InternalMessage): string {
     const toolResults = message.toolResults || [];
     return toolResults
       .map((result) => {
-        const status = result.success === false ? "failed" : "succeeded";
-        return `${getToolLabel(result.tool)} ${status}: ${result.result}`;
+        const status = result.success === false ? "failed" : "ok";
+        return `${result.tool}(${status})`;
       })
-      .join(" | ")
-      .slice(0, MAX_SUMMARY_CHARS);
+      .join(", ");
   }
 
-  const prefix = message.role === "user" ? "User" : "Assistant";
-  return `${prefix}: ${cleanContent(message.content)}`.slice(0, MAX_SUMMARY_CHARS);
+  const prefix = message.role === "user" ? "U" : "A";
+  const content = cleanContent(message.content);
+  return `${prefix}: ${content.length > 100 ? content.slice(0, 100) + "..." : content}`;
 }
 
 function normalizeChat(chat: Chat): Chat {
@@ -203,11 +198,20 @@ export class ChatManager {
   addToolResults(results: ToolResult[]): void {
     if (!this.currentChat || results.length === 0) return;
 
+    // Optimization: Strip redundant fields before saving to disk
+    const compressedResults = results.map(r => ({
+      tool: r.tool,
+      success: r.success,
+      result: r.result.slice(0, 500), // Hard cap result length on disk
+      normalizedArg: r.normalizedArg,
+      attempt: r.attempt
+    })) as ToolResult[];
+
     const toolMessage: InternalMessage = {
       role: "tool",
-      content: results.map(formatToolContext).join("\n\n"),
+      content: compressedResults.map(formatToolContext).join("\n\n"),
       timestamp: Date.now(),
-      toolResults: results,
+      toolResults: compressedResults,
     };
 
     this.currentChat.messages.push(toolMessage);
@@ -281,36 +285,46 @@ export class ChatManager {
       return { messages: [] };
     }
 
-    const relevant = this.currentChat.messages.filter((message) => message.role !== "system") as InternalMessage[];
-    if (relevant.length <= MAX_CONTEXT_MESSAGES) {
-      return {
-        messages: relevant.map((message) => this.toAPIMessage(message)),
-      };
+    const relevant = this.currentChat.messages
+      .filter((message) => message.role !== "system")
+      .filter((message) => message.content && message.content.trim() !== "") as InternalMessage[];
+
+    let totalTokens = 0;
+    const recentMessages: AIMessage[] = [];
+    const olderMessages: InternalMessage[] = [];
+
+    // Iterate backwards to keep the most recent messages
+    for (let i = relevant.length - 1; i >= 0; i--) {
+      const msg = relevant[i]!;
+      const apiMsg = this.toAPIMessage(msg);
+      const tokens = tokenManager.estimateTokens(apiMsg.content);
+
+      if (totalTokens + tokens <= MAX_HISTORY_TOKENS) {
+        recentMessages.unshift(apiMsg);
+        totalTokens += tokens;
+      } else {
+        olderMessages.unshift(msg);
+      }
     }
 
-    const recentMessages = relevant.slice(-MAX_CONTEXT_MESSAGES);
-    const olderMessages = relevant.slice(0, -MAX_CONTEXT_MESSAGES);
-    const summaryLines = olderMessages
-      .map(summarizeMessage)
-      .filter(Boolean)
-      .slice(-6);
-
     const messages: AIMessage[] = [];
-    if (summaryLines.length > 0) {
+    if (olderMessages.length > 0) {
+      const summaryLines = olderMessages
+        .slice(-5) // Take last 5 from older for summary
+        .map(summarizeMessage);
+      
       messages.push({
         role: "system",
-        content: `Conversation summary (${olderMessages.length} earlier messages):\n${summaryLines.join("\n")}`,
+        content: `[History: ${olderMessages.length} msgs]\n${summaryLines.join("\n")}`,
       });
     }
 
-    recentMessages.forEach((message) => {
-      messages.push(this.toAPIMessage(message));
-    });
+    messages.push(...recentMessages);
 
     return {
       messages,
       truncatedMessageCount: olderMessages.length,
-      summarizedMessageCount: summaryLines.length,
+      summarizedMessageCount: Math.min(olderMessages.length, 5),
     };
   }
 

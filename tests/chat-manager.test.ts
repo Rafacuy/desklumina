@@ -53,6 +53,49 @@ describe("ChatManager", () => {
     expect(context.messages[0]?.content).toBe("Hello");
   });
 
+  test("getMessagesForAPI prunes history based on tokens and adds summary", () => {
+    chatManager.createChat("Test");
+    
+    // MAX_HISTORY_TOKENS is 4000
+    // Add many large messages to exceed budget
+    // Each message ~1000 tokens (4000 chars)
+    const largeContent = "A".repeat(4000);
+    for (let i = 0; i < 6; i++) {
+      chatManager.addMessage(largeContent, "user");
+      chatManager.addMessage("Short response", "assistant");
+    }
+
+    const context = chatManager.getMessagesForAPI();
+    
+    // Check that we have a summary system message at the start
+    expect(context.messages[0]?.role).toBe("system");
+    expect(context.messages[0]?.content).toContain("[History:");
+    
+    // Check that recent messages are preserved
+    expect(context.messages.length).toBeLessThan(12); // Total 12 messages added + summary
+    expect(context.truncatedMessageCount).toBeGreaterThan(0);
+  });
+
+  test("addToolResults compresses large results before saving", () => {
+    chatManager.createChat("Tool Test");
+    chatManager.addMessage("User query", "user"); // Add a user message first
+    const largeResult = "B".repeat(2000);
+    chatManager.addToolResults([{
+      tool: "terminal",
+      success: true,
+      result: largeResult,
+      normalizedArg: "ls -la",
+      attempt: 1
+    }]);
+
+    const chat = chatManager.getCurrentChat();
+    // Index 1 because Index 0 is the "User query" added above
+    const toolMsg = chat?.messages[1];
+    expect(toolMsg?.role).toBe("tool");
+    // Should be truncated to 500 chars in memory/disk storage
+    expect((toolMsg as any).toolResults[0].result.length).toBe(500);
+  });
+
   test("prunes chats when exceeding MAX_CHATS", () => {
     const unlinkSpy = spyOn(fs, "unlinkSync").mockImplementation(() => {});
     const existsSpy = spyOn(fs, "existsSync").mockReturnValue(true);

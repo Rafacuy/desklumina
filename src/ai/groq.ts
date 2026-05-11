@@ -2,6 +2,7 @@ import { env, modelConfig } from "../config/env";
 import { logger } from "../logger";
 import { parseSSE } from "./stream";
 import { GROQ_API_ENDPOINT, MODEL_TEMPERATURE, MAX_TOKENS } from "../constants";
+import { tokenManager } from "../core/token-manager";
 import type { AIMessage } from "../types";
 
 const SAFE_TOKEN_LIMIT = 6000;
@@ -10,8 +11,7 @@ const SAFE_TOKEN_LIMIT = 6000;
  * Rough token estimation (1 token ≈ 4 chars)
  */
 function estimateTokens(messages: AIMessage[]): number {
-  const totalChars = messages.reduce((sum, msg) => sum + msg.content.length, 0);
-  return Math.ceil(totalChars / 4);
+  return messages.reduce((sum, msg) => sum + tokenManager.estimateTokens(msg.content), 0);
 }
 
 export class GroqAPIError extends Error {
@@ -65,12 +65,14 @@ async function* streamWithModel(
   messages: AIMessage[],
   model: string
 ): AsyncGenerator<string> {
-  const estimatedTokens = estimateTokens(messages);
-  logger.debug("groq", `Estimated tokens: ${estimatedTokens} (limit: ${SAFE_TOKEN_LIMIT})`);
+  const estimatedInputTokens = estimateTokens(messages);
+  logger.debug("groq", `Estimated input tokens: ${estimatedInputTokens} (limit: ${SAFE_TOKEN_LIMIT})`);
 
-  if (estimatedTokens > SAFE_TOKEN_LIMIT) {
-    logger.warn("groq", `Token count (${estimatedTokens}) exceeds safe limit (${SAFE_TOKEN_LIMIT}). Request may fail.`);
+  if (estimatedInputTokens > SAFE_TOKEN_LIMIT) {
+    logger.warn("groq", `Token count (${estimatedInputTokens}) exceeds safe limit (${SAFE_TOKEN_LIMIT}). Request may fail.`);
   }
+
+  await tokenManager.enforceBudget(estimatedInputTokens);
 
   logger.info("groq", `Sending request to Groq with model ${model}`);
 
@@ -84,6 +86,7 @@ async function* streamWithModel(
       model,
       messages,
       stream: true,
+      stream_options: { include_usage: true },
       temperature: MODEL_TEMPERATURE,
       max_tokens: MAX_TOKENS,
     }),
@@ -104,7 +107,25 @@ async function* streamWithModel(
     throw new Error("Response body is null");
   }
 
-  yield* parseSSE(response.body);
+  let fullResponse = "";
+  let actualUsage: { total_tokens: number } | undefined;
+
+  for await (const chunk of parseSSE(response.body)) {
+    if (chunk.content) {
+      fullResponse += chunk.content;
+      yield chunk.content;
+    }
+    if (chunk.usage) {
+      actualUsage = chunk.usage;
+    }
+  }
+
+  // Track usage after success. Use actual usage if provided by API, otherwise fallback to estimation.
+  const totalTokensUsed = actualUsage 
+    ? actualUsage.total_tokens 
+    : estimatedInputTokens + tokenManager.estimateTokens(fullResponse);
+  
+  tokenManager.trackUsage(totalTokensUsed);
 }
 
 /**
@@ -140,6 +161,10 @@ export async function* streamGroq(messages: AIMessage[]): AsyncGenerator<string>
       }
 
       if (error instanceof GroqAPIError) {
+        if (error.statusCode === 429) {
+          logger.error("groq", `Rate limit (429) hit. Account-wide limit reached. stopping fallback.`);
+          throw error;
+        }
         logger.warn("groq", `Model ${model} failed with error ${error.statusCode}, trying fallback...`);
         lastError = error;
         continue;

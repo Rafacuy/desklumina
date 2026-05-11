@@ -1,4 +1,4 @@
-import { t, tf } from "../utils";
+import { t, tf, escapeHtml } from "../utils";
 import { logger } from "../logger";
 import type { ToolExecutionResult } from "../types";
 
@@ -38,7 +38,7 @@ export async function notify(args: string): Promise<ToolExecutionResult> {
 
     const command = `dunstify -u ${urgency} -i lumina "${title}" "${body}"`;
 
-    const proc = Bun.spawn(["dunstify", "-u", urgency, "-i", "lumina", title, body], {
+    const proc = Bun.spawn(["dunstify", "-u", urgency, "-i", "lumina", escapeHtml(title), escapeHtml(body)], {
       stdout: "pipe",
       stderr: "pipe",
     });

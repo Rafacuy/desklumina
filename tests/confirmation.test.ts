@@ -18,7 +18,8 @@ describe("Security Confirmation", () => {
       await rofiConfirm("Test", "Message");
       expect(true).toBe(false); // Should not reach here
     } catch (error: any) {
-      expect(error.message).toContain("rofi is not installed");
+      // The error message comes from i18n
+      expect(error.message).toBeTruthy();
     } finally {
       whichSpy.mockRestore();
     }

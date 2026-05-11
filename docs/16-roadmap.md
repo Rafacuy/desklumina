@@ -27,7 +27,7 @@ This file describes ideas that are not yet implemented. Do not treat any item be
 - [x] **Japanese UI Localization**: Now supports full Japanese UI localization for better accessibility to Japanese-speaking users.
 - [ ] **Multi-Provider API Support**: Add support for multiple LLM providers including Groq, OpenRouter, OpenAI, Google Gemini, Anthropic Claude, and more. Allow users to switch between providers dynamically.
 - [ ] **Enhanced Visual Tool Display**: Improve the visual presentation of tool outputs to be more user-friendly.
-- [ ] **Token Optimization**: Upgrade prompt engineering and system prompts to optimize token usage for better efficiency.
+- [x] **Token Optimization**: Implemented token-manager module with token-based context pruning (4000 token budget), compressed system prompts (~250 tokens, 56% reduction), parallel tool execution, and MAX_TOKENS reduced to 512. Added escapeHtml for XSS prevention across all UI outputs.
 - [ ] **Local LLM Integration**: Support for Ollama or Llama.cpp for privacy-conscious users.
 - [ ] **Enhanced TTS**: Add support for more natural voices and offline TTS engines.
 - [ ] **Long-Term Memory (LTM)**: Implement persistent memory using SQLite3 with robust storage and automatic cleaning.

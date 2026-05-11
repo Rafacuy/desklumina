@@ -34,7 +34,7 @@ export async function rofiConfirm(
     severity === "critical" ? "#fee2e2" : severity === "high" ? "#fef3c7" : "#dbeafe";
 
   const hints = `<span size='small' foreground='#94a3b8'>\n\n󰌑   ${t("common.select")}  │  󱊷   ${t("common.cancel")}</span>`;
-  const mesg = `<span foreground='${iconColor}' size='xx-large'>${severityIcon}</span>\n<span weight='bold' size='large'>${t(title)}</span>\n\n${escapeHtml(message)}${hints}`;
+  const mesg = `<span foreground='${iconColor}' size='xx-large'>${severityIcon}</span>\n<span weight='bold' size='large'>${escapeHtml(t(title))}</span>\n\n${escapeHtml(message)}${hints}`;
 
   const proceedLabel = `󰄬 ${t("common.proceed")}`;
   const cancelLabel = `󰅖 ${t("common.cancel")}`;
@@ -118,7 +118,7 @@ export async function rofiAlert(
     [
       "rofi",
       "-e",
-      fullMessage,
+      escapeHtml(fullMessage),
       "-theme",
       THEME_PATH,
       "-theme-str",

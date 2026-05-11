@@ -25,4 +25,4 @@ export const MODEL_TEMPERATURE = 0.7;
 /**
  * Maximum tokens for AI response
  */
-export const MAX_TOKENS = 2048;
+export const MAX_TOKENS = 512;

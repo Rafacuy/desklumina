@@ -152,7 +152,7 @@ describe("Lumina", () => {
       { tool: "media", arg: "volume +10" },
     ]);
     expect(capturedMessages[1]?.some((message) => message.content.includes("[TOOL RESULT] tool=media"))).toBe(true);
-    expect(capturedMessages[2]?.some((message) => message.content.includes("Tool execution completed."))).toBe(true);
+    expect(capturedMessages[2]?.some((message) => message.content.includes("Tool results:"))).toBe(true);
     expect(toolOutputs.some((entry) => entry.type === "retry" && entry.text.includes("retry-update"))).toBe(true);
     expect(toolOutputs.some((entry) => entry.type === "results")).toBe(true);
     expect(finalText).toContain("Volume updated to 10%.");

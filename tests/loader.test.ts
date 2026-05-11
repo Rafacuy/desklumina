@@ -1,7 +1,7 @@
 import { describe, test, expect, mock, beforeEach, afterEach } from "bun:test";
 import { startLoader, stopLoader } from "../src/ui/loader";
 
-describe("Loader - Issue 18: Single-line spinner", () => {
+describe("Loader: Single-line spinner", () => {
   let originalWrite: typeof process.stdout.write;
   let writeCallCount = 0;
   let logCallCount = 0;

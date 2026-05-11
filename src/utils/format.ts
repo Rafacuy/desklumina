@@ -45,12 +45,15 @@ export function truncate(text: string, length: number): string {
 }
 
 /**
- * Escape special characters for display
+ * Escape special characters for display in Pango/HTML markup.
+ * Uses a negative lookahead to avoid double-escaping common entities.
  */
 export function escapeHtml(text: string): string {
+  if (!text) return "";
   return text
-    .replace(/&/g, "&amp;")
+    .replace(/&(?!(amp|lt|gt|quot|apos|#\d+|#x[a-f\d]+);)/gi, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }

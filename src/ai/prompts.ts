@@ -26,7 +26,7 @@ async function runProbe(command: string): Promise<string | null> {
 
 let cachedContext: string | null = null;
 let cachedAt = 0;
-const CACHE_TTL_MS = 3000;
+const CACHE_TTL_MS = 30000;
 
 export async function getSystemContext(): Promise<string> {
   const now = Date.now();
@@ -131,40 +131,23 @@ export async function buildSystemPrompt(): Promise<string> {
 
   return `You are Lumina, a Linux desktop assistant.
 
-Always respect the latest user message.
-If the user asks for an action and a matching tool exists, emit a tool call.
-Do not rely on side effects or prior hidden state.
-When a previous tool result reports a failure, correct the tool choice or args and retry with valid JSON.
-
 Live system context:
 ${systemContext}
 
-Response rules:
-1. EITHER: Reply with a JSON markdown block ONLY (if tools are needed).
-2. OR: Reply with a brief text message (if no tool is needed).
-3. NO mixed outputs (text + JSON).
-4. Tool JSON must use exactly: {"tool":"name","args":"value"}
-5. Never invent a tool name outside: app, terminal, file, music, clipboard, notify.
+Response: EITHER a JSON tool call in \`\`\`json blocks OR a brief text reply. Never both.
 
-Strict tool definitions:
-- app args: a configured app alias only. If no alias fits, use terminal instead.
-- terminal args: a shell command string.
-- file args: create_dir, delete, move, copy, list, read, write, find, preview, history, search_name, search_path, search_pattern.
-- music args: ALWAYS a JSON string: {"action": "play"|"resume"|"pause"|"stop"|"next"|"prev"|"volume_up"|"volume_down"}
-  Rules for music inference:
-  - Detect intent: "skip/next" -> next, "back/prev" -> prev, "stop/shut up" -> stop, "louder/up" -> volume_up, "quieter/down" -> volume_down.
-  - State-awareness: Use "Media State" from context.
-    - If state is "Paused", map "play/continue" to "resume".
-    - If state is "Stopped" or "None", map "play/resume" to "play".
-    - If user is ambiguous ("play"), check if a track is currently loaded.
-  - DO NOT support search, playlists, or any other music actions.
-- clipboard args: get | list | clear | set <text>
-- notify args: <title>|<body>|<low|normal|critical>
+Tools:
+- app <alias>
+- terminal <command>
+- file <op> (read|write|list|find|create_dir|delete|move|copy|search_name|search_path|search_pattern|preview|history)
+- music {"action":"play"|"resume"|"pause"|"stop"|"next"|"prev"|"volume_up"|"volume_down"}
+- clipboard get|list|clear|set <text>
+- notify <title>|<body>|<low|normal|critical>
 
-Tool correction rules:
-- If a tool result says invalid args, produce corrected args only.
-- If app/file rejects the action, do not repeat the same invalid call.
-- Keep tool args deterministic and machine-parseable.
+Rules:
+- If a tool fails, correct args and retry. Do not repeat invalid calls.
+- Use strict JSON for tool arguments.
+- Keep replies natural but concise.
 
 Examples:
 ${examples}`;

@@ -16,22 +16,16 @@ const MAX_TOOL_RETRIES = 2;
 function formatFileToolResultForContext(result: ToolResult): string {
   const files = result.files || [];
   const lines = [
-    `[TOOL RESULT] tool=file`,
-    `status=${result.success === false ? "failed" : "ok"}`,
+    `[TOOL RESULT] tool=file status=${result.success === false ? "failed" : "ok"}`,
     result.normalizedArg ? `args=${result.normalizedArg}` : "",
-    result.summary?.mode ? `search_mode=${result.summary.mode}` : "",
-    result.summary?.query ? `query=${result.summary.query}` : "",
-    result.summary?.totalMatches !== undefined ? `total_matches=${result.summary.totalMatches}` : "",
-    result.summary?.filteredMatches !== undefined ? `filtered_matches=${result.summary.filteredMatches}` : "",
-    result.selectedFile ? `selected_file=${result.selectedFile}` : "",
-    files.length > 0 ? "matched_files:" : "",
-    ...files.slice(0, 3).map((file, index) => `${index + 1}. ${file.path}`),
-    files.length > 3 ? `... and ${files.length - 3} more` : "",
-    result.preview?.path ? `preview_path=${result.preview.path}` : "",
-    result.preview?.content ? `preview_excerpt=${result.preview.content.slice(0, 150).trim()}` : "",
-    result.preview?.unavailableReason ? `preview_unavailable=${result.preview.unavailableReason}` : "",
-    result.stderr ? `stderr=${result.stderr.slice(0, 200).trim()}` : "",
-    result.success === false ? `message=${result.result.slice(0, 200).trim()}` : "",
+    result.summary?.totalMatches !== undefined ? `matches=${result.summary.totalMatches}` : "",
+    result.selectedFile ? `file=${result.selectedFile}` : "",
+    files.length > 0 ? "files:" : "",
+    ...files.slice(0, 3).map((file) => `  - ${file.path}`),
+    files.length > 3 ? `  - (...and ${files.length - 3} more)` : "",
+    result.preview?.content ? `preview=${result.preview.content.slice(0, 200).trim()}` : "",
+    result.stderr ? `stderr=${result.stderr.slice(0, 150).trim()}` : "",
+    result.success === false ? `msg=${result.result.slice(0, 150).trim()}` : "",
   ].filter(Boolean);
 
   return lines.join("\n");
@@ -43,25 +37,18 @@ function formatToolResultForContext(result: ToolResult): string {
   }
 
   const lines = [
-    `[TOOL RESULT] tool=${result.tool}`,
-    `status=${result.success === false ? "failed" : "ok"}`,
+    `[TOOL RESULT] tool=${result.tool} status=${result.success === false ? "failed" : "ok"}`,
     result.normalizedArg ? `args=${result.normalizedArg}` : "",
-    result.command ? `command=${result.command.slice(0, 200)}` : "",
-    result.exitCode !== undefined ? `exit_code=${result.exitCode}` : "",
-    result.stdout ? `stdout=${result.stdout.slice(0, 300).trim()}` : "",
-    result.stderr ? `stderr=${result.stderr.slice(0, 200).trim()}` : "",
-    result.actions && result.actions.length > 0 ? `actions=${result.actions.slice(0, 3).join(",")}` : "",
-    result.selectedFile ? `selected_file=${result.selectedFile}` : "",
-    result.files && result.files.length > 0 ? `files=${result.files.slice(0, 3).map((file) => file.path).join(" | ")}` : "",
-    result.files && result.files.length > 3 ? `... +${result.files.length - 3} more` : "",
-    `message=${result.result.slice(0, 200).trim()}`,
+    result.stdout ? `stdout=${result.stdout.slice(0, 250).trim()}` : "",
+    result.stderr ? `stderr=${result.stderr.slice(0, 150).trim()}` : "",
+    `msg=${result.result.slice(0, 150).trim()}`,
   ].filter(Boolean);
 
   return lines.join("\n");
 }
 
 function buildRetryMessages(
-  baseMessages: AIMessage[],
+  systemPrompt: string,
   originalUserMessage: string,
   previousAssistantResponse: string,
   failedResults: ToolResult[]
@@ -69,24 +56,18 @@ function buildRetryMessages(
   const retryFeedback = failedResults.map(formatToolResultForContext).join("\n\n");
 
   return [
-    baseMessages[0]!, 
+    { role: "system", content: systemPrompt },
     { role: "user", content: originalUserMessage },
     { role: "assistant", content: previousAssistantResponse },
     {
       role: "system",
-      content: [
-        "One or more tool calls failed.",
-        "Correct the failed tool invocation only.",
-        "Reply with a short acknowledgement and a JSON markdown block.",
-        "Use strict tool arguments. Do not repeat failed arguments if the feedback shows why they failed.",
-        retryFeedback,
-      ].join("\n\n"),
+      content: `Tool call failed. Correct args and retry:\n\n${retryFeedback}`,
     },
   ];
 }
 
 function buildFollowUpMessages(
-  baseMessages: AIMessage[],
+  systemPrompt: string,
   userMessage: string,
   previousAssistantResponse: string,
   toolResults: ToolResult[]
@@ -94,20 +75,12 @@ function buildFollowUpMessages(
   const toolFeedback = toolResults.map(formatToolResultForContext).join("\n\n");
 
   return [
-    baseMessages[0]!, // system prompt only
+    { role: "system", content: systemPrompt },
     { role: "user", content: userMessage },
     { role: "assistant", content: cleanAssistantResponse(previousAssistantResponse) || previousAssistantResponse },
     {
       role: "system",
-      content: [
-        "Tool execution completed.",
-        "Write the final answer using only the actual tool results below.",
-        "If the tool failed or found nothing, say that explicitly.",
-        "Do not copy raw tool fields like status labels, summaries, actions, or numbered machine lists verbatim.",
-        "Answer naturally and mention concrete file paths only when useful.",
-        "Do not emit any more tool calls.",
-        toolFeedback,
-      ].join("\n\n"),
+      content: `Tool results:\n\n${toolFeedback}\n\nSynthesize a natural, concise reply. No more tool calls.`,
     },
   ];
 }
@@ -119,13 +92,6 @@ async function collectStream(messages: AIMessage[], onChunk?: (chunk: string) =>
     onChunk?.(chunk);
   }
   return response;
-}
-
-function toToolResults(results: ToolExecutionResult[], attempt: number): ToolResult[] {
-  return results.map((result) => ({
-    ...result,
-    attempt,
-  }));
 }
 
 export class Lumina {
@@ -224,7 +190,7 @@ export class Lumina {
           results: failedResults,
         });
 
-        const retryMessages = buildRetryMessages(baseMessages, userMessage, retrySourceResponse, failedResults);
+        const retryMessages = buildRetryMessages(systemPrompt, userMessage, retrySourceResponse, failedResults);
         const retryResponse = await collectStream(retryMessages);
         retrySourceResponse = retryResponse;
         pendingToolCalls = parseToolCalls(retryResponse);
@@ -255,7 +221,7 @@ export class Lumina {
         );
       }
 
-      const followUpMessages = buildFollowUpMessages(baseMessages, userMessage, retrySourceResponse, allToolResults);
+      const followUpMessages = buildFollowUpMessages(systemPrompt, userMessage, retrySourceResponse, allToolResults);
       const followUpResponse = await collectStream(followUpMessages, (chunk) => onChunk?.(chunk));
       const cleanFollowUp = cleanAssistantResponse(followUpResponse);
 
@@ -290,33 +256,34 @@ export class Lumina {
   }
 
   private async executeToolCalls(toolCalls: ToolCall[], attempt: number): Promise<ToolResult[]> {
-    const results: ToolExecutionResult[] = [];
-
-    for (const call of toolCalls) {
-      logger.info("lumina", `Tool attempt ${attempt}: ${call.tool} ${call.arg}`);
-      try {
-        const result = await dispatch(call.tool, call.arg);
-        logger.info(
-          "lumina",
-          `Tool attempt ${attempt} result: ${call.tool} success=${result.success} exit=${result.exitCode ?? "n/a"}`
-        );
-        results.push(result);
-      } catch (error) {
-        if (error instanceof CancellationError) {
-          throw error;
+    const results = await Promise.all(
+      toolCalls.map(async (call) => {
+        logger.info("lumina", `Tool attempt ${attempt}: ${call.tool} ${call.arg}`);
+        try {
+          const result = await dispatch(call.tool, call.arg);
+          logger.info(
+            "lumina",
+            `Tool attempt ${attempt} result: ${call.tool} success=${result.success} exit=${result.exitCode ?? "n/a"}`
+          );
+          return { ...result, attempt };
+        } catch (error) {
+          if (error instanceof CancellationError) {
+            throw error;
+          }
+          const errMsg = logger.catchError(`tool:${call.tool}`, error);
+          return {
+            tool: call.tool,
+            result: `${t("common.error")}: ${errMsg}`,
+            success: false,
+            normalizedArg: call.arg.trim(),
+            stderr: errMsg,
+            exitCode: 1,
+            attempt,
+          };
         }
-        const errMsg = logger.catchError(`tool:${call.tool}`, error);
-        results.push({
-          tool: call.tool,
-          result: `${t("common.error")}: ${errMsg}`,
-          success: false,
-          normalizedArg: call.arg.trim(),
-          stderr: errMsg,
-          exitCode: 1,
-        });
-      }
-    }
+      })
+    );
 
-    return toToolResults(results, attempt);
+    return results;
   }
 }

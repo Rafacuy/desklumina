@@ -1,6 +1,15 @@
 import { logger } from "../logger";
 
-export async function* parseSSE(stream: ReadableStream<Uint8Array>): AsyncGenerator<string> {
+export interface StreamChunk {
+  content?: string;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
+export async function* parseSSE(stream: ReadableStream<Uint8Array>): AsyncGenerator<StreamChunk> {
   const reader = stream.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
@@ -22,7 +31,10 @@ export async function* parseSSE(stream: ReadableStream<Uint8Array>): AsyncGenera
           try {
             const parsed = JSON.parse(data);
             const content = parsed.choices?.[0]?.delta?.content;
-            if (content) yield content;
+            const usage = parsed.usage;
+
+            if (content) yield { content };
+            if (usage) yield { usage };
           } catch (err) {
             logger.warn("stream", `Failed to parse SSE chunk: ${data.slice(0, 200)}`);
           }
