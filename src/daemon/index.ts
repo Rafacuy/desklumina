@@ -26,7 +26,7 @@ export class DaemonClient {
 
   async sendCommand(command: string): Promise<string> {
     if (!(await this.isDaemonRunning())) {
-      throw new Error("Daemon is not running. Start it with: lumina --daemon");
+      throw new Error("Daemon is not running. Start it with: bun run daemon");
     }
 
     const token = this.getToken();
