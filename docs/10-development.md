@@ -26,10 +26,11 @@ A guide for developers looking to extend DeskLumina or contribute to the core pr
 
 ## Project Architecture
 
-DeskLumina's core is the **`Lumina` orchestrator** at `src/core/lumina.ts`. It follows a simple lifecycle for every user command:
-- **Build System Prompt**: Handled in `src/ai/prompts.ts`.
-- **Stream Response**: Handled in `src/ai/groq.ts`.
-- **Parse & Dispatch**: Handled in `src/core/planner.ts` and `src/tools/registry.ts`.
+DeskLumina's core is the **`Lumina` orchestrator** at `src/core/lumina.ts`. It follows a deterministic lifecycle:
+- **Build System Prompt**: Generates prompt from **Tool Contracts** and **Live Context**.
+- **Stream Response**: Managed via `src/ai/groq.ts`.
+- **Parse & Dispatch**: `src/core/planner.ts` parses tool calls, which are then dispatched via `src/tools/registry.ts`.
+- **Retry Logic**: Lumina automatically handles retries for retriable tool failures (up to 2 times).
 
 ---
 
@@ -37,25 +38,67 @@ DeskLumina's core is the **`Lumina` orchestrator** at `src/core/lumina.ts`. It f
 
 Follow these steps to add a new desktop capability:
 
-### 1. Create the Tool Logic
-Create a new file in `src/tools/`, such as `src/tools/my-tool.ts`:
+### 1. Define the Tool Contract
+Add a new `ToolContract` to `src/tools/contracts.ts`. This is the single source of truth for the AI model:
 
 ```typescript
-export async function myTool(arg: string): Promise<string> {
-  // 1. Process the argument
-  // 2. Perform the action
-  // 3. Return a success (✓) or error (❌) string
-  return `✓ Custom action completed: ${arg}`;
+{
+  name: "my_tool",
+  description: "Perform a custom action.",
+  schema: "my_tool <required_arg> [optional_arg]",
+  types: { required_arg: "string", optional_arg: "string" },
+  requiredArgs: ["required_arg"],
+  optionalArgs: ["optional_arg"],
+  validFormats: ["my_tool something"],
+  invalidFormats: ["my_tool 'something'"],
+  escapingRules: "None",
+  quotingRules: "Quotes forbidden",
+  output: {
+    success: "✓ Done",
+    failure: "❌ Failed",
+    empty: "N/A"
+  },
+  failure: {
+    retriable: ["Timeout"],
+    nonRetriable: ["Invalid arg"],
+    retryLimit: 1,
+    permissionBehavior: "N/A",
+    malformedInputBehavior: "Returns error code 2"
+  },
+  formatAnchors: ['{"tool":"my_tool","args":"something"}']
 }
 ```
 
-### 2. Register the Tool
+### 2. Implement the Tool Logic
+Create a new file in `src/tools/`, such as `src/tools/my-tool.ts`. Ensure it returns a `ToolExecutionResult`:
+
+```typescript
+import { ToolExecutionResult } from "../types";
+
+export async function myTool(arg: string): Promise<ToolExecutionResult> {
+  // 1. Process/Normalize the argument
+  // 2. Perform the action
+  // 3. Return a structured result
+  return {
+    tool: "my_tool",
+    result: "Action completed successfully",
+    success: true,
+    normalizedArg: arg.trim()
+  };
+}
+```
+
+### 3. Register the Tool
 Add your tool to the central registry in `src/tools/registry.ts`:
 
-`src/tools/registry.ts` defines a `tools` object; add a new entry to that map and export any helpers from `src/tools/index.ts`.
+```typescript
+import { myTool } from "./my-tool";
 
-### 3. Update the System Prompt
-To let the AI know about your new tool, add its definition to the prompt builder in `src/ai/prompts.ts`. Update the **TOOLS** section so the model knows the tool name and expected `args` format.
+export const tools: ToolRegistry = {
+  // ...
+  my_tool: myTool,
+};
+```
 
 ---
 
@@ -71,63 +114,15 @@ DeskLumina uses a centralized i18n system located in `src/utils/i18n.ts`.
      }
    }
    ```
-2. Use the `t()` helper for static strings or `tf()` for parameterized strings:
-   ```typescript
-   import { t, tf } from "../utils/i18n";
-
-   // Static translation
-   console.log(t("Settings")); 
-
-   // Nested key translation
-   console.log(t("error.not_found"));
-
-   // Parameterized translation
-   console.log(tf("error.not_found", { path: "/tmp" }));
-   ```
+2. Use the `t()` helper for static strings or `tf()` for parameterized strings.
 
 ---
 
-## Version Management (Developer)
+## Version Management
 
-DeskLumina uses **`package.json`** as the single source of truth for the app version.
-
-### Show the current version
-
-```bash
-bun run start -- --version
-```
-
-### Sync the README badge to `package.json`
-
-The README version badge is generated from `package.json` and can be synced automatically:
-
-```bash
-bun run version:sync
-```
-
-### Set or bump the version
-
-This updates `package.json` and the README version badge in one go:
-
-```bash
-bun run version:set 1.2.3
-```
-
-Accepted formats include prerelease or build metadata, for example:
-
-```bash
-bun run version:set 1.2.3-beta.1
-bun run version:set 1.2.3+build.5
-```
-
-### Implementation notes
-
-- **Runtime version**: `src/utils/version.ts` reads and caches `package.json`.
-- **CLI output**: `src/main.ts` prints the current Lumina version.
-- **i18n template**: `src/utils/i18n.ts` provides `tf()` for variable interpolation.
-- **Scripts**:
-  - `scripts/sync-version.ts`
-  - `scripts/bump-version.ts`
+DeskLumina uses `package.json` as the version source.
+- `bun run version:sync`: Syncs README badge to `package.json`.
+- `bun run version:set 1.2.3`: Updates version in `package.json` and README.
 
 ---
 
@@ -136,18 +131,18 @@ bun run version:set 1.2.3+build.5
 We use `bun test` for unit and integration testing.
 
 - **Run all tests**: `bun test`
-- **Watch mode**: `bun test --watch`
 - **Specific file**: `bun test tests/my-test.test.ts`
 
-When adding a new tool, please add a corresponding test in the `tests/` directory.
+When adding a new tool, please add a corresponding test in the `tests/` directory and ensure the `ToolContract` is covered by architecture tests.
 
 ---
 
 ## Coding Standards
 
-- **TypeScript First**: Use proper types and interfaces defined in `src/types/`.
-- **Error Handling**: Always return user-friendly error strings starting with `❌`.
-- **Logging**: Use the built-in `logger` for internal debugging.
+- **TypeScript First**: Use proper types from `src/types/`.
+- **Structured Results**: Tool handlers MUST return `ToolExecutionResult` with appropriate `success` and `status` fields.
+- **Deterministic Prompts**: Never hardcode tool descriptions in `src/ai/prompts.ts`; always use `ToolContract`.
+- **Logging**: Use the built-in `logger` for debugging.
 - **Asynchronicity**: Prefer `async/await` over raw Promises.
 
 ---

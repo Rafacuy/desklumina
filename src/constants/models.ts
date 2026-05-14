@@ -26,3 +26,8 @@ export const MODEL_TEMPERATURE = 0.7;
  * Maximum tokens for AI response
  */
 export const MAX_TOKENS = 512;
+
+/**
+ * Safe token limit for input validation before sending to Groq API
+ */
+export const SAFE_TOKEN_LIMIT = 6000;

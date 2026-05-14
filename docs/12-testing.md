@@ -33,6 +33,15 @@ Tests that verify the interaction between multiple modules, such as the `ChatMan
 ### 3. Edge-Case Tests
 Specifically designed to test TTS chunking and error handling, such as `tts-edge-cases.test.ts`.
 
+### 4. Architecture & Prompt Tests
+**Path**: `tests/architecture/`
+
+These critical tests ensure the behavior of the AI by verifying the generated system prompt:
+- **Prompt Structure**: Validates the required order (Identity -> Tools -> Rules -> Examples -> Context).
+- **Contract Inclusion**: Ensures every tool registered in `src/tools/contracts.ts` is correctly rendered into the prompt with its schema, types, and escalation rules.
+- **Escalation Tree**: Verifies that the 3-stage failure logic is present and correctly phrased.
+- **Format Anchors**: Confirms that JSON examples from tool contracts are properly injected.
+
 ---
 
 ## Running Tests

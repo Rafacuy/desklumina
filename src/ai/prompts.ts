@@ -1,5 +1,5 @@
 import { logger } from "../logger";
-import { getLang, getLangName } from "../utils";
+import { TOOL_CONTRACTS, ToolContract } from "../tools/contracts";
 
 async function runProbe(command: string): Promise<string | null> {
   try {
@@ -64,91 +64,111 @@ export function _resetPromptCache() {
   cachedAt = 0;
 }
 
-const EXAMPLES = {
-  id: `User: "putar musiknya"
-\`\`\`json
-{"tool":"music","args":"{\\"action\\":\\"play\\"}"}
-\`\`\`
+function formatToolContract(contract: ToolContract): string {
+  const sections = [
+    `TOOL: ${contract.name}`,
+    `${contract.description}`,
+    `SCHEMA: ${contract.schema}`,
+    `TYPES: ${JSON.stringify(contract.types)}`,
+    `REQUIRED: ${contract.requiredArgs.join(", ")}`,
+  ];
 
-User: "lanjutkan"
-\`\`\`json
-{"tool":"music","args":"{\\"action\\":\\"resume\\"}"}
-\`\`\`
+  if (contract.optionalArgs.length > 0) {
+    sections.push(`OPTIONAL: ${contract.optionalArgs.join(", ")}`);
+  }
 
-User: "skip lagu ini"
-\`\`\`json
-{"tool":"music","args":"{\\"action\\":\\"next\\"}"}
-\`\`\`
+  sections.push(
+    `VALID FORMATS:\n${contract.validFormats.map((f) => `  - ${f}`).join("\n")}`,
+    `INVALID FORMAT EXAMPLES:\n${contract.invalidFormats.map((f) => `  - ${f}`).join("\n")}`,
+    `ESCAPING: ${contract.escapingRules}`,
+    `QUOTING: ${contract.quotingRules}`
+  );
 
-User: "terlalu kencang"
-\`\`\`json
-{"tool":"music","args":"{\\"action\\":\\"volume_down\\"}"}
-\`\`\``,
-  en: `User: "play some music"
-\`\`\`json
-{"tool":"music","args":"{\\"action\\":\\"play\\"}"}
-\`\`\`
+  if (contract.pathRules) {
+    sections.push(`PATH RULES:
+  - Absolute: ${contract.pathRules.absolute}
+  - Relative: ${contract.pathRules.relative}
+  - Tilde Expansion: ${contract.pathRules.tildeExpansion}
+  - Whitespace Handling: ${contract.pathRules.whitespace}
+  - Normalization: ${contract.pathRules.normalization}
+  - Invalid Examples: ${contract.pathRules.invalidExamples.join(", ")}`);
+  }
 
-User: "continue playback"
-\`\`\`json
-{"tool":"music","args":"{\\"action\\":\\"resume\\"}"}
-\`\`\`
+  sections.push(`OUTPUT CONTRACT:
+  - Success: ${contract.output.success}
+  - Failure: ${contract.output.failure}
+  - Empty: ${contract.output.empty}${contract.output.partial ? `\n  - Partial: ${contract.output.partial}` : ""}`);
 
-User: "skip this"
-\`\`\`json
-{"tool":"music","args":"{\\"action\\":\\"next\\"}"}
-\`\`\`
+  const retryLimit = contract.failure.retryLimit;
+  const retryInstructions =
+    retryLimit > 0
+      ? `Retry up to ${retryLimit} times before escalation.`
+      : "Do not retry automatically. Escalate immediately.";
 
-User: "turn it up"
-\`\`\`json
-{"tool":"music","args":"{\\"action\\":\\"volume_up\\"}"}
-\`\`\``,
-  ja: `User: "音楽を再生して"
-\`\`\`json
-{"tool":"music","args":"{\\"action\\":\\"play\\"}"}
-\`\`\`
+  sections.push(`FAILURE CONTRACT:
+  - Retriable: ${contract.failure.retriable.join(", ") || "None"}
+  - Non-Retriable: ${contract.failure.nonRetriable.join(", ")}
+  - Retry Limit: ${retryLimit}
+  - Permission: ${contract.failure.permissionBehavior}
+  - Malformed Input: ${contract.failure.malformedInputBehavior}
+  - Escalation: ${retryInstructions}`);
 
-User: "再生を再開して"
-\`\`\`json
-{"tool":"music","args":"{\\"action\\":\\"resume\\"}"}
-\`\`\`
+  return sections.join("\n");
+}
 
-User: "次へ"
-\`\`\`json
-{"tool":"music","args":"{\\"action\\":\\"next\\"}"}
-\`\`\`
+const IDENTITY = "You are Lumina, a deterministic Linux desktop assistant.";
 
-User: "音を大きくして"
-\`\`\`json
-{"tool":"music","args":"{\\"action\\":\\"volume_up\\"}"}
-\`\`\``,
-};
+const RULES_AND_ESCALATION = `EXECUTION RULES:
+1. Response: EITHER a JSON tool call in \`\`\`json blocks OR a brief text reply. Never both.
+2. Format: {"tool": "tool_name", "args": "arguments_string"}
+3. Pathing: Always use absolute paths or ~ for home directory.
+4. Concurrency: Multiple tool calls allowed in one response if independent.
 
-export async function buildSystemPrompt(): Promise<string> {
-  const currentLang = getLang() as "id" | "en" | "ja";
-  const examples = EXAMPLES[currentLang] || EXAMPLES.en;
-  const systemContext = await getSystemContext();
+FAILURE ESCALATION TREE:
+- Failure 1: Inspect error message, identify syntax or path error, correct arguments, and retry according to tool contract.
+- Failure 2: Verify tool contract and local file system state. If arguments are correct but tool fails, do not retry with same arguments.
+- Failure 3: Stop execution. Produce a structured failure report explaining why the task cannot be completed.`;
 
-  return `You are Lumina, a Linux desktop assistant.
+function generateFormatAnchors(): string {
+  const anchors = TOOL_CONTRACTS.filter((c) => c.formatAnchors && c.formatAnchors.length > 0)
+    .map((c) => {
+      const toolName = c.name.charAt(0).toUpperCase() + c.name.slice(1);
+      const examples = c.formatAnchors?.map((a) => `\`\`\`json\n${a}\n\`\`\``).join("\n\n");
+      return `${toolName}:\n${examples}`;
+    })
+    .join("\n\n");
 
-Live system context:
-${systemContext}
+  return `FORMAT ANCHORS:\n\n${anchors}`;
+}
 
-Response: EITHER a JSON tool call in \`\`\`json blocks OR a brief text reply. Never both.
+function selectContext(query: string, context: string): string {
+  const lines = context.split("\n");
+  const mediaKeywords = ["music", "play", "pause", "track", "volume", "player", "song", "album", "artist"];
+  const isMediaIntent = mediaKeywords.some((k) => query.toLowerCase().includes(k));
 
-Tools:
-- app <alias>
-- terminal <command>
-- file <op> (read|write|list|find|create_dir|delete|move|copy|search_name|search_path|search_pattern|preview|history)
-- music {"action":"play"|"resume"|"pause"|"stop"|"next"|"prev"|"volume_up"|"volume_down"}
-- clipboard get|list|clear|set <text>
-- notify <title>|<body>|<low|normal|critical>
+  if (isMediaIntent) {
+    return context;
+  }
 
-Rules:
-- If a tool fails, correct args and retry. Do not repeat invalid calls.
-- Use strict JSON for tool arguments.
-- Keep replies natural but concise.
+  // Filter out media-related context if not media intent
+  const mediaKeys = ["Media State:", "Active Players:", "Current Track:"];
+  return lines.filter((line) => !mediaKeys.some((key) => line.startsWith(key))).join("\n");
+}
 
-Examples:
-${examples}`;
+export async function buildSystemPrompt(query: string = ""): Promise<string> {
+  const toolContracts = TOOL_CONTRACTS.map(formatToolContract).join("\n\n---\n\n");
+  const fullContext = await getSystemContext();
+  const systemContext = selectContext(query, fullContext);
+  const formatExamples = generateFormatAnchors();
+
+  return `${IDENTITY}
+
+${toolContracts}
+
+${RULES_AND_ESCALATION}
+
+${formatExamples}
+
+LIVE SYSTEM CONTEXT:
+${systemContext}`;
 }

@@ -1,6 +1,6 @@
 # 07 - Tools Reference
 
-Complete documentation for all available tools in DeskLumina's automation system.
+Complete documentation for all available tools in DeskLumina's contract-driven automation system.
 
 ---
 
@@ -18,184 +18,154 @@ Complete documentation for all available tools in DeskLumina's automation system
 
 ## Overview
 
-DeskLumina uses a modular tool-based architecture. The AI agent generates structured JSON tool calls, which are then executed by specialized handlers.
+DeskLumina uses a **Contract-Driven** tool architecture. Each tool's behavior, schema, and failure logic are defined in `src/tools/contracts.ts`, which the system uses to generate deterministic prompts.
 
 ### Tool Call Format
 
 ```json
-{"tool": "tool_name", "args": "arguments"}
+{"tool": "tool_name", "args": "arguments_string"}
 ```
 
-Tool calls are parsed from markdown code fences in the model output. The canonical tools are: `app`, `terminal`, `file`, `music`, `clipboard`, and `notify`.
-
-`media` is accepted as a legacy alias for `music` for backward compatibility. New prompts, examples, and integrations should use `music`.
+Tool calls are parsed from markdown code blocks. Arguments are passed as a single string (or a JSON-string for complex tools like `music`).
 
 ---
 
 ## Application Tool (`app`)
 
-Launch an application by alias. Aliases are defined in `src/config/apps.json`. If an alias is not found, the tool returns an explicit error and the assistant must use the `terminal` tool for shell commands.
+Launch GUI application by alias.
 
-**Path**: `src/tools/apps.ts`  
-**Aliases Configuration**: `src/config/apps.json`
+- **Schema**: `app <alias>`
+- **Quoting**: Strictly forbidden. The parser fails if quotes are detected.
+- **Escaping**: None. Raw string only.
 
-### Usage Examples:
-- "open browser" -> `{"tool": "app", "args": "browser"}`
-- "start telegram" -> `{"tool": "app", "args": "telegram"}`
+### Examples:
+- `{"tool": "app", "args": "firefox"}`
+- `{"tool": "app", "args": "code"}`
 
-### Default Aliases (Partial List):
-
-| Alias | Description | System Command |
-|-------|-------------|----------------|
-| `browser` | Web Browser | `xdg-open https://` |
-| `telegram`, `tg` | Telegram | `telegram-desktop` |
-| `term`, `terminal` | Terminal | `alacritty` |
-| `neovim`, `nvim` | Text Editor | `alacritty -e nvim` |
-| `files`, `thunar` | File Manager | `thunar` |
-| `yazi` | TUI File Manager | `alacritty -e yazi` |
-| `music` | Music Player | `alacritty -e ncmpcpp` |
-| `btop`, `htop` | System Monitor | `alacritty -e btop` |
+### Default Aliases:
+Aliases are defined in `src/config/apps.json`. Common ones include `browser`, `terminal`, `files`, `tg`, and `nvim`.
 
 ---
 
 ## File Tool (`file`)
 
-Perform file and directory operations safely, including indexed file discovery and preview.
+Filesystem operations and indexed search.
 
-**Path**: `src/tools/files.ts`
+- **Schema**: `file <op> <args>`
+- **Quoting**: Paths or content with spaces MUST be enclosed in double quotes. Single quotes are not supported.
+- **Escaping**: Standard backslash escaping for quotes in paths/content. `\n` is supported in `write`.
+- **Path Rules**:
+  - Absolute and relative paths supported.
+  - Tilde (`~`) expansion supported.
+  - Normalization: Standard path normalization applied.
 
-### Supported Operations:
+### Operations:
 
-| Operation | Arguments | Example |
-|-----------|-----------|---------|
-| `list` | `<path>` | `list ~/Documents` |
-| `create_dir`| `<path>` | `create_dir ~/Projects/NewApp` |
-| `move` | `<src> <dest>` | `move file.txt backup/` |
-| `copy` | `<src> <dest>` | `copy notes.md notes_bkp.md` |
-| `delete` | `<path>` | `delete temporary.log` |
-| `read` | `<path>` | `read config.json` |
-| `write` | `<path> <text>`| `write log.txt "Entry updated"` |
-| `find` | `<dir> <name>` | `find ~/Downloads report.pdf` |
-| `preview` | `<path>` | `preview ~/.config/bspwm/bspwmrc` |
-| `history` | `[limit]` | `history 5` |
-| `repeat_last` | none | `repeat_last` |
-| `search_name` | `<query> [filters]` | `search_name bspwm base=~/.config type=file preview=true` |
-| `search_path` | `<query> [filters]` | `search_path .config/bspwm type=file` |
-| `search_pattern` | `<regex> [filters]` | `search_pattern "bspwm(rc)?$" base=~/.config` |
+| Operation | Arguments | Description |
+|-----------|-----------|-------------|
+| `read` | `<path>` | Read file content. |
+| `write` | `<path> "<content>"` | Write text to file. |
+| `list` | `[path]` | List directory contents. |
+| `create_dir`| `<path>` | Create directory (recursive). |
+| `move` | `<src> <dest>` | Move/rename file or directory. |
+| `copy` | `<src> <dest>` | Copy file or directory. |
+| `delete` | `<path>` | Delete file or directory. |
+| `preview` | `<path>` | Smart preview (text snippet or folder list). |
+| `search_name`| `"<query>" [filters]` | Indexed search by filename. |
+| `search_path`| `"<query>" [filters]` | Indexed search by full path. |
+| `search_pattern`| `"<regex>" [filters]` | Indexed search using regex. |
+| `history` | `[limit]` | Show recent search history. |
+| `repeat_last`| none | Repeat the last successful search. |
 
-### Advanced Search Filters
+### Search Filters:
 
-Advanced search operations use `locate` as the primary indexed backend and support these canonical key-value filters:
+Filters use `key=value` syntax after the query.
 
 | Filter | Values | Description |
 |--------|--------|-------------|
-| `base` | `<path>` | Restrict results to a base directory |
-| `type` | `file`, `directory`, `any` | Restrict by entry type |
-| `ext` | `md,txt,json` | Restrict by extension list |
-| `hidden` | `true`, `false` | Include only hidden or non-hidden entries |
-| `limit` | `1-200` | Cap returned matches |
-| `select` | `true`, `false` | Open terminal-side `fzf` selection when a TTY is available |
-| `preview` | `true`, `false` | Attach file or directory preview data |
+| `base` | `<path>` | Restrict search to this base directory. |
+| `type` | `file\|directory\|any` | Restrict results by entry type. |
+| `ext` | `md,txt` | Comma-separated extension list. |
+| `hidden` | `true\|false` | Include or exclude hidden files. |
+| `limit` | `1-200` | Max results to return. |
+| `select` | `true\|false` | Trigger interactive `fzf` selection (CLI mode). |
+| `preview` | `true\|false` | Automatically include a preview of the best match. |
 
-### Notes
-
-- Paths starting with `~` are expanded to `$HOME`.
-- File operations like `mkdir`, `rm`, `mv`, `cp`, and `ls` are executed via direct array-based spawning. This eliminates shell injection vulnerabilities.
-- Some operations trigger a Rofi confirmation when they involve critical system paths.
-- If the first token is not a supported operation, `file` returns a validation error.
-- Advanced search results are structured: DeskLumina stores matched files, selected file, preview data, actions performed, and summary counts.
-- Preview returns file contents for readable text files and directory listings for folders; binary files return metadata without dumping raw bytes.
-- Search history is stored under `~/.config/desklumina/file-search-history.json`.
-- `fzf` selection is terminal-oriented. In Rofi mode, DeskLumina shows deterministic result lists and previews instead of spawning an interactive fuzzy picker.
+### Examples:
+- `{"tool": "file", "args": "read ~/todo.md"}`
+- `{"tool": "file", "args": "write \"/tmp/test.txt\" \"Line 1\\nLine 2\""}`
+- `{"tool": "file", "args": "search_name \"config\" base=~/.config limit=5 select=true"}`
 
 ---
 
 ## Music Tool (`music`)
 
-A generalized media transport controller that provides a media-agnostic interface for playback and volume control. It prioritizes MPC/MPD for local music but intelligently falls back to `playerctl` (MPRIS) for applications like Spotify, VLC, and browsers.
+Control media playback using a JSON action payload.
 
-**Path**: `src/tools/music.ts`  
-**Backends**: `mpc` (primary), `playerctl` (fallback).
+- **Schema**: `music {"action": "..."}`
+- **Quoting**: Arguments MUST be a valid JSON object string. Double quotes for keys and values.
+- **Escaping**: JSON-standard backslash escaping for quotes in payload.
 
 ### Supported Actions:
+`play`, `resume`, `pause`, `stop`, `next`, `prev`, `volume_up`, `volume_down`.
 
-| Action | Description |
-|--------|-------------|
-| `play` | Start or resume playback. |
-| `resume` | Resume playback (alias for `play`). |
-| `pause` | Pause playback. |
-| `stop` | Stop playback. |
-| `next` | Skip to the next track. |
-| `prev` | Skip to the previous track. |
-| `volume up` | Increase volume by 5% (alias: `vol up`). |
-| `volume down` | Decrease volume by 5% (alias: `vol down`). |
-
-### Fallback Behavior
-
-1. **MPC First**: The tool attempts to execute the action via `mpc`. If `mpc` is missing, disconnected, or fails (e.g., empty playlist), it moves to the next backend.
-2. **Playerctl Fallback**: If MPC fails, it attempts the action via `playerctl`. This covers Spotify, Chromium, Firefox, VLC, and any other MPRIS-compatible player.
-3. **Graceful Failure**: If no backends are available or all fail, a structured error is returned without crashing.
+### Examples:
+- `{"tool": "music", "args": "{\"action\": \"play\"}"}`
+- `{"tool": "music", "args": "{\"action\": \"volume_up\"}"}`
 
 ---
 
 ## Clipboard Tool (`clipboard`)
 
-Manage your clipboard via `clipcatctl`.
+Manage clipboard history via `clipcat`.
 
-**Path**: `src/tools/clipboard.ts`
+- **Schema**: `clipboard get <ID> | list | clear | set <text>`
+- **Quoting**: Forbidden for command names. `set` content should not be quoted.
+- **Escaping**: None for commands. `set` captures all trailing text verbatim.
 
-### Supported Actions:
-- `get`: `clipcatctl get`
-- `list`: `clipcatctl list`
-- `set <text>`: `clipcatctl insert`
-- `clear`: `clipcatctl clear`
-
-### Limitations:
-- Maximum content size: 1MB. Content exceeding this limit will be rejected.
+### Examples:
+- `{"tool": "clipboard", "args": "list"}`
+- `{"tool": "clipboard", "args": "set Important note"}`
+- `{"tool": "clipboard", "args": "get c12345b234c5a1b"}`
 
 ---
 
 ## Terminal Tool (`terminal`)
 
-Execute a shell command via `bash -c <command>`. Commands are analyzed for dangerous patterns; if matched, DeskLumina shows a Rofi confirmation prompt before execution.
+Execute a bash command.
 
-**Path**: `src/tools/terminal.ts`
+- **Schema**: `terminal <command>`
+- **Quoting**: Do not quote the whole command. Internal quotes must be escaped for bash.
+- **Escaping**: Standard bash escaping for internal characters. Tool arg itself is raw.
 
-### Usage:
+### Examples:
 - `{"tool": "terminal", "args": "ls -la"}`
-- `{"tool": "terminal", "args": "free -m"}`
-
-### Security:
-- **Command analysis**: `src/security/dangerous-commands.ts`
-- **Confirmation UI**: `src/security/confirmation.ts`
-- **Timeout**: 30 seconds.
+- `{"tool": "terminal", "args": "pactl get-sink-volume @DEFAULT_SINK@"}`
 
 ---
 
 ## Notification Tool (`notify`)
 
-Send desktop notifications to the user.
+Send desktop notifications.
 
-**Path**: `src/tools/notify.ts`
-
-### Format:
-`<title>|<message>|<urgency>`
+- **Schema**: `notify <title>|<body>|<urgency>`
+- **Quoting**: Forbidden. Quotes in title/body are treated as literal characters.
+- **Escaping**: None. Pipe (`|`) is the literal delimiter.
 
 ### Urgency Levels:
-- `low`
-- `normal`
-- `critical`
+`low`, `normal`, `critical`.
 
-### Example:
-`"Task Complete|Project successfully built!|normal"`
+### Examples:
+- `{"tool": "notify", "args": "Title|Message|normal"}`
+- `{"tool": "notify", "args": "Alert|System offline|critical"}`
 
 ---
 
 ## Next Steps
 
-- 🛡️ **[Security Guide](09-security.md)**: Learn more about safe execution.
-- 🤖 **[Daemon Mode](11-daemon-mode.md)**: Optimize tool performance.
-- 🛠️ **[Development Guide](10-development.md)**: Learn how to create your own tools.
+- 🛡️ **[Security Guide](09-security.md)**: Learn about safe execution and confirmation.
+- 🤖 **[Daemon Mode](11-daemon-mode.md)**: Background service and tool performance.
+- 🛠️ **[Development Guide](10-development.md)**: Learn how to define new Tool Contracts.
 
 ---
 

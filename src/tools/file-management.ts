@@ -72,16 +72,12 @@ export function parseQuotedArgs(input: string): string[] {
 
   for (let i = 0; i < input.length; i++) {
     const char = input[i];
-    if ((char === "\"" || char === "'") && (i === 0 || input[i - 1] !== "\\")) {
+    // Only double quotes are supported as per tool contracts
+    if (char === "\"" && (i === 0 || input[i - 1] !== "\\")) {
       if (inQuotes) {
-        if (char === quoteChar) {
-          inQuotes = false;
-        } else {
-          current += char;
-        }
+        inQuotes = false;
       } else {
         inQuotes = true;
-        quoteChar = char;
       }
       continue;
     }

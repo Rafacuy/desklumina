@@ -18,6 +18,19 @@ export function lookup(alias: string): string | null {
 export async function launch(alias: string): Promise<ToolExecutionResult> {
   const normalizedAlias = alias.trim().toLowerCase();
 
+  if (normalizedAlias.includes("\"") || normalizedAlias.includes("'")) {
+    const stderr = `Invalid alias: quotes are forbidden in application aliases. Received: ${alias}`;
+    logger.warn("apps", stderr);
+    return {
+      tool: "app",
+      result: "❌ Invalid request: quotes are forbidden in application aliases.",
+      success: false,
+      normalizedArg: normalizedAlias,
+      stderr,
+      exitCode: 2,
+    };
+  }
+
   try {
     const command = lookup(normalizedAlias);
 

@@ -1,6 +1,6 @@
 # 05 - Architecture
 
-Understand the internal design, module organization, and data flow of DeskLumina.
+Understand the internal design, module organization, and prompt architecture of DeskLumina.
 
 ---
 
@@ -10,9 +10,10 @@ Understand the internal design, module organization, and data flow of DeskLumina
 - [Module Map](#module-map)
 - [Core Components](#core-components)
   - [Lumina (Orchestrator)](#lumina-orchestrator)
-  - [ChatManager](#chatmanager)
+  - [Contract-Driven Prompts](#contract-driven-prompts)
   - [Tool Registry](#tool-registry)
 - [Data Flow](#data-flow)
+- [Failure Escalation Tree](#failure-escalation-tree)
 - [Security Model](#security-model)
 - [UI Layer](#ui-layer)
 
@@ -30,6 +31,7 @@ flowchart TD
 
     subgraph Logic [Core Orchestrator]
         Core[Lumina / ChatManager / i18n]
+        Prompt[Prompt Engine / Contracts]
     end
 
     subgraph Backend [Execution & Intelligence]
@@ -39,7 +41,8 @@ flowchart TD
     end
 
     UI --> Core
-    Core --> AI
+    Core --> Prompt
+    Prompt --> AI
     Core --> Security
     Core --> Tools
 
@@ -54,18 +57,16 @@ flowchart TD
 
 The project is organized into several key directories under `src/`:
 
-- **`ai/`**: Handles AI interactions, including Groq streaming, TTS generation, and prompts.
+- **`ai/`**: Handles AI interactions, including Groq streaming, TTS generation, and the contract-driven prompt builder.
 - **`config/`**: Environment variable loading and application aliases.
-- **`constants/`**: Shared constants such as command timeouts, model defaults, and the API endpoint.
-- **`core/`**: The brain of the application, containing the Lumina orchestrator and Chat/Settings managers.
-- **`tools/`**: Desktop automation implementations for apps, files, media, and the terminal.
-- **`ui/`**: User interface components including Rofi logic, themes, and loading animations.
-- **`daemon/`**: Background service implementation.
+- **`constants/`**: Shared constants such as command timeouts, model defaults, and tool retries.
+- **`core/`**: The brain of the application, containing the Lumina orchestrator, Chat/Settings managers, and the tool planner.
+- **`tools/`**: Desktop automation implementations (apps, files, music, etc.) and their formal contracts.
+- **`ui/`**: User interface components including Rofi logic, themes, and tool result rendering.
 - **`security/`**: Confirmation dialogs and dangerous command analysis.
 - **`logger/`**: File and console logging infrastructure.
-- **`types/`**: TypeScript type definitions and default settings.
+- **`types/`**: TypeScript type definitions for tools, results, and AI messages.
 - **`utils/`**: Shared helpers such as formatters, i18n, and path utilities.
-- **`locales/`**: JSON translation files for English and Indonesian.
 
 ---
 
@@ -73,21 +74,35 @@ The project is organized into several key directories under `src/`:
 
 ### Lumina (Orchestrator)
 **Path**: `src/core/lumina.ts`  
-The central hub coordinates all activity. It takes user input, manages the AI conversation context, dispatches tool calls, and returns formatted responses to the UI.
+The central hub coordinates all activity. It takes user input, builds deterministic system prompts, manages the tool execution lifecycle (including retries), and synthesizes final responses.
 
-### ChatManager
-**Path**: `src/core/chat-manager.ts`  
-This handles conversation persistence. It saves chat history to `~/.config/desklumina/chats/` and manages session state, including tool call results.
+### Contract-Driven Prompts
+**Path**: `src/ai/prompts.ts`  
+Instead of static text, DeskLumina generates prompts dynamically from **Tool Contracts** (`src/tools/contracts.ts`). Each contract defines:
+- **Schema & Types**: Formal syntax for tool calls.
+- **Valid/Invalid Formats**: Examples that ground the model's output.
+- **Failure Behavior**: Specific retry limits and retriable vs. non-retriable errors.
+- **Path/Quoting Rules**: Precise constraints for argument formatting.
 
-### Tool Registry
-**Path**: `src/tools/registry.ts`  
-A central mapping of tool names, like `app`, `file`, or `terminal`, to their TypeScript implementations. This allows for easy extensibility: adding a new tool simply requires registering it here.
+### Live Context Injection
+DeskLumina injects real-time system state into every request:
+- **Probing**: Uses `pactl`, `playerctl`, and `xdotool` to gather volume, media state, and active window info.
+- **Caching**: Probes are cached for 30 seconds to minimize system overhead.
+- **Selective Injection**: A relevance filter (`selectContext`) ensures only pertinent state (e.g., media state for music queries) is sent to the model, saving tokens.
+
+---
+
+## Failure Escalation Tree
+
+DeskLumina implements a 3-stage escalation logic for tool failures:
+
+1.  **Failure 1 (Correction)**: Lumina identifies syntax or path errors from the tool's `stderr`. It feeds the error back to the model, which corrects the arguments and retries.
+2.  **Failure 2 (Verification)**: If a corrected call still fails, the system verifies the tool contract and local file system state. The model is instructed to avoid repeating the same failing arguments.
+3.  **Failure 3 (Escalation)**: After 2 unsuccessful retries, execution stops. The system synthesizes a structured failure report explaining the blockers to the user.
 
 ---
 
 ## Data Flow
-
-The following diagram illustrates the interaction between components during a typical command execution.
 
 ```mermaid
 sequenceDiagram
@@ -95,72 +110,39 @@ sequenceDiagram
     actor User
     participant UI as User Interface
     participant Core as Lumina Orchestrator
+    participant Prompt as Prompt Engine
     participant AI as Groq AI
     participant Sec as Security Engine
     participant OS as System Tools
 
-    rect rgba(100, 149, 237, 0.08)
-        Note over User,AI: Input & Intent Processing
-        User->>UI: Enter command
-        UI->>Core: Forward request
-        Core->>AI: Request intent + tool calls
-        AI-->>Core: Return intent + structured tools
-    end
-
+    User->>UI: Enter command
+    UI->>Core: Forward request
+    Core->>Prompt: Build system prompt (Contracts + Context)
+    Prompt-->>Core: Final Prompt
+    Core->>AI: Request tool calls
+    AI-->>Core: Structured JSON tool calls
+    
     rect rgba(255, 140, 0, 0.08)
-        Note over Core,Sec: Security Validation
+        Note over Core,Sec: Security & Execution
         Core->>Sec: Validate command safety
-
         alt Risk detected
             Core->>UI: Request confirmation
-            UI->>User: Show confirmation dialog
-            User-->>UI: Confirm or reject
-            UI-->>Core: Forward decision
+            UI-->>Core: Decision
         end
+        Core->>OS: Execute tool
+        OS-->>Core: Tool Result (stdout/stderr/code)
     end
 
-    rect rgba(60, 179, 113, 0.08)
-        Note over Core,OS: Execution
-        alt Safe or confirmed
-            Core->>OS: Execute desktop action
-            OS-->>Core: Return result
-            Core->>UI: Show success + trigger voice
-        else Rejected
-            Core->>UI: Show cancellation notice
-        end
+    alt Failure & Retries < 2
+        Core->>Prompt: Build retry prompt (Error feedback)
+        Prompt->>AI: Request corrected tool call
+    else Success or Retries Exhausted
+        Core->>Prompt: Build follow-up prompt
+        Prompt->>AI: Request natural synthesis
+        AI-->>Core: Text response
+        Core->>UI: Show result + TTS
     end
 ```
-
-1.  **Input Capture**: The user types a command in Rofi or the Terminal.
-2.  **Context Building**: `Lumina` builds the request from the system prompt, bounded prior context, and current user message.
-3.  **AI Request**: The input and context are sent to the Groq API.
-4.  **Streaming**: The AI starts streaming text and tool calls back to DeskLumina.
-5.  **Tool Execution**:
-    - `Planner` parses tool call JSON.
-    - `Security` checks for dangerous commands.
-    - `Registry` dispatches to the correct tool handler and records structured result data.
-6.  **Retry Loop**: Failed tool calls are fed back into the model as structured tool-result context. Lumina retries corrected tool calls up to 2 times.
-7.  **Persistence**: Assistant text and tool-result messages are saved into chat history. Older turns are compacted into summaries to bound context growth.
-8.  **Final Output**: Tool results may be displayed in the UI; the assistant text is displayed and can be spoken via TTS.
-
-## BREAKING CHANGES
-
-- `app` no longer treats unknown aliases as shell commands. Use the `terminal` tool for arbitrary commands.
-- `file` no longer falls back to arbitrary shell execution. Unsupported file actions now fail explicitly.
-- Tool outcomes are now persisted as first-class chat messages and replayed into future model context.
-
----
-
-## Recent Security Hardening
-
-DeskLumina has recently undergone a comprehensive security audit and hardening process. Key improvements include:
-
-1.  **Shell Injection Prevention**: All file operations use direct array-based spawning, eliminating the risk of command injection via malicious path names.
-2.  **Command Substitution Detection**: The security analyzer now detects and blocks nested command substitution in terminal commands.
-3.  **Secure TTS Lifecycle**: Text-to-Speech temporary files use `randomUUID` naming and are stored in a private directory with guaranteed cleanup.
-4.  **Daemon Authentication**: Background services require a session token for communication, preventing unauthorized local access.
-5.  **Atomic File Writes**: Configuration and chat persistence use atomic writes to prevent data corruption from interrupted saves.
-6.  **Log Rotation**: Logs are automatically rotated at 10MB with 3 backup files, preventing unbounded disk growth.
 
 ---
 
@@ -168,25 +150,23 @@ DeskLumina has recently undergone a comprehensive security audit and hardening p
 
 DeskLumina implements a **Human-in-the-Loop** security model.
 
-- **Passive Analysis**: All terminal commands are scanned for dangerous patterns.
-- **Active Confirmation**: If a command is deemed high-risk, a Rofi confirmation dialog is shown.
-- **Path Restrictions**: Tools like `file` prevent operations on sensitive system directories without elevated permissions or explicit confirmation.
+- **Passive Analysis**: All terminal commands are scanned for dangerous patterns (e.g., recursive deletion, nested command substitution).
+- **Active Confirmation**: High-risk commands trigger a Rofi confirmation dialog.
+- **Path Restrictions**: The `file` tool enforces specific rules for absolute paths and tilde expansion, preventing directory traversal.
 
 ---
 
 ## UI Layer
 
-DeskLumina's UI is designed to be invisible until needed.
-
-- **Rofi Integration**: Uses Rofi's `dmenu` and `script` modes to create a dynamic chat interface.
-- **Theming**: Powered by `.rasi` files, allowing for deep customization of colors, fonts, and layouts.
-- **Asynchronous Feedback**: A background loader animation is shown during AI inference to keep the UI responsive.
+- **Rofi Integration**: Uses Rofi's `dmenu` mode for a lightweight, floating chat interface.
+- **Theming**: Powered by `.rasi` files, allowing for deep customization.
+- **Tool Display**: `src/ui/tool-display.ts` renders tool results (especially complex file search results) into human-readable tables and lists within the chat.
 
 ---
 
 ## Next Steps
 
-- 🔧 **[Tools Reference](07-tools-reference.md)**: Learn about the available tools.
+- 🔧 **[Tools Reference](07-tools-reference.md)**: Learn about the available tools and their contracts.
 - ⚙️ **[Configuration](04-configuration.md)**: Fine-tune the architecture.
 - 🛠️ **[Development Guide](10-development.md)**: Learn how to extend the system.
 

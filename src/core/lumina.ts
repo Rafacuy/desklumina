@@ -51,7 +51,8 @@ function buildRetryMessages(
   systemPrompt: string,
   originalUserMessage: string,
   previousAssistantResponse: string,
-  failedResults: ToolResult[]
+  failedResults: ToolResult[],
+  attempt: number
 ): AIMessage[] {
   const retryFeedback = failedResults.map(formatToolResultForContext).join("\n\n");
 
@@ -61,7 +62,7 @@ function buildRetryMessages(
     { role: "assistant", content: previousAssistantResponse },
     {
       role: "system",
-      content: `Tool call failed. Correct args and retry:\n\n${retryFeedback}`,
+      content: `[Escalation: Failure ${attempt}] Tool call failed. Correct args and retry:\n\n${retryFeedback}`,
     },
   ];
 }
@@ -73,6 +74,8 @@ function buildFollowUpMessages(
   toolResults: ToolResult[]
 ): AIMessage[] {
   const toolFeedback = toolResults.map(formatToolResultForContext).join("\n\n");
+  const anyFailed = toolResults.some(r => r.success === false);
+  const failureEscalation = anyFailed ? "\n\n[Escalation: Failure 3] Multiple attempts failed. Produce a structured failure report." : "";
 
   return [
     { role: "system", content: systemPrompt },
@@ -80,7 +83,7 @@ function buildFollowUpMessages(
     { role: "assistant", content: cleanAssistantResponse(previousAssistantResponse) || previousAssistantResponse },
     {
       role: "system",
-      content: `Tool results:\n\n${toolFeedback}\n\nSynthesize a natural, concise reply. No more tool calls.`,
+      content: `Tool results:\n\n${toolFeedback}${failureEscalation}\n\nSynthesize a natural, concise reply. No more tool calls.`,
     },
   ];
 }
@@ -108,7 +111,7 @@ export class Lumina {
   ): Promise<string> {
     logger.info("lumina", `User: ${userMessage}`);
 
-    const systemPrompt = await buildSystemPrompt();
+    const systemPrompt = await buildSystemPrompt(userMessage);
     const contextState = this.chatManager
       ? this.chatManager.getMessagesForAPI()
       : { messages: this.context.getMessages() };
@@ -190,7 +193,7 @@ export class Lumina {
           results: failedResults,
         });
 
-        const retryMessages = buildRetryMessages(systemPrompt, userMessage, retrySourceResponse, failedResults);
+        const retryMessages = buildRetryMessages(systemPrompt, userMessage, retrySourceResponse, failedResults, attemptNumber);
         const retryResponse = await collectStream(retryMessages);
         retrySourceResponse = retryResponse;
         pendingToolCalls = parseToolCalls(retryResponse);

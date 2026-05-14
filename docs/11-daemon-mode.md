@@ -24,9 +24,9 @@ Daemon mode runs DeskLumina as a persistent background process. The daemon stays
 
 ## Why Daemon Mode?
 
-- Avoids starting a new Bun process for every command.
-- Provides a stable socket endpoint for hotkeys and scripts.
-- Each request is handled independently by the daemon.
+- **Zero Overhead**: Avoids starting a new Bun process for every command.
+- **Stable Endpoint**: Provides a persistent socket for hotkeys and scripts.
+- **Structured Data**: The daemon returns full execution metadata, including tool results and file matches.
 
 ---
 
@@ -93,7 +93,7 @@ bun run daemon:status
 Once the daemon is running, use the `send` command to interact with it:
 ```bash
 bun run send "open telegram"
-run send "what's the current volume?"
+bun run send "what's the current volume?"
 ```
 
 ---
@@ -129,15 +129,15 @@ Add these to your `~/.config/sxhkd/sxhkdrc`:
 ```bash
 # Instant AI Command
 super + t
-    bun run ~/.config/desklumina/src/main.ts --send "what's on my schedule?"
+    bun run send "what's on my schedule?"
 
 # Media Toggle
 super + space
-    bun run ~/.config/desklumina/src/main.ts --send "toggle music"
+    bun run send "toggle music"
 
 # Quick Browser
 super + b
-    bun run ~/.config/desklumina/src/main.ts --send "open chrome"
+    bun run send "open chrome"
 ```
 
 ---

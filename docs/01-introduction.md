@@ -36,13 +36,13 @@ The system analyzes every command for safety. Destructive or sensitive operation
 ## Example Interactions
 
 > **User:** "open telegram"
-> **DeskLumina:** (executes tool call `app` with `telegram`)
+> **DeskLumina:** (executes tool call `{"tool": "app", "args": "telegram"}`)
 
 > **User:** "create a folder on Desktop"
-> **DeskLumina:** (executes tool call `file` with `create_dir ~/Desktop/...`)
+> **DeskLumina:** (executes tool call `{"tool": "file", "args": "create_dir ~/Desktop/NewFolder"}`)
 
 > **User:** "play music"
-> **DeskLumina:** (executes tool call `music` with `play`)
+> **DeskLumina:** (executes tool call `{"tool": "music", "args": "{\"action\": \"play\"}"}`)
 
 ---
 
@@ -53,7 +53,7 @@ The system analyzes every command for safety. Destructive or sensitive operation
 - **🤖 Smart Daemon**: A persistent background service that eliminates startup overhead.
 - **🛡️ Security Layer**: Automatic detection of dangerous commands with interactive confirmation.
 - **🔧 Extensible Tools**: A modular system for controlling applications, files, media, and more.
-- **🌐 Bilingual**: Native support for English and Indonesian.
+- **🌐 Bilingual**: Native support for English, Indonesian, and Japanese.
 
 ---
 

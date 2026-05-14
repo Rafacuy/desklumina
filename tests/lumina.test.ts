@@ -9,38 +9,53 @@ const mockStreamGroq = mock(async function* (messages: Array<{ role: string; con
   streamInvocations++;
 
   if (streamInvocations === 1) {
-    yield 'On it.\n```json\n{"tool":"media","args":"volume up"}\n```';
+    yield 'On it.\n```json\n{"tool":"music","args":"{\\"action\\":\\"volume_up\\"}"}\n```';
     return;
   }
 
   if (streamInvocations === 2) {
-    yield 'Retrying.\n```json\n{"tool":"media","args":"volume +10"}\n```';
+    // Verify escalation marker was sent
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg?.role === "system" && lastMsg.content.includes("[Escalation: Failure 1]")) {
+      yield 'Retrying.\n```json\n{"tool":"music","args":"{\\"action\\":\\"volume_up\\"}"}\n```';
+    } else {
+      yield "Escalation marker missing!";
+    }
     return;
   }
 
-  yield "Volume updated to 10%.";
+  yield "Volume updated.";
 });
 
 const mockDispatch = mock(async (tool: string, arg: string) => {
   dispatchCalls.push({ tool, arg });
 
-  if (arg === "volume up") {
+  if (arg.includes("volume_up")) {
+    if (streamInvocations === 1) {
+      return {
+        tool,
+        result: "❌ Backend timeout",
+        success: false,
+        normalizedArg: arg,
+        stderr: "Backend timeout",
+        exitCode: 1,
+      };
+    }
     return {
       tool,
-      result: "❌ Invalid volume format",
-      success: false,
+      result: "✓ Volume updated",
+      success: true,
       normalizedArg: arg,
-      stderr: "Invalid volume format",
-      exitCode: 2,
+      stdout: "volume: 10%",
+      exitCode: 0,
     };
   }
 
   return {
     tool,
-    result: "✓ Volume updated",
+    result: "✓ Done",
     success: true,
     normalizedArg: arg,
-    stdout: "volume: 10%",
     exitCode: 0,
   };
 });
@@ -48,10 +63,6 @@ const mockDispatch = mock(async (tool: string, arg: string) => {
 mock.module("../src/ai", () => ({
   streamGroq: mockStreamGroq,
   textToSpeech: mock(async () => {}),
-}));
-
-mock.module("../src/ai/prompts", () => ({
-  buildSystemPrompt: mock(async () => "System prompt"),
 }));
 
 mock.module("../src/tools", () => ({
@@ -82,14 +93,19 @@ mock.module("../src/utils", () => ({
 import { Lumina } from "../src/core/lumina";
 import { ChatManager } from "../src/core/chat-manager";
 import { settingsManager } from "../src/core/settings-manager";
+import * as prompts from "../src/ai/prompts";
 import { spyOn, afterAll, beforeAll } from "bun:test";
 
 describe("Lumina", () => {
   let getSpy: any;
   let saveSpy: any;
   let toggleSpy: any;
+  let promptSpy: any;
 
   beforeAll(() => {
+    // Mock buildSystemPrompt locally
+    promptSpy = spyOn(prompts, "buildSystemPrompt").mockResolvedValue("System prompt");
+
     // Mock settingsManager to avoid side effects and provide controlled state
     getSpy = spyOn(settingsManager, "get").mockReturnValue({
       language: "en",
@@ -112,6 +128,7 @@ describe("Lumina", () => {
     getSpy.mockRestore();
     saveSpy.mockRestore();
     toggleSpy.mockRestore();
+    promptSpy.mockRestore();
   });
 
   beforeEach(() => {
@@ -148,14 +165,14 @@ describe("Lumina", () => {
 
     expect(streamInvocations).toBe(3);
     expect(dispatchCalls).toEqual([
-      { tool: "media", arg: "volume up" },
-      { tool: "media", arg: "volume +10" },
+      { tool: "music", arg: '{"action":"volume_up"}' },
+      { tool: "music", arg: '{"action":"volume_up"}' },
     ]);
-    expect(capturedMessages[1]?.some((message) => message.content.includes("[TOOL RESULT] tool=media"))).toBe(true);
+    expect(capturedMessages[1]?.some((message) => message.content.includes("[TOOL RESULT] tool=music"))).toBe(true);
     expect(capturedMessages[2]?.some((message) => message.content.includes("Tool results:"))).toBe(true);
     expect(toolOutputs.some((entry) => entry.type === "retry" && entry.text.includes("retry-update"))).toBe(true);
     expect(toolOutputs.some((entry) => entry.type === "results")).toBe(true);
-    expect(finalText).toContain("Volume updated to 10%.");
+    expect(finalText).toContain("Volume updated.");
   });
 
   test("persists tool result messages in chat history", async () => {

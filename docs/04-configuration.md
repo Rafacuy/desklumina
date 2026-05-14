@@ -28,7 +28,7 @@ The `.env` file in the project root stores sensitive credentials and core servic
 
 ## Settings JSON (settings.json)
 
-DeskLumina stores user preferences in `~/.config/desklumina/settings.json`. You can edit this file directly or use the interactive settings menu.
+DeskLumina stores user preferences in `~/.config/desklumina/settings.json`.
 
 ### Core Settings
 
@@ -50,6 +50,7 @@ DeskLumina stores user preferences in `~/.config/desklumina/settings.json`. You 
 
 - **`language`**: Primary language for the UI and AI. Supported: `"en"`, `"id"`, `"ja"`.
   - Changing the language automatically updates the `tts.voiceId` to a matching natural voice.
+  - **Default**: `"en"`
 - **`features.tts`**: Enable or disable text-to-speech output.
 - **`features.toolDisplay`**: Show or hide tool execution details in the UI.
 - **`features.dangerousCommandConfirmation`**: Require confirmation for critical commands.

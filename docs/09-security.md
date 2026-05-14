@@ -85,14 +85,16 @@ flowchart LR
 
 ---
 
-## Path Restrictions
+## Path Restrictions (File Tool)
 
-The **File** tool implements restrictions to prevent accidental modification of system-critical files. Path interpolation is handled via array-based spawning, which eliminates shell injection vulnerabilities.
+The **File** tool implements its own internal restrictions to prevent accidental modification of system-critical files.
+
+**Logic**: `src/tools/files.ts` (using `isDangerousPath`)
 
 ### Protected Directories:
 - `/bin`, `/boot`, `/dev`, `/etc`, `/lib`, `/root`, `/sys`, `/usr`, `/var`
 
-Any operation targeting these paths will trigger a **High** severity confirmation, even if the command itself is not inherently flagged as dangerous. Normalization and path expansion are performed before security analysis to ensure consistent protection.
+Any operation targeting these paths will trigger a **Critical** severity confirmation, even if the command itself is not inherently flagged by the terminal analyzer.
 
 ---
 
