@@ -6,6 +6,7 @@ describe("TokenManager", () => {
   beforeEach(() => {
     // Accessing private usageHistory to reset for tests
     (tokenManager as any).usageHistory = [];
+    tokenManager.setTpmLimit(30_000);
   });
 
   test("estimateTokens uses script-aware multipliers", () => {

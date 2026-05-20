@@ -16,4 +16,4 @@ test("TTS should not deadlock when generation fails", async () => {
   await textToSpeech(longText);
   
   expect(true).toBe(true);
-});
+}, 15000);

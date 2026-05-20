@@ -205,9 +205,25 @@ class MediaController {
       result: `❌ ${errorMsg}`,
       success: false,
       normalizedArg: action,
+      command: lastError?.command || this.displayCommand(action),
       stderr: lastError?.stderr || "No backends available",
       exitCode: lastError?.exitCode || 1,
     };
+  }
+
+  private displayCommand(action: MediaAction): string {
+    const actionMap: Record<MediaAction, string[]> = {
+      play: ["play"],
+      resume: ["play"],
+      pause: ["pause"],
+      stop: ["stop"],
+      next: ["next"],
+      prev: ["prev"],
+      volume_up: ["volume", "+5"],
+      volume_down: ["volume", "-5"],
+    };
+
+    return ["mpc", ...actionMap[action]].join(" ");
   }
 
   /**

@@ -9,5 +9,8 @@
   "tts": {
     "voiceId": "en-US-AvaNeural",
     "speed": 1
+  },
+  "provider": {
+    "default": "openrouter"
   }
 }

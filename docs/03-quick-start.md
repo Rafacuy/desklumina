@@ -18,7 +18,7 @@ Get started with DeskLumina and run your first commands. This guide covers basic
 
 ## First Flight
 
-1. Ensure your `.env` file contains `GROQ_API_KEY` and `MODEL_NAME`.
+1. Ensure your `.env` file contains at least one provider API key and `DESKLUMINA_MODEL` (or configure `models.json`).
 2. Open your terminal and run:
    ```bash
    bun run start

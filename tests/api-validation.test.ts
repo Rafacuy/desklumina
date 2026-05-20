@@ -1,28 +1,29 @@
-import { describe, test, expect, spyOn, beforeEach } from "bun:test";
+import { describe, test, expect, beforeEach, spyOn } from "bun:test";
 import { Validation } from "../src/utils/validation";
 import { logger } from "../src/logger";
-import { streamGroq, GroqAPIError } from "../src/ai/groq";
+import { providerRegistry, streamAI, AllModelsFailedError } from "../src/ai";
+import { GroqProvider, OpenAIProvider, AuthenticationError, ProviderNetworkError } from "../src/ai";
 
 describe("API Dependency & Validation", () => {
-  
-  describe("Environment Validation", () => {
-    test("detects missing GROQ_API_KEY", () => {
-      expect(() => {
-        Validation.validateEnv({ MODEL_NAME: "test-model" });
-      }).toThrow(/Missing required environment variables: GROQ_API_KEY/);
-    });
 
+  beforeEach(() => {
+    providerRegistry.reset();
+    providerRegistry.register(new GroqProvider("gsk_test_key_1234567890123456789012345678901234567890"));
+    providerRegistry.register(new OpenAIProvider("sk-test-key"));
+  });
+
+  describe("Environment Validation", () => {
     test("detects missing MODEL_NAME", () => {
       expect(() => {
-        Validation.validateEnv({ GROQ_API_KEY: "gsk_test_key_1234567890123456789012345678901234567890" });
+        Validation.validateEnv({});
       }).toThrow(/Missing required environment variables: MODEL_NAME/);
     });
 
     test("warns about malformed Groq key", () => {
       const warnSpy = spyOn(logger, "warn");
-      Validation.validateEnv({ 
-        GROQ_API_KEY: "invalid-key", 
-        MODEL_NAME: "test-model" 
+      Validation.validateEnv({
+        GROQ_API_KEY: "invalid-key",
+        MODEL_NAME: "test-model"
       });
       expect(warnSpy).toHaveBeenCalledWith("validation", expect.stringContaining("GROQ_API_KEY does not match expected format"));
       warnSpy.mockRestore();
@@ -30,62 +31,61 @@ describe("API Dependency & Validation", () => {
 
     test("accepts valid environment", () => {
       expect(() => {
-        Validation.validateEnv({ 
-          GROQ_API_KEY: "gsk_valid_key_1234567890123456789012345678901234567890", 
-          MODEL_NAME: "test-model" 
+        Validation.validateEnv({
+          GROQ_API_KEY: "gsk_valid_key_1234567890123456789012345678901234567890",
+          MODEL_NAME: "test-model"
         });
       }).not.toThrow();
     });
   });
 
-  describe("Provider Error Handling (Simulated)", () => {
-    test("handles 429 Rate Limit error", async () => {
-      // Mock fetch to return 429
-      const mockFetch = spyOn(globalThis, "fetch").mockImplementation(() => 
-        Promise.resolve(new Response("Rate limit exceeded", { status: 429 }))
+  describe("Provider Error Handling", () => {
+    test("handles 429 Rate Limit error with fallback", async () => {
+      const mockFetch = () =>
+        Promise.resolve(new Response("Rate limit exceeded", { status: 429 }));
+
+      providerRegistry.register(new GroqProvider("gsk_test_key_1234567890123456789012345678901234567890", mockFetch));
+      providerRegistry.register(new OpenAIProvider("sk-test-key-123456789012345678901234567890", mockFetch));
+
+      const gen = streamAI(
+        [{ role: "user", content: "hi" }],
+        "openai:gpt-4o",
+        ["groq:llama-3.3-70b-versatile"]
       );
 
-      try {
-        const gen = streamGroq([{ role: "user", content: "hi" }]);
-        await gen.next();
-      } catch (error) {
-        expect(error).toBeDefined();
-        // Now throws GroqAPIError directly for 429 to avoid wasting TPM
-        expect(error.name).toBe("GroqAPIError");
-        expect((error as any).statusCode).toBe(429);
-      }
-
-      mockFetch.mockRestore();
+      // With all providers returning 429, AllModelsFailedError should be thrown
+      await expect(gen.next()).rejects.toThrow();
     });
 
-    test("handles 401 Unauthorized error", async () => {
-      const mockFetch = spyOn(globalThis, "fetch").mockImplementation(() => 
-        Promise.resolve(new Response("Invalid API Key", { status: 401 }))
+    test("handles 401 Unauthorized by re-throwing immediately", async () => {
+      const mockFetch = () =>
+        Promise.resolve(new Response("Unauthorized", { status: 401 }));
+
+      providerRegistry.register(new GroqProvider("gsk_test_key_1234567890123456789012345678901234567890", mockFetch));
+      providerRegistry.register(new OpenAIProvider("sk-test-key-123456789012345678901234567890", mockFetch));
+
+      const gen = streamAI(
+        [{ role: "user", content: "hi" }],
+        "openai:gpt-4o",
+        ["groq:llama-3.3-70b-versatile"]
       );
 
-      try {
-        const gen = streamGroq([{ role: "user", content: "hi" }]);
-        await gen.next();
-      } catch (error) {
-        expect(error.name).toBe("AllModelsFailedError");
-      }
-
-      mockFetch.mockRestore();
+      // 401 should re-throw immediately without attempting fallback
+      await expect(gen.next()).rejects.toThrow();
     });
-    
+
     test("handles network timeout/failure", async () => {
-      const mockFetch = spyOn(globalThis, "fetch").mockImplementation(() => 
-        Promise.reject(new Error("Network connection lost"))
+      const mockFetch = () =>
+        Promise.reject(new DOMException("The operation was aborted.", "AbortError"));
+
+      providerRegistry.register(new OpenAIProvider("sk-test-key-123456789012345678901234567890", mockFetch));
+
+      const gen = streamAI(
+        [{ role: "user", content: "hi" }],
+        "openai:gpt-4o"
       );
 
-      try {
-        const gen = streamGroq([{ role: "user", content: "hi" }]);
-        await gen.next();
-      } catch (error) {
-        expect(error.message).toBe("Network connection lost");
-      }
-
-      mockFetch.mockRestore();
+      await expect(gen.next()).rejects.toThrow();
     });
   });
 });

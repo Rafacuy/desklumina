@@ -1,5 +1,5 @@
 import { t, cleanAssistantResponse } from "../utils";
-import { streamGroq, textToSpeech } from "../ai";
+import { streamAI, textToSpeech, initializeAI } from "../ai";
 import { buildSystemPrompt } from "../ai/prompts";
 import { Context } from "./context";
 import { ChatManager } from "./chat-manager";
@@ -90,7 +90,7 @@ function buildFollowUpMessages(
 
 async function collectStream(messages: AIMessage[], onChunk?: (chunk: string) => void): Promise<string> {
   let response = "";
-  for await (const chunk of streamGroq(messages)) {
+  for await (const chunk of streamAI(messages)) {
     response += chunk;
     onChunk?.(chunk);
   }
@@ -103,6 +103,7 @@ export class Lumina {
 
   constructor(chatManager?: ChatManager) {
     this.chatManager = chatManager;
+    initializeAI();
   }
 
   async chat(

@@ -40,7 +40,7 @@ DeskLumina's primary interface is built on **Rofi**.
 
 The settings menu allows you to customize DeskLumina's behavior without editing files:
 - **Toggle TTS**: Enable or disable voice output.
-- **Language**: Switch between English and Indonesian.
+- **Language**: Switch between English, Indonesian, and Japanese.
 - **Tool Display**: Show or hide tool execution logs.
 - **Security Confirmation**: Toggle interactive checks for dangerous commands.
 - **TTS Voice & Speed**: Choose a voice and adjust playback speed.
@@ -81,6 +81,8 @@ DeskLumina supports several CLI flags for different use cases:
 | `--send "<message>"` | Send a command to the running daemon. |
 | `--exec "<message>"` | Execute a single message and print the assistant response. |
 | `--version` | Display the current version and configured model. |
+| `provider list` | List all registered providers. |
+| `provider current` | Show the active primary model and resolved provider. |
 
 ### Passing flags via Bun scripts
 

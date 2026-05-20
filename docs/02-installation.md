@@ -20,7 +20,7 @@ Get DeskLumina up and running on your system. This guide covers all requirements
 ### Essential
 
 - **[Bun](https://bun.sh/)** v1.3.9 or higher.
-- **[Groq API key](https://console.groq.com/)** for AI inference.
+- **API Key**: At least one provider key (Groq, OpenAI, Anthropic, Gemini, OpenRouter, or Hugging Face).
 - **[Rofi](https://github.com/davatorium/rofi)** (Standard Linux distribution package).
 - **Core Utilities**: `bash`, `git`, `find`, `ls`, `mkdir`, `rm`, `mv`, `cp`.
 
@@ -63,11 +63,19 @@ cp .env.example .env
 Now, edit the `.env` file with your preferred editor:
 
 ```env
+# Set at least one provider key
 GROQ_API_KEY=gsk_your_actual_key_here
-MODEL_NAME=openai/gpt-oss-120b
+# OPENAI_API_KEY=sk-...
+# ANTHROPIC_API_KEY=sk-ant-...
+# GEMINI_API_KEY=...
+# OPENROUTER_API_KEY=...
+# HF_API_KEY=...
+
+# Primary model (format: provider:model)
+DESKLUMINA_MODEL=groq:llama-3.3-70b-versatile
 ```
 
-Both `GROQ_API_KEY` and `MODEL_NAME` are required. DeskLumina will exit with a fatal error if either is missing.
+At minimum, one provider API key and a primary model (`DESKLUMINA_MODEL`) are required. DeskLumina will exit with a fatal error if neither a model nor any API key is configured. Alternatively, you can skip the env-based model config entirely and use `models.json` instead (see [Configuration](04-configuration.md)).
 
 ---
 

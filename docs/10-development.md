@@ -21,6 +21,7 @@ A guide for developers looking to extend DeskLumina or contribute to the core pr
 2.  **Dependencies**: Run `bun install`.
 3.  **Dev Mode**: Use `bun run dev` for a persistent terminal chat loop.
 4.  **Linting**: Run `bun run lint` to check for TypeScript errors.
+5.  **Provider Setup**: Set at least one provider API key in `.env`. Use `bun run start -- provider list` to verify which providers are registere.
 
 ---
 
@@ -28,8 +29,9 @@ A guide for developers looking to extend DeskLumina or contribute to the core pr
 
 DeskLumina's core is the **`Lumina` orchestrator** at `src/core/lumina.ts`. It follows a deterministic lifecycle:
 - **Build System Prompt**: Generates prompt from **Tool Contracts** and **Live Context**.
-- **Stream Response**: Managed via `src/ai/groq.ts`.
+- **Stream Response**: Managed via `src/ai/orchestrator.ts` through the multi-provider layer.
 - **Parse & Dispatch**: `src/core/planner.ts` parses tool calls, which are then dispatched via `src/tools/registry.ts`.
+- **AI Orchestration**: `src/ai/orchestrator.ts` resolves the primary model and fallback chain through `ModelRegistry`, routes requests through `ProviderRegistry`, and handles circuit-breaker-based failover.
 - **Retry Logic**: Lumina automatically handles retries for retriable tool failures (up to 2 times).
 
 ---
@@ -99,6 +101,47 @@ export const tools: ToolRegistry = {
   my_tool: myTool,
 };
 ```
+
+---
+
+## Adding a New Provider
+
+To add a new AI provider:
+
+### 1. Create the Provider Implementation
+
+Create a directory under `src/ai/provider/<name>/` with a `provider.ts` file. Providers should extend either `OpenAICompatibleAdapter` (for OpenAI-compatible APIs) or `StreamingBaseProvider` (for custom protocols).
+
+```typescript
+// src/ai/provider/example/provider.ts
+import { StreamingBaseProvider } from "../streaming-base";
+// ... implement id, name, validateConfig, capabilities, getEndpoint, getHeaders, getRequestBody, parseChunk
+```
+
+### 2. Export from the Provider Index
+
+Add the export to `src/ai/provider/index.ts`:
+
+```typescript
+export { ExampleProvider, EXAMPLE_PROVIDER_ID } from "./example";
+```
+
+### 3. Register in ProviderRegistry
+
+Add the import and conditional registration to `src/ai/registry/provider-registry.ts`:
+
+```typescript
+import { ExampleProvider, EXAMPLE_PROVIDER_ID } from "../provider/example";
+
+// In initialize():
+if (env.EXAMPLE_API_KEY) {
+  this.register(new ExampleProvider(env.EXAMPLE_API_KEY));
+}
+```
+
+### 4. Add Env Var and Endpoint
+
+Add the API key to `src/config/env.ts` and the endpoint constant to `src/constants/models.ts`. Add the provider ID to the `PROVIDERS` list in `src/ai/config/models-config.ts`.
 
 ---
 

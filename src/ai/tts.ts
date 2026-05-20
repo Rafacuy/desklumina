@@ -223,93 +223,97 @@ export async function textToSpeech(text: string): Promise<void> {
     }
   }
 
-  (async () => {
-    const chunker = new AdaptiveChunker();
-    const chunks = chunker.chunk(cleaned);
-    
-    const jobs: ChunkJob[] = chunks.map((chunk, i) => ({
-      id: i,
-      text: chunk,
-      audioFile: join(tmpDir, `tts-${randomUUID()}-${i}.mp3`),
-      ready: false,
-      error: false,
-    }));
+  const chunker = new AdaptiveChunker();
+  const chunks = chunker.chunk(cleaned);
+  
+  const jobs: ChunkJob[] = chunks.map((chunk, i) => ({
+    id: i,
+    text: chunk,
+    audioFile: join(tmpDir, `tts-${randomUUID()}-${i}.mp3`),
+    ready: false,
+    error: false,
+  }));
 
-    try {
-      const firstChunkLen = chunks[0]?.length ?? 0;
-      logger.info("tts", `Adaptive chunking: ${jobs.length} chunks (first: ${firstChunkLen} chars)`);
+  try {
+    const firstChunkLen = chunks[0]?.length ?? 0;
+    logger.info("tts", `Adaptive chunking: ${jobs.length} chunks (first: ${firstChunkLen} chars)`);
 
-      const generateQueue = [...jobs];
-      let generating = 0;
-      let nextPlay = 0;
+    const generateQueue = [...jobs];
+    let generating = 0;
+    let nextPlay = 0;
+    const generationErrors: Error[] = [];
 
-      const startGeneration = async (job: ChunkJob) => {
-        generating++;
-        job.generationStart = Date.now();
-        try {
-          await generateAudio(job.text, voice, rate, job.audioFile);
-          job.generationEnd = Date.now();
+    const startGeneration = async (job: ChunkJob) => {
+      generating++;
+      job.generationStart = Date.now();
+      try {
+        await generateAudio(job.text, voice, rate, job.audioFile);
+        job.generationEnd = Date.now();
 
-          const duration = job.generationEnd - job.generationStart;
-          chunker.updateMetrics(duration);
+        const duration = job.generationEnd - job.generationStart;
+        chunker.updateMetrics(duration);
 
-          if (job.id === 0) {
-            logger.info("tts", `First chunk ready in ${duration}ms`);
-          }
-        } catch (err) {
-          logger.error("tts", `Chunk ${job.id} failed: ${err}`);
-          job.error = true;
-        } finally {
-          job.ready = true;
-          generating--;
+        if (job.id === 0) {
+          logger.info("tts", `First chunk ready in ${duration}ms`);
         }
-      };
-
-
-      const processPlayback = async () => {
-        while (nextPlay < jobs.length) {
-          const job = jobs[nextPlay];
-          if (!job) break;
-          
-          while (!job.ready) {
-            await Bun.sleep(50);
-          }
-
-          if (!job.error) {
-            await playAudio(job.audioFile);
-          } else {
-            logger.warn("tts", `Skipping playback for chunk ${job.id} due to generation error`);
-          }
-          
-          nextPlay++;
-        }
-      };
-
-      const playbackPromise = processPlayback();
-
-      while (generateQueue.length > 0 || generating > 0) {
-        while (generating < MAX_PARALLEL && generateQueue.length > 0) {
-          const job = generateQueue.shift()!;
-          startGeneration(job);
-        }
-        await Bun.sleep(100);
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        logger.error("tts", `Chunk ${job.id} failed: ${error.message}`);
+        job.error = true;
+        generationErrors.push(error);
+      } finally {
+        job.ready = true;
+        generating--;
       }
+    };
 
-      await playbackPromise;
-      logger.info("tts", "Playback complete");
-
-    } catch (error) {
-      logger.error("tts", `Failed: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      for (const job of jobs) {
-        try {
-          if (existsSync(job.audioFile)) {
-            unlinkSync(job.audioFile);
-          }
-        } catch (err) {
-          logger.warn("tts", `Failed to cleanup temp file ${job.audioFile}: ${err}`);
+    const processPlayback = async () => {
+      while (nextPlay < jobs.length) {
+        const job = jobs[nextPlay];
+        if (!job) break;
+        
+        while (!job.ready) {
+          await Bun.sleep(50);
         }
+
+        if (!job.error) {
+          await playAudio(job.audioFile);
+        } else {
+          logger.warn("tts", `Skipping playback for chunk ${job.id} due to generation error`);
+        }
+        
+        nextPlay++;
+      }
+    };
+
+    const playbackPromise = processPlayback();
+
+    while (generateQueue.length > 0 || generating > 0) {
+      while (generating < MAX_PARALLEL && generateQueue.length > 0) {
+        const job = generateQueue.shift()!;
+        startGeneration(job);
+      }
+      await Bun.sleep(100);
+    }
+
+    await playbackPromise;
+    logger.info("tts", "Playback complete");
+
+    if (generationErrors.length > 0) {
+      throw generationErrors[0];
+    }
+  } catch (error) {
+    logger.error("tts", `Failed: ${error instanceof Error ? error.message : String(error)}`);
+    throw error;
+  } finally {
+    for (const job of jobs) {
+      try {
+        if (existsSync(job.audioFile)) {
+          unlinkSync(job.audioFile);
+        }
+      } catch (err) {
+        logger.warn("tts", `Failed to cleanup temp file ${job.audioFile}: ${err}`);
       }
     }
-  })();
+  }
 }

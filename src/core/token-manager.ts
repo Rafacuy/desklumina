@@ -10,11 +10,19 @@ export class TokenManager {
   private readonly WINDOW_MS = 60_000;
   private usageHistory: { timestamp: number; tokens: number }[] = [];
   
-  // Thresholds (Groq free tier is roughly 30k TPM)
-  private readonly TPM_LIMIT = 30_000;
+  // Configurable TPM limit per provider (default: no hard limit)
+  private tpmLimit = 0;
   private readonly WARNING_THRESHOLD = 0.8; // 80%
 
   private constructor() {}
+
+  /**
+   * Set the TPM limit for the current provider.
+   * Pass 0 to disable the limit.
+   */
+  setTpmLimit(limit: number): void {
+    this.tpmLimit = limit;
+  }
 
   static getInstance(): TokenManager {
     if (!TokenManager.instance) {
@@ -75,10 +83,10 @@ export class TokenManager {
     this.pruneHistory();
 
     const currentTPM = this.getCurrentTPM();
-    if (currentTPM > this.TPM_LIMIT * this.WARNING_THRESHOLD) {
-      logger.warn("token-manager", `TPM Usage High: ${currentTPM}/${this.TPM_LIMIT} (${Math.round((currentTPM / this.TPM_LIMIT) * 100)}%)`);
+    if (this.tpmLimit > 0 && currentTPM > this.tpmLimit * this.WARNING_THRESHOLD) {
+      logger.warn("token-manager", `TPM Usage High: ${currentTPM}/${this.tpmLimit} (${Math.round((currentTPM / this.tpmLimit) * 100)}%)`);
     } else {
-      logger.debug("token-manager", `Current TPM: ${currentTPM}/${this.TPM_LIMIT}`);
+      logger.debug("token-manager", `Current TPM: ${currentTPM}`);
     }
   }
 
@@ -94,25 +102,28 @@ export class TokenManager {
    * Check if a request of certain size will likely trigger a 429.
    */
   isLikelyToLimit(estimatedTokens: number): boolean {
+    if (this.tpmLimit <= 0) return false;
     const currentTPM = this.getCurrentTPM();
-    return (currentTPM + estimatedTokens) > this.TPM_LIMIT;
+    return (currentTPM + estimatedTokens) > this.tpmLimit;
   }
 
   /**
    * Enforce TPM budget by waiting if necessary.
    */
   async enforceBudget(estimatedTokens: number): Promise<void> {
-    if (estimatedTokens > this.TPM_LIMIT) {
-      throw new Error(`Request size (${estimatedTokens} tokens) exceeds total TPM limit (${this.TPM_LIMIT}).`);
+    if (this.tpmLimit <= 0) return;
+
+    if (estimatedTokens > this.tpmLimit) {
+      throw new Error(`Request size (${estimatedTokens} tokens) exceeds total TPM limit (${this.tpmLimit}).`);
     }
 
     let currentTPM = this.getCurrentTPM();
-    if (currentTPM + estimatedTokens > this.TPM_LIMIT) {
+    if (currentTPM + estimatedTokens > this.tpmLimit) {
       logger.warn("token-manager", `TPM limit approaching. Throttling request...`);
-      
+
       // Simple backoff: wait for the oldest entry to expire or a fixed interval
       // Since history is pruned on getCurrentTPM, we can just wait a bit and retry check
-      while (this.getCurrentTPM() + estimatedTokens > this.TPM_LIMIT) {
+      while (this.getCurrentTPM() + estimatedTokens > this.tpmLimit) {
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
       logger.info("token-manager", "TPM budget cleared. Resuming request.");

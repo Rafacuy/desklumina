@@ -61,7 +61,7 @@ const mockDispatch = mock(async (tool: string, arg: string) => {
 });
 
 mock.module("../src/ai", () => ({
-  streamGroq: mockStreamGroq,
+  streamAI: mockStreamGroq,
   textToSpeech: mock(async () => {}),
 }));
 

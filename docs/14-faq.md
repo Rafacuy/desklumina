@@ -19,7 +19,7 @@ Frequently asked questions about DeskLumina.
 No. DeskLumina is an assistant layer that runs on top of your existing Linux desktop, such as GNOME, KDE, i3, or Sway. It helps you automate tasks within your current environment.
 
 ### Which LLMs does it use?
-DeskLumina uses the Groq API model configured in `.env` as `MODEL_NAME`. If fallback models are configured, DeskLumina will try them only when the primary model request fails before any output is produced.
+DeskLumina supports six providers: Groq, OpenAI, Anthropic, Gemini, OpenRouter, and Hugging Face. The active provider and model are determined by `DESKLUMINA_MODEL` (or `models.json`). If fallback models are configured, DeskLumina will try them only when the primary model request fails before any output is produced.
 
 ### Does it support other OSs?
 Currently, DeskLumina is Linux-only. It relies on Linux-specific tooling such as Rofi and Unix domain sockets.
@@ -29,10 +29,10 @@ Currently, DeskLumina is Linux-only. It relies on Linux-specific tooling such as
 ## Privacy & Security
 
 ### Is my data sent to the cloud?
-DeskLumina sends your chat messages and a static system prompt to the Groq API for processing. DeskLumina does not automatically upload local files; if you instruct it to read a file, that file content may become part of the chat context you send.
+DeskLumina sends your chat messages and a static system prompt to the configured AI provider for processing. DeskLumina does not automatically upload local files; if you instruct it to read a file, that file content may become part of the chat context you send.
 
 ### Can it run locally?
-This repository implements Groq API integration. Local LLM support is not implemented here.
+This repository integrates cloud providers (Groq, OpenAI, Anthropic, Gemini, OpenRouter, Hugging Face). Local LLM support (e.g. Ollama) is not implemented.
 
 ---
 

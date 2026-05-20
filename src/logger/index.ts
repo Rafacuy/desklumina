@@ -1,14 +1,9 @@
-/**
- * Logger module with file logging and error tracking
- */
-
 import { writeFileSync, appendFileSync, existsSync, mkdirSync, statSync, renameSync, unlinkSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 
 type LogLevel = "debug" | "info" | "warn" | "error" | "fatal";
 
-const LOG_LEVELS: LogLevel[] = ["debug", "info", "warn", "error", "fatal"];
 const LOG_DIR = join(homedir(), ".config/desklumina/logs");
 const ERROR_LOG = join(LOG_DIR, "error.log");
 const GENERAL_LOG = join(LOG_DIR, "general.log");
@@ -82,6 +77,13 @@ function writeToFile(logFile: string, message: string) {
   }
 }
 
+/** Raw line to general.log (same queue/rotation as other logs).
+* Used by AI orchestration NDJSON. */
+
+export function enqueueGeneralLogLine(line: string): void {
+  writeToFile(GENERAL_LOG, line);
+}
+
 // Ensure logs are flushed on exit
 process.on("exit", () => {
   flushQueue(GENERAL_LOG);
@@ -104,9 +106,18 @@ function formatTimestamp(): string {
   return new Date().toISOString();
 }
 
+function formatConsoleTimestamp(): string {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+  return `${hours}:${minutes}:${seconds}`;
+}
+
 function log(level: LogLevel, module: string, message: string, error?: Error) {
   const timestamp = formatTimestamp();
-  const consoleMsg = `${timestamp} ${formatLevel(level)} [${module}] ${message}`;
+  const consoleTimestamp = formatConsoleTimestamp();
+  const consoleMsg = `${consoleTimestamp} ${formatLevel(level)} [${module}] ${message}`;
   const fileMsg = `${timestamp} [${level.toUpperCase()}] [${module}] ${message}`;
 
   // Console output

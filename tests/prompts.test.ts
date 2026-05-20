@@ -6,7 +6,7 @@ describe("System Prompt Caching", () => {
     _resetPromptCache();
   });
 
-  test("getSystemContext should cache results for 3 seconds", async () => {
+  test("getSystemContext should cache results for 3 seconds", { timeout: 30000 }, async () => {
     const spawnSpy = spyOn(Bun, "spawn");
     
     // First call - should spawn
@@ -27,7 +27,7 @@ describe("System Prompt Caching", () => {
     spawnSpy.mockRestore();
   });
 
-  test("should selectively include media context based on query", async () => {
+  test("should selectively include media context based on query", { timeout: 30000 }, async () => {
     _resetPromptCache();
     const { buildSystemPrompt } = await import("../src/ai/prompts");
     

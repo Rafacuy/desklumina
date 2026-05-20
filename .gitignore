@@ -33,6 +33,10 @@ chats
 .env.local
 .env*.local
 
+# --- User Configuration ---
+models.json
+settings.json
+
 # --- Caches ---
 # bun cache
 .bun

@@ -21,6 +21,7 @@
     "confirm": "確認",
     "enter": "決定",
     "error": "エラー",
+    "service_unavailable": "サービスは一時的に利用できません。",
     "esc": "Esc",
     "exit": "終了",
     "expand": "展開",

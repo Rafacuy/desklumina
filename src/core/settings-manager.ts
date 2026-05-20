@@ -1,6 +1,6 @@
 import { homedir } from "os";
 import { join } from "path";
-import { existsSync, readFileSync, mkdirSync, writeFileSync, renameSync, unlinkSync } from "fs";
+import { existsSync, readFileSync, mkdirSync, writeFileSync, renameSync } from "fs";
 import type { Settings } from "../types";
 import { DEFAULT_SETTINGS } from "../types";
 import { logger } from "../logger";
@@ -35,6 +35,9 @@ export class SettingsManager {
         const saved = JSON.parse(data);
         if (saved && typeof saved === "object") {
           this.settings = { ...DEFAULT_SETTINGS, ...saved };
+          this.settings.features = { ...DEFAULT_SETTINGS.features, ...(saved.features || {}) };
+          this.settings.tts = { ...DEFAULT_SETTINGS.tts, ...(saved.tts || {}) };
+          
           // Sync language with i18n IMMEDIATELY to avoid race conditions
           if (this.settings.language) {
             setLang(this.settings.language);

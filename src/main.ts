@@ -1,10 +1,13 @@
 #!/usr/bin/env bun
 import { t, tf, getAppVersion, cleanAssistantResponse } from "./utils";
 import { Lumina, ChatManager } from "./core";
+import { initializeAI } from "./ai";
+import { providerRegistry } from "./ai/registry";
+import { settingsManager } from "./core/settings-manager";
 import { rofiChatLoop } from "./ui";
 import { startLoader, stopLoader } from "./ui/loader";
 import { logger } from "./logger";
-import { env } from "./config/env";
+import { env, modelConfig } from "./config/env";
 import { DeskLuminaDaemon, DaemonClient } from "./daemon";
 import type { ToolCallbackPayload } from "./types";
 
@@ -165,6 +168,43 @@ async function main() {
 
     const finalOutput = [cleanResponse, toolOutput.trim()].filter(Boolean).join("\n\n") || "Done.";
     console.log(finalOutput);
+  } else if (mode === "provider") {
+    const subCommand = args[1];
+    
+    if (subCommand === "current") {
+      const primaryModel = modelConfig.primaryModel;      try {
+        const resolved = import("./ai/registry").then(m => m.modelRegistry.resolveModels(primaryModel, []));
+        resolved.then(res => {
+          if (res.length > 0) {
+            console.log(`Primary model configuration: ${primaryModel}`);
+            console.log(`Resolved provider: ${res[0]!.providerId}`);
+            console.log(`Resolved model: ${res[0]!.modelId}`);
+          } else {
+            console.log(`Primary model configuration: ${primaryModel}`);
+            console.log(`Could not resolve a registered provider for this model.`);
+          }
+        });
+      } catch (e) {
+        console.log(`Primary model: ${primaryModel}`);
+        console.log(`Error resolving model: ${(e as Error).message}`);
+      }
+    } else if (subCommand === "list") {
+      console.log("Available Providers:");
+      const providers = providerRegistry.list();
+      if (providers.length === 0) {
+        console.log("  No providers currently registered. Check your API keys.");
+      } else {
+        providers.forEach(p => {
+          console.log(`  - ${p.id} (${p.name})`);
+        });
+      }
+      
+    } else {
+      console.error("Usage:");
+      console.error("  bun start provider current");
+      console.error("  bun start provider list");
+      process.exit(1);
+    }
   } else if (mode === "--version") {
     const version = await getAppVersion();
     console.log(tf("app.version", { version }));

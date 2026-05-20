@@ -4,7 +4,7 @@ import { tokenManager } from "../src/core/token-manager";
 import { logger } from "../src/logger";
 
 // Mock the real streamGroq to simulate behavior without using mock.module on the whole file
-import * as groqModule from "../src/ai/groq";
+import * as orchestratorModule from "../src/ai/orchestrator";
 
 describe("Token Flow Integration", () => {
   let lumina: Lumina;
@@ -12,20 +12,21 @@ describe("Token Flow Integration", () => {
   beforeEach(() => {
     lumina = new Lumina();
     (tokenManager as any).usageHistory = [];
+    tokenManager.setTpmLimit(30_000);
     // Reset any existing mocks
-    if ((groqModule.streamGroq as any).mockRestore) {
-      (groqModule.streamGroq as any).mockRestore();
+    if ((orchestratorModule.streamAI as any).mockRestore) {
+      (orchestratorModule.streamAI as any).mockRestore();
     }
   });
 
   test("tracks tokens for successful chat interaction", async () => {
     const trackSpy = spyOn(tokenManager, "trackUsage");
-    const streamSpy = spyOn(groqModule, "streamGroq").mockImplementation(async function* () {
+    const streamSpy = spyOn(orchestratorModule, "streamAI").mockImplementation(async function* () {
       yield "Hello! How can I assist you today?";
       tokenManager.trackUsage(100);
     });
     
-    // We expect streamGroq to be called and then it should call trackUsage
+    // We expect streamAI to be called and then it should call trackUsage
     await lumina.chat("Hello there");
     
     expect(trackSpy).toHaveBeenCalled();
@@ -37,7 +38,7 @@ describe("Token Flow Integration", () => {
 
   test("warns when approaching TPM limit", async () => {
     const warnSpy = spyOn(logger, "warn");
-    const streamSpy = spyOn(groqModule, "streamGroq").mockImplementation(async function* () {
+    const streamSpy = spyOn(orchestratorModule, "streamAI").mockImplementation(async function* () {
       yield "Sure, how can I help?";
       tokenManager.trackUsage(2058); // Total will be 27058
     });
@@ -60,8 +61,8 @@ describe("Token Flow Integration", () => {
     const estimateSpy = spyOn(tokenManager, "estimateTokens");
     const trackSpy = spyOn(tokenManager, "trackUsage");
     
-    // Mock streamGroq to simulate token tracking without real API calls
-    const streamSpy = spyOn(groqModule, "streamGroq").mockImplementation(async function* (messages) {
+    // Mock streamAI to simulate token tracking without real API calls
+    const streamSpy = spyOn(orchestratorModule, "streamAI").mockImplementation(async function* (messages) {
       // Call estimateTokens to satisfy the spy in the test
       tokenManager.estimateTokens(messages[messages.length - 1].content);
       

@@ -18,13 +18,17 @@ Quick fixes for common issues encountered while using or installing DeskLumina.
 
 ### `401 Unauthorized` or Invalid API Key
 - **Symptom**: AI responses fail with an authorization error.
-- **Fix**: Check your `.env` file. Ensure `GROQ_API_KEY` is set correctly and has no leading or trailing spaces.
+- **Fix**: Check your `.env` file. Ensure the API key for your configured provider (e.g. `GROQ_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`) is set correctly and has no leading or trailing spaces.
+
+### Provider not registered
+- **Symptom**: Error message says `Provider is not registered: <name>`.
+- **Fix**: The provider's API key is missing or empty at startup. Set the corresponding `*_API_KEY` in `.env` and restart DeskLumina. Only providers with a non-empty API key are registered.
 
 ### Slow Responses or High Latency
 - **Symptom**: The assistant takes several seconds to respond.
 - **Fix**: 
   - Check your internet connection.
-  - Verify the Groq service status at [status.groq.com](https://status.groq.com/).
+  - Try switching to a different provider by changing `DESKLUMINA_MODEL` to use another provider's model.
 
 ---
 

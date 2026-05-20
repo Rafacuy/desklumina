@@ -31,10 +31,11 @@ function getActualDepth(obj: any): number {
 function toParsedToolCall(candidate: unknown): ParsedToolCall | null {
   if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return null;
 
-  const tool = "tool" in (candidate as any) ? (candidate as any).tool : undefined;
-  const args = "args" in (candidate as any) ? (candidate as any).args : undefined;
+  const obj = candidate as Record<string, unknown>;
+  const tool = obj.tool;
+  const args = obj.args;
 
-  if (typeof tool !== "string" || (typeof args !== "string" && typeof args !== "object")) {
+  if (typeof tool !== "string" || (typeof args !== "string" && typeof args !== "object" && args !== null)) {
     return null;
   }
 

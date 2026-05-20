@@ -21,6 +21,7 @@
     "confirm": "Confirm",
     "enter": "Enter",
     "error": "Error",
+    "service_unavailable": "Service Temporarily Unavailable",
     "esc": "Esc",
     "exit": "Exit",
     "expand": "Expand",

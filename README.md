@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.11.3-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.12.4-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/Framework-Bun-black?style=for-the-badge&logo=bun" alt="Framework">
   <img src="https://img.shields.io/badge/Status-STABLE-green?style=for-the-badge" alt="Build Status">
@@ -22,7 +22,7 @@
 
 DeskLumina automates your Linux desktop using Bun and TypeScript. It translates human intent into system execution, letting you control your environment through natural language.
 
-By leveraging the Groq API for near-instant inference and Rofi for a lightweight UI, DeskLumina provides a seamless, keyboard-centric experience for launching apps, managing files, and controlling media.
+By leveraging a multi-provider AI layer (Groq, OpenAI, Anthropic, Gemini, OpenRouter, Hugging Face) for near-instant inference and Rofi for a lightweight UI, DeskLumina provides a seamless, keyboard-centric experience for launching apps, managing files, and controlling media.
 
 ---
 
@@ -33,7 +33,7 @@ By leveraging the Groq API for near-instant inference and Rofi for a lightweight
 - 🤖 **Smart Daemon**: A persistent background service that eliminates startup overhead.
 - 🛡️ **Security Layer**: Automatic detection of dangerous commands with interactive confirmation.
 - 🔧 **Extensible Tools**: A modular system for controlling applications, files, media, and more.
-- 🌐 **Bilingual Support**: Fully localized for English and Indonesian.
+- 🌐 **Multilingual Support**: Fully localized for English, Indonesian, and Japanese.
 
 ---
 
@@ -54,7 +54,7 @@ By leveraging the Groq API for near-instant inference and Rofi for a lightweight
 
 ### Essential
 - **[Bun](https://bun.sh/)**: High-performance JS/TS runtime (v1.3.9+).
-- **[Groq API Key](https://console.groq.com/)**: Required for AI inference.
+- **API Key**: At least one provider key (Groq, OpenAI, Anthropic, Gemini, OpenRouter, or Hugging Face).
 - **[Rofi](https://github.com/davatorium/rofi)**: Standard Linux distribution package for the UI.
 
 ### Optional (Feature-dependent)
@@ -79,7 +79,7 @@ cp .env.example .env
 ```
 
 > [!IMPORTANT]
-> Edit your `.env` file and add your `GROQ_API_KEY` and preferred `MODEL_NAME`.
+> Edit your `.env` file and add at least one provider API key and your preferred `DESKLUMINA_MODEL` (format: `provider:model`).
 
 ---
 
@@ -140,7 +140,7 @@ flowchart TD
     end
 
     subgraph Backend ["Execution & Intelligence"]
-        AI["AI Layer - Groq"]
+        AI["AI Layer - Multi-Provider"]
         Security["Security Layer"]
         Tools["Tools Layer - Desktop"]
     end

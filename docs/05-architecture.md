@@ -35,7 +35,7 @@ flowchart TD
     end
 
     subgraph Backend [Execution & Intelligence]
-        AI[AI Layer - Groq]
+        AI[AI Layer - Multi-Provider]
         Security[Security Layer]
         Tools[Tools Layer - Desktop]
     end
@@ -57,10 +57,10 @@ flowchart TD
 
 The project is organized into several key directories under `src/`:
 
-- **`ai/`**: Handles AI interactions, including Groq streaming, TTS generation, and the contract-driven prompt builder.
+- **`ai/`**: Handles AI interactions through a multi-provider architecture. Includes provider adapters (Groq, OpenAI, Anthropic, Gemini, OpenRouter, Hugging Face), a shared streaming base, SSE parsing, model resolution with fallback chains, circuit-breaker health tracking, and the contract-driven prompt builder.
 - **`config/`**: Environment variable loading and application aliases.
 - **`constants/`**: Shared constants such as command timeouts, model defaults, and tool retries.
-- **`core/`**: The brain of the application, containing the Lumina orchestrator, Chat/Settings managers, and the tool planner.
+- **`core/`**: The brain of the application, containing the Lumina orchestrator, Chat/Settings managers (with provider preference storage), and the tool planner.
 - **`tools/`**: Desktop automation implementations (apps, files, music, etc.) and their formal contracts.
 - **`ui/`**: User interface components including Rofi logic, themes, and tool result rendering.
 - **`security/`**: Confirmation dialogs and dangerous command analysis.
@@ -70,7 +70,23 @@ The project is organized into several key directories under `src/`:
 
 ---
 
-## Core Components
+## Intelligence Layer (AI)
+
+DeskLumina features a robust, multi-provider intelligence layer designed for high availability and reliability.
+
+### Multi-Provider Orchestration
+**Path**: `src/ai/orchestrator.ts`  
+The orchestrator manages the lifecycle of an AI request across multiple providers. It uses a **provider-agnostic model resolution** system that allows fallback chains to span different platforms (e.g., failing over from Groq to OpenAI).
+
+### Fallback & Resilience Strategy
+1.  **Model Resolution**: The system expands configured models and aliases (like `fast` or `smart`) into a prioritized list of `{ providerId, modelId }`.
+2.  **Circuit Breaking**: The `CircuitBreaker` (`src/ai/provider/circuit-breaker.ts`) tracks the health of each provider. If a provider consistently fails (e.g., returns 5xx or 429), it is temporarily marked as "unhealthy" and skipped in the fallback chain.
+3.  **Automatic Failover**: When a primary model fails with a retriable error (Rate Limit, Server Error, or Model Not Found), the orchestrator immediately moves to the next model in the resolved list, regardless of whether it belongs to the same provider.
+4.  **Health Recovery**: Providers are automatically re-tested after a cooldown period to restore them to the active pool once they become responsive.
+
+### Token Management & Middleware
+- **Global Token Counter**: Tracks usage across all providers to enforce safe limits and provide metrics.
+- **Middleware Pipeline**: Requests pass through a pipeline for capability guarding (ensuring the model supports requested features), logging, and token counting before reaching the provider.
 
 ### Lumina (Orchestrator)
 **Path**: `src/core/lumina.ts`  
@@ -111,7 +127,7 @@ sequenceDiagram
     participant UI as User Interface
     participant Core as Lumina Orchestrator
     participant Prompt as Prompt Engine
-    participant AI as Groq AI
+    participant AI as AI Provider
     participant Sec as Security Engine
     participant OS as System Tools
 

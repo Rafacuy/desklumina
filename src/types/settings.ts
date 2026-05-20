@@ -15,7 +15,7 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  language: "id",
+  language: "en",
   features: {
     tts: false,
     toolDisplay: true,
@@ -23,7 +23,7 @@ export const DEFAULT_SETTINGS: Settings = {
     dangerousCommandConfirmation: true,
   },
   tts: {
-    voiceId: "id-ID-GadisNeural",
+    voiceId: "en-US-AvaNeural",
     speed: 1.0,
   },
 };

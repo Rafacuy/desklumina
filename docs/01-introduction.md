@@ -18,7 +18,7 @@ DeskLumina is an intelligent, high-performance desktop automation agent designed
 
 ## What is DeskLumina?
 
-DeskLumina translates human intent into system execution. Built for native Linux integration, it leverages the speed of **Bun** and the intelligence of the **Groq API** to provide an assistant that feels like a natural extension of your desktop.
+DeskLumina translates human intent into system execution. Built for native Linux integration, it leverages the speed of **Bun** and a **multi-provider AI layer** (Groq, OpenAI, Anthropic, Gemini, OpenRouter, Hugging Face) to provide an assistant that feels like a natural extension of your desktop.
 
 ## Core Philosophy
 
@@ -26,7 +26,7 @@ DeskLumina translates human intent into system execution. Built for native Linux
 Rather than memorizing keyboard shortcuts, CLI arguments, or configuration syntax, you simply tell DeskLumina what you want to accomplish in plain language.
 
 ### Performance & Responsiveness
-DeskLumina streams model output from the Groq API and can optionally run text-to-speech for the assistant response.
+DeskLumina streams model output from the configured AI provider and can optionally run text-to-speech for the assistant response.
 
 ### Secure by Design
 The system analyzes every command for safety. Destructive or sensitive operations require explicit user confirmation through a Rofi-based dialog, ensuring you remain in full control.
@@ -53,7 +53,7 @@ The system analyzes every command for safety. Destructive or sensitive operation
 - **🤖 Smart Daemon**: A persistent background service that eliminates startup overhead.
 - **🛡️ Security Layer**: Automatic detection of dangerous commands with interactive confirmation.
 - **🔧 Extensible Tools**: A modular system for controlling applications, files, media, and more.
-- **🌐 Bilingual**: Native support for English, Indonesian, and Japanese.
+- **🌐 Multilingual**: Native support for English, Indonesian, and Japanese.
 
 ---
 
@@ -69,7 +69,7 @@ Modern desktops are powerful but often complex. DeskLumina was created for users
 ## How It Works
 
 1.  **Input**: Receives your command via Rofi, the terminal, or a daemon socket.
-2.  **Intent Parsing**: Sends the input to the Groq API to determine required actions.
+2.  **Intent Parsing**: Sends the input to the configured AI provider to determine required actions.
 3.  **Tool Selection**: The LLM generates structured tool calls.
 4.  **Security Check**: The system analyzes tools for dangerous patterns.
 5.  **Execution**: DeskLumina executes the tools, such as launching an app or running a script.
@@ -81,7 +81,7 @@ Modern desktops are powerful but often complex. DeskLumina was created for users
 
 - **Runtime**: [Bun](https://bun.sh/) (Fast JS/TS runtime)
 - **Language**: TypeScript
-- **AI Inference**: [Groq API](https://groq.com/) (model configured via `MODEL_NAME`)
+- **AI Inference**: Multi-provider (Groq, OpenAI, Anthropic, Gemini, OpenRouter, Hugging Face) — model configured via `DESKLUMINA_MODEL` or `models.json`
 - **UI Architecture**: [Rofi](https://github.com/davatorium/rofi)
 - **TTS Engine**: [Edge TTS](https://github.com/rany2/edge-tts) (Universal)
 - **Automation**: shell commands via `bash`, plus optional `dunstify` (notifications), `clipcatctl` (clipboard), and `mpc` (media).

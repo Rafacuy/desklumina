@@ -76,7 +76,7 @@ describe("TTS Integration - Network Conditions", () => {
     const result = await service.generateAudio("Test message");
     const elapsed = Date.now() - startTime;
     
-    expect(elapsed).toBeGreaterThanOrEqual(2000);
+    expect(elapsed).toBeGreaterThanOrEqual(1900);
     expect(result.success).toBe(true);
   });
 

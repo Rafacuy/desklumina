@@ -1,16 +1,17 @@
-import { spawn } from "bun";
+import { getLang, t } from "../utils/i18n";
 import { settingsManager } from "../core/settings-manager";
 import type { Settings } from "../types";
-import { t, getLang } from "../utils/i18n";
-
-const THEME_PATH = `${process.env.HOME}/.config/desklumina/src/ui/themes/lumina.rasi`;
-
+import { spawn } from "bun";
+import { join } from "path";
+import { homedir } from "os";
 import { rofiMenu } from "./rofi";
+
+const THEME_PATH = join(homedir(), ".config/desklumina/themes/lumina.rasi");
 
 export async function rofiSettings(): Promise<boolean> {
   const settings = settingsManager.get();
   const currentLang = getLang();
-
+  
   // Helper for toggle labels
   const getToggleLabel = (feature: keyof Settings["features"], icon: string, label: string) => {
     const isEnabled = settings.features[feature];
@@ -48,7 +49,7 @@ export async function rofiSettings(): Promise<boolean> {
   const resultObj = await rofiMenu(
     menuItems.join("\n"), 
     t("ui.settings.title"), 
-    "listview { lines: 13; }",
+    "listview { lines: 11; }",
     t("ui.settings.search"),
     `󰌑 ${t("common.select")}/${t("common.toggle")} │ 󱊷 ${t("common.back")}/${t("common.exit")} │ 󰍉 ${t("common.search")}`
   );

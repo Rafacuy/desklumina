@@ -21,8 +21,8 @@ export class Validation {
   static validateEnv(env: Record<string, string | undefined>): void {
     const missing: string[] = [];
 
-    if (!env.GROQ_API_KEY) missing.push("GROQ_API_KEY");
-    if (!env.MODEL_NAME) missing.push("MODEL_NAME");
+    // Removed GROQ_API_KEY strict requirement. Handled by runtime config validation.
+    if (env.MODEL_NAME === undefined || env.MODEL_NAME === "") missing.push("MODEL_NAME");
 
     if (missing.length > 0) {
       throw new Error(
