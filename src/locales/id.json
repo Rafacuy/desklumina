@@ -38,6 +38,7 @@
     "attempt": "(percobaan {count})",
     "save_exit": "Simpan & Keluar",
     "search": "Cari",
+    "default": "Default",
     "select": "Pilih",
     "send": "Kirim",
     "toggle": "Ganti",
@@ -178,6 +179,12 @@
     "select_chat": "Pilih Chat",
     "send_message": "Kirim pesan",
     "settings": {
+      "no_voices_for_language": "Tidak ada suara yang tersedia untuk bahasa Anda",
+      "section": {
+        "ai": "Asisten AI",
+        "history": "Riwayat",
+        "system": "Sistem"
+      },
       "change_tts_voice": "Ganti Suara TTS",
       "chat_history": "Riwayat Chat",
       "confirmation": "Konfirmasi",

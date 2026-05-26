@@ -38,6 +38,7 @@
     "attempt": "({count} 回目の試行)",
     "save_exit": "保存して終了",
     "search": "検索",
+    "default": "デフォルト",
     "select": "選択",
     "send": "送信",
     "toggle": "切り替え",
@@ -178,6 +179,12 @@
     "select_chat": "チャットを選択",
     "send_message": "メッセージを送信",
     "settings": {
+      "no_voices_for_language": "お使いの言語で利用可能な音声がありません",
+      "section": {
+        "ai": "AI アシスタント",
+        "history": "履歴",
+        "system": "システム"
+      },
       "change_tts_voice": "TTS 音声を変更",
       "chat_history": "チャット履歴",
       "confirmation": "確認",

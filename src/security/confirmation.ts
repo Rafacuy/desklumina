@@ -58,6 +58,7 @@ export async function rofiConfirm(
   const proc = spawn(
     [
       "rofi",
+      "-replace",        
       "-dmenu",
       "-p",
       `${severityIcon} ${t("common.confirm")}`,

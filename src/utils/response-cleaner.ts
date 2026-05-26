@@ -34,7 +34,7 @@ export function cleanAssistantResponse(text: string): string {
     .replace(/\n?Summary:\s.*?(?=\n|$)/gis, "")
     .replace(/\n?Actions:\s.*?(?=\n|$)/gis, "")
     .replace(/\n?Results:\s*\n(?:\d+\.\s[a-zA-Z0-9._\-\/ ]+\n?)+/gis, "")
-    .replace(/^━+$/gm, "")
+    .replace(/^\s+·\s.+$/gm, "")
     .replace(/^\n+/, "")
     .replace(/\n+$/, "")
     .trim();

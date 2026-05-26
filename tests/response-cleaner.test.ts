@@ -38,8 +38,8 @@ describe("Response Cleaner (Duplicate Logic)", () => {
     expect(result).toBe("Text");
   });
 
-  test("removes separator lines", () => {
-    const input = "Text\n━━━━━━━━━━\nMore text";
+  test("removes pending tool lines", () => {
+    const input = "Text\n  · 💻 terminal  📁 file\nMore text";
     const result = cleanAssistantResponse(input);
     expect(result).toBe("Text\n\nMore text");
   });
@@ -63,7 +63,7 @@ Some text
 \`\`\`
 <tool:app>content</tool:app>
 Summary: Done
-━━━━━━━━━━
+  · 💻 terminal
 Final text`;
     
     const result = cleanAssistantResponse(input);
@@ -72,7 +72,7 @@ Final text`;
     expect(result).not.toContain("```json");
     expect(result).not.toContain("<tool:");
     expect(result).not.toContain("Summary:");
-    expect(result).not.toContain("━");
+    expect(result).not.toContain("·");
   });
 
   describe("Robustness - Tool Call Removal", () => {

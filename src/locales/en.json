@@ -38,6 +38,7 @@
     "attempt": "(attempt {count})",
     "save_exit": "Save & Exit",
     "search": "Search",
+    "default": "Default",
     "select": "Select",
     "send": "Send",
     "toggle": "Toggle",
@@ -178,6 +179,12 @@
     "select_chat": "Select Chat",
     "send_message": "Send message",
     "settings": {
+      "no_voices_for_language": "No voices available for your language",
+      "section": {
+        "ai": "AI Assistant",
+        "history": "History",
+        "system": "System"
+      },
       "change_tts_voice": "Change TTS Voice",
       "chat_history": "Chat History",
       "confirmation": "Confirmation",

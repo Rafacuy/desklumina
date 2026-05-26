@@ -1,119 +1,271 @@
+/* ████████╗██╗  ██╗███████╗███╗   ███╗███████╗ */
+/* ╚══██╔══╝██║  ██║██╔════╝████╗ ████║██╔════╝ */
+/*    ██║   ███████║█████╗  ██╔████╔██║█████╗   */
+/*    ██║   ██╔══██║██╔══╝  ██║╚██╔╝██║██╔══╝   */
+/*    ██║   ██║  ██║███████╗██║ ╚═╝ ██║███████╗ */
+/*    ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝╚══════╝ */
+/*
+ * WELCOMEE!
+ * This is a configuration theme for DeskLumina!
+ *
+ * [!!] Alias contract (referenced by -theme-str overrides in rofi.ts):
+ *   @bg, @fg, @accent-color, @border-subtle, @accent-light,
+ *   @text-primary, @text-secondary, @text-muted, @surface
+ *   
+ * DO NOT rename without updating rofi.ts!!
+ */
+
+
+/*  ▄▄ • ▄▄▌        ▄▄▄▄·  ▄▄▄· ▄▄▌   */
+/* ▐█ ▀ ▪██•  ▪     ▐█ ▀█▪▐█ ▀█ ██•   */
+/* ▄█ ▀█▄██▪   ▄█▀▄ ▐█▀▀█▄▄█▀▀█ ██▪   */
+/* ▐█▄▪▐█▐█▌▐▌▐█▌.▐▌██▄▪▐█▐█ ▪▐▌▐█▌▐▌ */
+/* ·▀▀▀▀ .▀▀▀  ▀█▄▀▪·▀▀▀▀  ▀  ▀ .▀▀▀  */
 * {
-    /* Color palette */
-    white: #ffffff;
-    surface: #f8fafc;
-    border-subtle: #e2e8f0;
-    text-primary: #0f172a;
-    text-secondary: #475569;
-    text-muted: #94a3b8;
-    accent: #3b82f6;
-    accent-light: #eff6ff;
+    /* Base surfaces */
+    white:            #f7f6f4;
+    surface:          #f0efec;
+    surface-alt:      #eceae6;
 
-    bg: @white;
-    fg: @text-primary;
-    accent-color: @accent;
+    /* Borders */
+    border-subtle:    #dedad6;
+    border-focus:     #c4bfba;
 
+    /* Typography scale */
+    text-primary:     #1a1917;
+    text-secondary:   #6b6762;
+    text-muted:       #a09b96;
+
+    /* Accent */
+    accent:           #4f46e5;
+    accent-muted:     #6d64ef;
+    accent-light:     #eceafa;   
+    accent-surface:   #f5f4fd;   
+
+    /* Semantic */
+    error:            #dc2626;
+    success:          #16a34a;
+
+    /* Aliases (required by rofi.ts) */
+    bg:               @white;
+    fg:               @text-primary;
+    accent-color:     @accent;
+
+    /* Base typeface*/
     font: "JetBrainsMono Nerd Font 10";
 }
 
+
+/* ▄▄▌ ▐ ▄▌▪   ▐ ▄ ·▄▄▄▄        ▄▄▌ ▐ ▄▌ */
+/* ██· █▌▐███ •█▌▐███▪ ██ ▪     ██· █▌▐█ */
+/* ██▪▐█▐▐▌▐█·▐█▐▐▌▐█· ▐█▌ ▄█▀▄ ██▪▐█▐▐▌ */
+/* ▐█▌██▐█▌▐█▌██▐█▌██. ██ ▐█▌.▐▌▐█▌██▐█▌ */
+/*  ▀▀▀▀ ▀▪▀▀▀▀▀ █▪▀▀▀▀▀•  ▀█▄▀▪ ▀▀▀▀ ▀▪ */
 window {
-    anchor: northeast;
-    location: northeast;
-    x-offset: -20;
-    y-offset: 20;
-    width: 480px;
-    border: 1px;
-    border-color: @border-subtle;
-    border-radius: 16px;
-    padding: 0px;
+    anchor:           northeast;
+    location:         northeast;
+    x-offset:         -7px;    /* gap from screen edge */
+    y-offset:          28px;   /* standard 28–30px top panel */
+
+    width:            540px;
+
+    /* Border */
+    border:           1px;
+    border-color:     @border-subtle;
+    border-radius:    12px;
+
+    padding:          0px;
     background-color: @bg;
-    transparency: "real";
+    transparency:     "real";
 }
 
+
+/* ▄▄▌   ▄▄▄·  ▄· ▄▌      ▄• ▄▌▄▄▄▄▄ */
+/* ██•  ▐█ ▀█ ▐█▪██▌▪     █▪██▌•██   */
+/* ██▪  ▄█▀▀█ ▐█▌▐█▪ ▄█▀▄ █▌▐█▌ ▐█.▪ */
+/* ▐█▌▐▌▐█ ▪▐▌ ▐█▀·.▐█▌.▐▌▐█▄█▌ ▐█▌· */
+/* .▀▀▀  ▀  ▀   ▀ •  ▀█▄▀▪ ▀▀▀  ▀▀▀  */
 mainbox {
-    padding: 0px;
-    spacing: 0px;
+    padding:          0px;
+    spacing:          0px;
     background-color: transparent;
-    children: [inputbar, listview, message];
+    children:         [inputbar, listview, message];
 }
 
+
+/* ▪   ▐ ▄  ▄▄▄·▄• ▄▌▄▄▄▄▄    ▄▄▄▄·  ▄▄▄· ▄▄▄   */
+/* ██ •█▌▐█▐█ ▄██▪██▌•██      ▐█ ▀█▪▐█ ▀█ ▀▄ █· */
+/* ▐█·▐█▐▐▌ ██▀·█▌▐█▌ ▐█.▪    ▐█▀▀█▄▄█▀▀█ ▐▀▀▄  */
+/* ▐█▌██▐█▌▐█▪·•▐█▄█▌ ▐█▌·    ██▄▪▐█▐█ ▪▐▌▐█•█▌ */
+/* ▀▀▀▀▀ █▪.▀    ▀▀▀  ▀▀▀     ·▀▀▀▀  ▀  ▀ .▀  ▀ */
 inputbar {
-    padding: 16px 20px;
-    spacing: 12px;
-    background-color: @bg;
-    children: [prompt, entry];
+    padding:          13px 18px;
+    spacing:          10px;
+    children:         [prompt, entry];
+
+    /* Bottom rule only */
+    border:           0px 0px 1px 0px;
+    border-color:     @border-subtle;
 }
 
 prompt {
-    text-color: @accent-color;
-    font: "JetBrainsMono Nerd Font Bold 11";
-    vertical-align: 0.5;
+    text-color:       @accent-color;
+    font:             "JetBrainsMono Nerd Font Bold 10";
+    vertical-align:   0.5;
+    padding:          0px 4px 0px 0px;
 }
 
 entry {
-    text-color: @fg;
-    placeholder: "Type your message...";
+    text-color:        @fg;
+    placeholder:       "Type your message…";
     placeholder-color: @text-muted;
-    background-color: transparent;
-    vertical-align: 0.5;
+    background-color:  transparent;
+    vertical-align:    0.5;
+    font:              "JetBrainsMono Nerd Font 10.5";
 }
 
+
+/*  ▄ .▄    ▪       ▐ ▄     ▄▄▄▄▄ */
+/* ██▪▐█    ██     •█▌▐█    •██   */
+/* ██▀▐█    ▐█·    ▐█▐▐▌     ▐█.▪ */
+/* ██▌▐▀    ▐█▌    ██▐█▌     ▐█▌· */
+/* ▀▀▀ ·    ▀▀▀    ▀▀ █▪     ▀▀▀  */
 message {
     background-color: @surface;
-    padding: 10px 20px;
-    text-color: @text-secondary;
-    border-top: 1px solid;
-    border-color: @border-subtle;
-    font: "JetBrainsMono Nerd Font 9";
+    padding:          8px 18px;
+
+    /* Top rule */
+    border:           1px 0px 0px 0px;
+    border-color:     @border-subtle;
 }
 
 textbox {
     background-color: transparent;
-    text-color: @text-secondary;
-    font: "JetBrainsMono Nerd Font 9";
-    vertical-align: 0.5;
+    text-color:       @text-muted;    /* hints are tertiary*/
+    font:             "JetBrainsMono Nerd Font 9";
+    vertical-align:   0.5;
 }
 
+
+/* ▄▄▌  ▪  .▄▄ · ▄▄▄▄▄     ▌ ▐·▪  ▄▄▄ .▄▄▌ ▐ ▄▌ */
+/* ██•  ██ ▐█ ▀. •██      ▪█·█▌██ ▀▄.▀·██· █▌▐█ */
+/* ██▪  ▐█·▄▀▀▀█▄ ▐█.▪    ▐█▐█•▐█·▐▀▀▪▄██▪▐█▐▐▌ */
+/* ▐█▌▐▌▐█▌▐█▄▪▐█ ▐█▌·     ███ ▐█▌▐█▄▄▌▐█▌██▐█▌ */
+/* .▀▀▀ ▀▀▀ ▀▀▀▀  ▀▀▀     . ▀  ▀▀▀ ▀▀▀  ▀▀▀▀ ▀▪ */
 listview {
-    lines: 8;
-    fixed-height: false;
-    scrollbar: true;
-    border: 0;
-    padding: 8px 12px;
-    spacing: 4px;
+    lines:            8;
+    markup-rows:      true;
+
+    /*
+     * false -> window height adapts to actual item count
+     * Eliminates the 5line ghost space when only 3 items are shown
+     * Override to true in -theme-str when a fixed-height container
+     * is required (e.g., rofiExpandedResponse)
+     */
+    fixed-height:     false;
+
+    scrollbar:        true;
+    border:           0;
+
+    /* Uniform padding */
+    padding:          6px;
+
+    /* Tighter gap*/
+    spacing:          2px;
+
     background-color: @bg;
 }
 
 scrollbar {
     background-color: transparent;
-    handle-color: @text-muted;
-    handle-width: 4px;
-    border-radius: 2px;
-    width: 6px;
-    margin: 8px 4px;
+    handle-color:     @border-focus;   
+    handle-width:     3px;
+    border-radius:    2px;
+    width:            5px;
+    margin:           6px 3px;
 }
 
+
+/* ▄▄▌  ▪  .▄▄ · ▄▄▄▄▄    ▪  ▄▄▄▄▄▄▄▄ .• ▌ ▄ ·. .▄▄ ·  */
+/* ██•  ██ ▐█ ▀. •██      ██ •██  ▀▄.▀··██ ▐███▪▐█ ▀.  */
+/* ██▪  ▐█·▄▀▀▀█▄ ▐█.▪    ▐█· ▐█.▪▐▀▀▪▄▐█ ▌▐▌▐█·▄▀▀▀█▄ */
+/* ▐█▌▐▌▐█▌▐█▄▪▐█ ▐█▌·    ▐█▌ ▐█▌·▐█▄▄▌██ ██▌▐█▌▐█▄▪▐█ */
+/* .▀▀▀ ▀▀▀ ▀▀▀▀  ▀▀▀     ▀▀▀ ▀▀▀  ▀▀▀ ▀▀  █▪▀▀▀ ▀▀▀▀  */
+/* Base element */
 element {
-    padding: 10px 16px;
-    border-radius: 10px;
-    spacing: 12px;
+    padding:          8px 12px;
+    border-radius:    8px;
+    spacing:          10px;
     background-color: transparent;
-    text-color: @text-primary;
+    text-color:       @text-primary;
+    orientation:      horizontal;
 }
 
+/* normal state (odd rows) */
+element normal.normal {
+    background-color: transparent;
+    text-color:       @text-primary;
+}
+
+element normal.urgent {
+    background-color: transparent;
+    text-color:       @error;
+}
+
+element normal.active {
+    background-color: @accent-surface;
+    text-color:       @accent;
+}
+
+/* Alternate rows */
+element alternate.normal {
+    /* 2% darker than bg,visible on calibrated displays,invisible on bad ones */
+    background-color: @surface;
+    text-color:       @text-primary;
+    border-radius:    8px;
+}
+
+element alternate.urgent {
+    background-color: @surface;
+    text-color:       @error;
+}
+
+element alternate.active {
+    background-color: @accent-surface;
+    text-color:       @accent;
+}
+
+/* Selected state */
 element selected.normal {
     background-color: @accent-light;
-    text-color: @accent-color;
+    text-color:       @accent;
 }
+
+element selected.urgent {
+    background-color: @accent-light;
+    text-color:       @error;
+}
+
+element selected.active {
+    background-color: @accent-light;
+    text-color:       @accent;
+}
+
+/* ▪  ▄▄▄▄▄▄▄▄ .• ▌ ▄ ·.      ▄▄·        ▐ ▄ ▄▄▄▄▄▄▄▄ . ▐ ▄ ▄▄▄▄▄ */
+/* ██ •██  ▀▄.▀··██ ▐███▪    ▐█ ▌▪▪     •█▌▐█•██  ▀▄.▀·•█▌▐█•██   */
+/* ▐█· ▐█.▪▐▀▀▪▄▐█ ▌▐▌▐█·    ██ ▄▄ ▄█▀▄ ▐█▐▐▌ ▐█.▪▐▀▀▪▄▐█▐▐▌ ▐█.▪ */
+/* ▐█▌ ▐█▌·▐█▄▄▌██ ██▌▐█▌    ▐███▌▐█▌.▐▌██▐█▌ ▐█▌·▐█▄▄▌██▐█▌ ▐█▌· */
+/* ▀▀▀ ▀▀▀  ▀▀▀ ▀▀  █▪▀▀▀    ·▀▀▀  ▀█▄▀▪▀▀ █▪ ▀▀▀  ▀▀▀ ▀▀ █▪ ▀▀▀  */
 
 element-text {
     background-color: inherit;
-    text-color: inherit;
-    vertical-align: 0.5;
+    text-color:       inherit;
+    vertical-align:   0.5;
+    highlight:        bold;    /* matched search characters are bolded */
 }
 
 element-icon {
-    size: 1.1em;
+    size:             1.1em;
     background-color: transparent;
-    vertical-align: 0.5;
+    vertical-align:   0.5;
 }

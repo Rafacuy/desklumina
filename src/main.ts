@@ -137,8 +137,9 @@ async function main() {
           process.stdout.write(chunk);
         });
 
-        if (toolOutput.trim()) {
-          process.stdout.write(`\n${toolOutput.trim()}`);
+        const cleanToolOutput = cleanAssistantResponse(toolOutput);
+        if (cleanToolOutput) {
+          process.stdout.write(`\n${cleanToolOutput}`);
         }
         console.log("\n");
         prompt();
@@ -165,8 +166,9 @@ async function main() {
     });
 
     const cleanResponse = cleanAssistantResponse(response);
+    const cleanToolOutput = cleanAssistantResponse(toolOutput);
 
-    const finalOutput = [cleanResponse, toolOutput.trim()].filter(Boolean).join("\n\n") || "Done.";
+    const finalOutput = [cleanResponse, cleanToolOutput].filter(Boolean).join("\n\n") || "Done.";
     console.log(finalOutput);
   } else if (mode === "provider") {
     const subCommand = args[1];
@@ -232,7 +234,7 @@ async function main() {
       
       const cleanInitialResponse = cleanAssistantResponse(initialResponse);
       const cleanCallbackResponse = cleanAssistantResponse(callbackResponse);
-      const cleanToolDisplay = toolDisplay.trim();
+      const cleanToolDisplay = cleanAssistantResponse(toolDisplay);
 
       const finalOutput = [cleanInitialResponse, cleanToolDisplay, cleanCallbackResponse]
         .filter(Boolean)

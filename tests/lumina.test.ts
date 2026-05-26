@@ -79,12 +79,23 @@ mock.module("../src/logger", () => ({
   },
 }));
 
-mock.module("../src/ui/tool-display", () => ({
-  ToolDisplay: {
-    formatResultsInline: mock(() => "formatted-results"),
-    formatRetryUpdate: mock(() => "retry-update"),
-  },
-}));
+import { ToolDisplay } from "../src/ui/tool-display";
+
+let formatInlineSpy: ReturnType<typeof spyOn>;
+let formatResultsInlineSpy: ReturnType<typeof spyOn>;
+let formatRetryUpdateSpy: ReturnType<typeof spyOn>;
+
+beforeAll(() => {
+  formatInlineSpy = spyOn(ToolDisplay, "formatInline").mockReturnValue("formatted-inline" as any);
+  formatResultsInlineSpy = spyOn(ToolDisplay, "formatResultsInline").mockReturnValue("formatted-results" as any);
+  formatRetryUpdateSpy = spyOn(ToolDisplay, "formatRetryUpdate").mockReturnValue("retry-update" as any);
+});
+
+afterAll(() => {
+  formatInlineSpy?.mockRestore();
+  formatResultsInlineSpy?.mockRestore();
+  formatRetryUpdateSpy?.mockRestore();
+});
 
 mock.module("../src/utils", () => ({
   t: (value: string) => value,

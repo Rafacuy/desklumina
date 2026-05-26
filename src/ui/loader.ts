@@ -16,6 +16,10 @@ const MESSAGES = [
 let loaderInterval: Timer | null = null;
 let currentIndex = 0;
 
+export function randomLoader(): string {
+  return t(MESSAGES[Math.floor(Math.random() * MESSAGES.length)]!);
+}
+
 export function startLoader() {
   currentIndex = 0;
   process.stdout.write(t(MESSAGES[currentIndex] || ""));

@@ -31,7 +31,7 @@ export interface ToolExecutionSummary {
 }
 
 export interface ToolCallbackPayload {
-  type: "retry" | "results";
+  type: "pending" | "retry" | "results";
   text: string;
   results?: ToolResult[];
   tools?: string[];

@@ -162,6 +162,16 @@ export class Lumina {
       }
 
       logger.info("lumina", `Executing ${initialToolCalls.length} tool call(s)`);
+
+      const pendingStrip = ToolDisplay.formatInline(initialToolCalls);
+      if (settings.features.toolDisplay && pendingStrip) {
+        onChunk?.("", {
+          type: "pending",
+          text: `\n${pendingStrip}`,
+          tools: initialToolCalls.map((c) => c.tool),
+        });
+      }
+
       const allToolResults: ToolResult[] = [];
       let pendingToolCalls: ToolCall[] = initialToolCalls;
       let retrySourceResponse = fullResponse;
