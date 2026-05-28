@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.12.4-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.13.3-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/Framework-Bun-black?style=for-the-badge&logo=bun" alt="Framework">
   <img src="https://img.shields.io/badge/Status-STABLE-green?style=for-the-badge" alt="Build Status">
@@ -93,6 +93,7 @@ bun run start
 
 - **App**: "open browser" or "launch telegram"
 - **Files**: "list files in ~/Downloads" or "create a folder named Work"
+- **Math**: "what is 15% of 340?" or "convert 100 km to miles"
 - **Media**: "play music" or "volume 50"
 - **System**: "what's the current date?"
 

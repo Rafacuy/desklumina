@@ -9,10 +9,11 @@ Learn how to master DeskLumina's interactive and terminal interfaces.
 - [Interactive UI (Rofi)](#interactive-ui-rofi)
   - [Main Chat Interface](#main-chat-interface)
   - [Chat History Preview](#chat-history-preview)
+  - [Agentic Workflow](#agentic-workflow)
   - [Settings Menu](#settings-menu)
 - [Terminal Mode](#terminal-mode)
 - [CLI Arguments](#cli-arguments)
-- [One-Off Commands](#one-off-commands)
+- [Multi-Step Tasks](#multi-step-tasks)
 
 ---
 
@@ -25,14 +26,22 @@ DeskLumina's primary interface is built on **Rofi**.
 **Launch**: `bun run start`
 
 - **Type to Chat**: Type your natural language command and press `Enter`.
-- **Tool Display**: If enabled, tool execution summaries appear under the assistant response.
-- **TTS Feedback**: If enabled, the assistant will speak its response concurrently.
+- **Tool Display**: If enabled, real-time tool execution updates appear under the assistant response.
+- **TTS Feedback**: If enabled, the assistant will speak its final response.
 
 ### Chat History Preview
 
 **Access**: Press `Tab` to expand, then select **Select Chat**.
 
 - Chats are saved under `~/.config/desklumina/chats/` as JSON files.
+
+### Agentic Workflow
+
+DeskLumina now uses a ReAct-based agent loop. This means it can:
+- **Reason**: Analyze your request and determine which tools are needed.
+- **Act**: Execute one or more tools sequentially.
+- **Refine**: Use tool results to decide if more steps are required.
+- **Self-Correct**: Automatically retry tool calls if transient errors occur.
 
 ### Settings Menu
 
@@ -41,7 +50,7 @@ DeskLumina's primary interface is built on **Rofi**.
 The settings menu allows you to customize DeskLumina's behavior without editing files:
 - **Toggle TTS**: Enable or disable voice output.
 - **Language**: Switch between English, Indonesian, and Japanese.
-- **Tool Display**: Show or hide tool execution logs.
+- **Tool Display**: Show or hide real-time tool execution logs.
 - **Security Confirmation**: Toggle interactive checks for dangerous commands.
 - **TTS Voice & Speed**: Choose a voice and adjust playback speed.
 
@@ -54,7 +63,7 @@ This mode is for development, debugging, or users who prefer the terminal enviro
 **Launch**: `bun run dev`
 
 - Provides a persistent chat loop directly in your shell.
-- Best for long-form conversations where you need to copy and paste text.
+- Best for long-form conversations and debugging agent reasoning.
 
 ### Terminal Chat Commands
 
@@ -79,10 +88,8 @@ DeskLumina supports several CLI flags for different use cases:
 | `--daemon` | Start the background daemon service. |
 | `--daemon-status` | Check if the daemon is running. |
 | `--send "<message>"` | Send a command to the running daemon. |
-| `--exec "<message>"` | Execute a single message and print the assistant response. |
+| `--exec "<message>"` | Execute a single message through the agent loop. |
 | `--version` | Display the current version and configured model. |
-| `provider list` | List all registered providers. |
-| `provider current` | Show the active primary model and resolved provider. |
 
 ### Passing flags via Bun scripts
 
@@ -95,18 +102,18 @@ bun run start -- --chat
 
 ---
 
-## One-Off Commands
+## Multi-Step Tasks
 
-You can execute a single desktop action directly from your terminal or a keyboard shortcut without entering an interactive loop.
+The new agent architecture allows for complex, multi-step desktop automation.
 
-**Command**: `bun run start -- --exec "your message"`
+**Command**: `bun run start -- --exec "your complex request"`
 
 ### Examples:
-- `bun run start -- --exec "open telegram"`
-- `bun run start -- --exec "file list ~"`
-- `bun run start -- --exec "music next"`
+- "Find the project report in my documents, read it, and summarize the key points."
+- "Check if Telegram is running, if not open it, and then clear my clipboard."
+- "Calculate the sum of all numbers in a text file and notify me of the result."
 
-> **Pro Tip**: Bind these commands to your desktop's hotkeys for instant access.
+The agent will autonomously execute the necessary tools and provide a final synthesis.
 
 ---
 

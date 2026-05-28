@@ -38,6 +38,7 @@
     "attempt": "({count} 回目の試行)",
     "save_exit": "保存して終了",
     "search": "検索",
+    "default": "デフォルト",
     "select": "選択",
     "send": "送信",
     "toggle": "切り替え",
@@ -70,6 +71,26 @@
   "history": {
     "tool_action": "アクション",
     "tool_result": "完了"
+  },
+  "math": {
+    "result_label": "結果",
+    "expression_label": "式",
+    "loading": "計算中...",
+    "error": {
+      "parse": "式を解析できません: {expression}",
+      "division_by_zero": "ゼロ除算",
+      "overflow": "結果が表現可能な範囲を超えています",
+      "empty_expression": "式が空です",
+      "unsupported": "サポートされていない操作: {hint}",
+      "timeout": "評価がタイムアウトしました",
+      "input_too_long": "式が最大文字数 {max} を超えています",
+      "forbidden_pattern": "式に許可されていないパターンが含まれています"
+    },
+    "unit_result": "{value} {unit}"
+  },
+  "signal": {
+    "soft_fail": "リクエストを完了できませんでした。",
+    "soft_fail_reason": "作業中に問題が発生しました: {reason}"
   },
   "security": {
     "approved": "危険なコマンドがユーザーによって承認されました",
@@ -178,6 +199,12 @@
     "select_chat": "チャットを選択",
     "send_message": "メッセージを送信",
     "settings": {
+      "no_voices_for_language": "お使いの言語で利用可能な音声がありません",
+      "section": {
+        "ai": "AI アシスタント",
+        "history": "履歴",
+        "system": "システム"
+      },
       "change_tts_voice": "TTS 音声を変更",
       "chat_history": "チャット履歴",
       "confirmation": "確認",

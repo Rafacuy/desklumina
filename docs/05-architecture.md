@@ -8,12 +8,18 @@ Understand the internal design, module organization, and prompt architecture of 
 
 - [System Overview](#system-overview)
 - [Module Map](#module-map)
+- [Intelligence Layer (AI)](#intelligence-layer-ai)
+  - [Multi-Provider Orchestration](#multi-provider-orchestration)
+  - [Fallback & Resilience Strategy](#fallback--resilience-strategy)
+  - [Token Management & Middleware](#token-management--middleware)
+- [Agentic Workflow](#agentic-workflow)
+  - [Agent (ReAct Loop)](#agent-react-loop)
+  - [Bounded Reasoning Loop](#bounded-reasoning-loop)
 - [Core Components](#core-components)
   - [Lumina (Orchestrator)](#lumina-orchestrator)
   - [Contract-Driven Prompts](#contract-driven-prompts)
-  - [Tool Registry](#tool-registry)
+  - [Live Context Injection](#live-context-injection)
 - [Data Flow](#data-flow)
-- [Failure Escalation Tree](#failure-escalation-tree)
 - [Security Model](#security-model)
 - [UI Layer](#ui-layer)
 
@@ -31,6 +37,7 @@ flowchart TD
 
     subgraph Logic [Core Orchestrator]
         Core[Lumina / ChatManager / i18n]
+        Agent[Agent Loop / Context]
         Prompt[Prompt Engine / Contracts]
     end
 
@@ -41,10 +48,11 @@ flowchart TD
     end
 
     UI --> Core
-    Core --> Prompt
-    Prompt --> AI
+    Core --> Agent
+    Agent --> Prompt
+    Agent --> AI
+    Agent --> Tools
     Core --> Security
-    Core --> Tools
 
     style Frontend fill:#f9f9f9,stroke:#333
     style Logic fill:#f9f9f9,stroke:#333
@@ -57,10 +65,11 @@ flowchart TD
 
 The project is organized into several key directories under `src/`:
 
+- **`agent/`**: The core of the agentic workflow. Implements the bounded ReAct reasoning loop, terminal signal parsing, turn-based context accumulation, and history trimming.
 - **`ai/`**: Handles AI interactions through a multi-provider architecture. Includes provider adapters (Groq, OpenAI, Anthropic, Gemini, OpenRouter, Hugging Face), a shared streaming base, SSE parsing, model resolution with fallback chains, circuit-breaker health tracking, and the contract-driven prompt builder.
 - **`config/`**: Environment variable loading and application aliases.
 - **`constants/`**: Shared constants such as command timeouts, model defaults, and tool retries.
-- **`core/`**: The brain of the application, containing the Lumina orchestrator, Chat/Settings managers (with provider preference storage), and the tool planner.
+- **`core/`**: High-level orchestration, containing the Lumina coordinator, Chat/Settings managers (with provider preference storage), and the tool planner.
 - **`tools/`**: Desktop automation implementations (apps, files, music, etc.) and their formal contracts.
 - **`ui/`**: User interface components including Rofi logic, themes, and tool result rendering.
 - **`security/`**: Confirmation dialogs and dangerous command analysis.
@@ -75,7 +84,7 @@ The project is organized into several key directories under `src/`:
 DeskLumina features a robust, multi-provider intelligence layer designed for high availability and reliability.
 
 ### Multi-Provider Orchestration
-**Path**: `src/ai/orchestrator.ts`  
+**Path**: `src/ai/orchestrator.ts`
 The orchestrator manages the lifecycle of an AI request across multiple providers. It uses a **provider-agnostic model resolution** system that allows fallback chains to span different platforms (e.g., failing over from Groq to OpenAI).
 
 ### Fallback & Resilience Strategy
@@ -88,13 +97,34 @@ The orchestrator manages the lifecycle of an AI request across multiple provider
 - **Global Token Counter**: Tracks usage across all providers to enforce safe limits and provide metrics.
 - **Middleware Pipeline**: Requests pass through a pipeline for capability guarding (ensuring the model supports requested features), logging, and token counting before reaching the provider.
 
+---
+
+## Agentic Workflow
+
+### Agent (ReAct Loop)
+**Path**: `src/agent/agent.ts`
+The Agent implements a **Bounded ReAct Loop**. Each iteration involves reasoning, tool selection, and execution. The loop is bounded by a turn budget (default: 10) to prevent infinite loops and manage token consumption.
+
+### Bounded Reasoning Loop
+DeskLumina uses a turn-based reasoning loop to solve complex tasks:
+1.  **Reasoning**: The model analyzes the conversation history and decides the next step.
+2.  **Action**: The model emits tool calls if needed.
+3.  **Execution**: System executes tools and injects results back into history as `user` messages.
+4.  **Signal Detection**: The system scans for terminal markers (`[[DONE]]`, `[[FAIL]]`).
+5.  **History Trimming**: If history exceeds the token limit, early reasoning turns are discarded to preserve recent context.
+6.  **Synthesis Fallback**: If the turn budget is exhausted, the system forces a final answer without further tool use.
+
+---
+
+## Core Components
+
 ### Lumina (Orchestrator)
-**Path**: `src/core/lumina.ts`  
-The central hub coordinates all activity. It takes user input, builds deterministic system prompts, manages the tool execution lifecycle (including retries), and synthesizes final responses.
+**Path**: `src/core/lumina.ts`
+The central hub coordinates activity between the UI and the Agent. It prepares the initial context, triggers the agent loop, and handles terminal signals. It also manages the final presentation, including i18n-aware failure messaging and TTS.
 
 ### Contract-Driven Prompts
-**Path**: `src/ai/prompts.ts`  
-Instead of static text, DeskLumina generates prompts dynamically from **Tool Contracts** (`src/tools/contracts.ts`). Each contract defines:
+**Path**: `src/ai/prompts.ts`
+DeskLumina generates prompts dynamically from **Tool Contracts** (`src/tools/contracts.ts`). Each contract defines:
 - **Schema & Types**: Formal syntax for tool calls.
 - **Valid/Invalid Formats**: Examples that ground the model's output.
 - **Failure Behavior**: Specific retry limits and retriable vs. non-retriable errors.
@@ -108,16 +138,6 @@ DeskLumina injects real-time system state into every request:
 
 ---
 
-## Failure Escalation Tree
-
-DeskLumina implements a 3-stage escalation logic for tool failures:
-
-1.  **Failure 1 (Correction)**: Lumina identifies syntax or path errors from the tool's `stderr`. It feeds the error back to the model, which corrects the arguments and retries.
-2.  **Failure 2 (Verification)**: If a corrected call still fails, the system verifies the tool contract and local file system state. The model is instructed to avoid repeating the same failing arguments.
-3.  **Failure 3 (Escalation)**: After 2 unsuccessful retries, execution stops. The system synthesizes a structured failure report explaining the blockers to the user.
-
----
-
 ## Data Flow
 
 ```mermaid
@@ -126,38 +146,34 @@ sequenceDiagram
     actor User
     participant UI as User Interface
     participant Core as Lumina Orchestrator
-    participant Prompt as Prompt Engine
+    participant Agent as Agent Loop
     participant AI as AI Provider
-    participant Sec as Security Engine
     participant OS as System Tools
 
     User->>UI: Enter command
     UI->>Core: Forward request
-    Core->>Prompt: Build system prompt (Contracts + Context)
-    Prompt-->>Core: Final Prompt
-    Core->>AI: Request tool calls
-    AI-->>Core: Structured JSON tool calls
+    Core->>Agent: runAgent(history)
     
-    rect rgba(255, 140, 0, 0.08)
-        Note over Core,Sec: Security & Execution
-        Core->>Sec: Validate command safety
-        alt Risk detected
-            Core->>UI: Request confirmation
-            UI-->>Core: Decision
+    loop Turn <= MAX_TURNS
+        Agent->>AI: streamAI(history)
+        AI-->>Agent: Assistant text + Tool calls
+        
+        alt Signal Detected ([[DONE]] / [[FAIL]])
+            Agent-->>Core: Final Result
+        else Tool Calls Present
+            Agent->>OS: Execute tools
+            OS-->>Agent: Tool Results
+            Agent->>Agent: Append results to history
         end
-        Core->>OS: Execute tool
-        OS-->>Core: Tool Result (stdout/stderr/code)
     end
 
-    alt Failure & Retries < 2
-        Core->>Prompt: Build retry prompt (Error feedback)
-        Prompt->>AI: Request corrected tool call
-    else Success or Retries Exhausted
-        Core->>Prompt: Build follow-up prompt
-        Prompt->>AI: Request natural synthesis
-        AI-->>Core: Text response
-        Core->>UI: Show result + TTS
+    alt Budget Exhausted
+        Agent->>AI: Synthesis prompt
+        AI-->>Agent: Final synthesis
     end
+
+    Agent-->>Core: Final Result
+    Core->>UI: Show clean result + TTS
 ```
 
 ---
@@ -176,7 +192,7 @@ DeskLumina implements a **Human-in-the-Loop** security model.
 
 - **Rofi Integration**: Uses Rofi's `dmenu` mode for a lightweight, floating chat interface.
 - **Theming**: Powered by `.rasi` files, allowing for deep customization.
-- **Tool Display**: `src/ui/tool-display.ts` renders tool results (especially complex file search results) into human-readable tables and lists within the chat.
+- **Tool Display**: `src/ui/tool-display.ts` renders tool results into human-readable tables and lists within the chat. Terminal signals are hidden from the user-facing UI to maintain a clean experience.
 
 ---
 

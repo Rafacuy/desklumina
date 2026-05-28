@@ -161,6 +161,31 @@ Send desktop notifications.
 
 ---
 
+## Math Tool (`math`)
+
+Evaluate mathematical expressions, equations, and unit conversions securely in-process.
+
+- **Schema**: `math <expression>`
+- **Quoting**: Forbidden. The parser treats quotes as literal characters and may fail.
+- **Escaping**: None. Raw expression string only.
+- **Security**: Executed fully in-process without shell invocation. Blocks shell patterns like `$()`, backticks, and pipes.
+
+### Features:
+- **Precision**: 10 significant figures by default.
+- **Formatting**: Automatic scientific notation for extremely large (`>= 1e15`) or small (`< 1e-10`) values.
+- **Syntactic Sugar**: Supports `X% of Y` (e.g., `15% of 340`).
+- **Units**: Supports unit conversions (e.g., `100 km to miles`).
+- **Functions**: Full support for trigonometry, statistics, logarithms, and more.
+
+### Examples:
+- `{"tool": "math", "args": "2 + 2"}`
+- `{"tool": "math", "args": "sqrt(144) * sin(pi / 4)"}`
+- `{"tool": "math", "args": "15% of 340"}`
+- `{"tool": "math", "args": "mean([12, 45, 33, 28, 51])"}`
+- `{"tool": "math", "args": "100 km to miles"}`
+
+---
+
 ## Next Steps
 
 - 🛡️ **[Security Guide](09-security.md)**: Learn about safe execution and confirmation.

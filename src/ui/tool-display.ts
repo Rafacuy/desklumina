@@ -18,6 +18,7 @@ const TOOL_CONFIG: Record<string, ToolConfig> = {
   clipboard: { icon: "📋", label: "tool.clipboard", resultLabel: "tool.clipboard_updated" },
   notify: { icon: "🔔", label: "tool.sending_notification", resultLabel: "tool.notification_sent" },
   music: { icon: "🎶", label: "tool.music_system", resultLabel: "tool.music_controlled" },
+  math: { icon: "🧮", label: "math.loading", resultLabel: "math.result_label" },
 };
 
 /**
@@ -49,39 +50,53 @@ function formatFileResult(result: ToolResult): string[] {
 
   if (result.status === "search_complete") {
     const matchCount = files.length;
-    lines.push(`    ${tf("tool.result.search_complete", { count: matchCount })}`);
+    lines.push(tf("tool.result.search_complete", { count: matchCount }));
   } else if (result.status === "no_matches") {
-    lines.push(`    ${t("tool.result.no_matches")}`);
+    lines.push(t("tool.result.no_matches"));
   } else if (result.status === "preview_ready") {
-    lines.push(`    ${t("tool.result.preview_ready")}`);
+    lines.push(t("tool.result.preview_ready"));
   } else if (result.status === "history_ready") {
-    lines.push(`    ${tf("tool.result.history_entries", { count: files.length })}`);
+    lines.push(tf("tool.result.history_entries", { count: files.length }));
   } else if (result.status === "history_empty") {
-    lines.push(`    ${t("tool.result.history_empty")}`);
+    lines.push(t("tool.result.history_empty"));
   } else if (result.status === "invalid_request") {
-    lines.push(`    ${t("tool.result.invalid_request")}`);
+    lines.push(t("tool.result.invalid_request"));
   }
 
   if (result.selectedFile) {
-    lines.push(`    ${tf("tool.result.selected", { path: result.selectedFile })}`);
+    lines.push(tf("tool.result.selected", { path: result.selectedFile }));
   } else {
     files.slice(0, 3).forEach((file) => {
-      lines.push(`    • ${file.path}`);
+      lines.push(`• ${file.path}`);
     });
     if (files.length > 3) {
       const moreWord = t("common.more") || "more";
-      lines.push(`    • +${files.length - 3} ${moreWord}`);
+      lines.push(`• +${files.length - 3} ${moreWord}`);
     }
   }
 
   if (result.preview?.path && result.preview.path !== result.selectedFile) {
-    lines.push(`    ${tf("tool.result.preview", { path: result.preview.path })}`);
+    lines.push(tf("tool.result.preview", { path: result.preview.path }));
   }
 
   if (result.success === false) {
-    lines.push(`    ${t("tool.result.failed")}`);
+    lines.push(t("tool.result.failed"));
   }
 
+  return lines;
+}
+
+function formatMathResult(result: ToolResult): string[] {
+  const lines: string[] = [];
+  if (result.expression) {
+    lines.push(`${t("math.expression_label")}: ${result.expression}`);
+  }
+  if (result.success !== false) {
+    lines.push(`${t("math.result_label")}:     ${result.result}`);
+  } else {
+    // result string already contains "❌ Math error: ..." or localized version
+    lines.push(result.result);
+  }
   return lines;
 }
 
@@ -90,46 +105,48 @@ function summarizeResult(result: ToolResult): string[] {
     return formatFileResult(result);
   }
 
+  if (result.tool === "math") {
+    return formatMathResult(result);
+  }
+
   if (result.tool === "music") {
     const lines: string[] = [];
     const files = result.files || [];
     if (files.length > 0) {
-      files.slice(0, 3).forEach((f) => lines.push(`    • ${f.name}`));
+      files.slice(0, 3).forEach((f) => lines.push(`• ${f.name}`));
       if (files.length > 3) {
         const moreWord = t("common.more") || "more";
-        lines.push(`    • +${files.length - 3} ${moreWord}`);
+        lines.push(`• +${files.length - 3} ${moreWord}`);
       }
     }
     return lines;
   }
 
   if (result.success === false) {
-    return [`    ${t("tool.result.failed")}`];
+    return [t("tool.result.failed")];
   }
 
   return [];
 }
 
-export class ToolDisplay {
-  private static readonly SEPARATOR = "━".repeat(36);
+const GUTTER = "  ┃";
+const COL_WIDTH = 18;
 
+function padLabel(label: string): string {
+  const len = Array.from(label).length; // unicode-safe
+  return label + " ".repeat(Math.max(1, COL_WIDTH - len));
+}
+
+export class ToolDisplay {
   /**
    * Format tool calls for inline display (during AI response)
    * Shows action bullets, results will be appended inline
    */
   static formatInline(calls: ParsedToolCall[]): string {
     if (calls.length === 0) return "";
-
-    const uniqueTools = [...new Set(calls.map((c) => c.tool))];
-    
-    let output = `${this.SEPARATOR}\n`;
-    
-    uniqueTools.forEach((tool) => {
-      const label = getToolLabel(tool);
-      output += `  • ${label}\n`;
-    });
-
-    return output.trim();
+    const tools = [...new Set(calls.map((c) => c.tool))];
+    const parts = tools.map((t) => `${getToolIcon(t)} ${getToolLabel(t)}`).join("  ");
+    return `  · ${parts}`;
   }
 
   /**
@@ -138,28 +155,23 @@ export class ToolDisplay {
   static formatResultsInline(results: ToolResult[]): string {
     if (results.length === 0) return "";
 
-    let output = `${this.SEPARATOR}\n`;
+    return results.flatMap((result) => {
+      const mark = result.success === false ? "✗" : "✓";
+      const retry = result.attempt && result.attempt > 1 ? ` ↺${result.attempt}` : "";
+      const label = padLabel(getToolLabel(result.tool));
+      const detail = summarizeResult(result);
 
-    results.forEach((result) => {
-      const label = getToolLabel(result.tool);
-      const mark = result.success === false ? "✕" : "✓";
-      const attemptSuffix = result.attempt && result.attempt > 1 ? ` ${tf("common.attempt", { count: result.attempt })}` : "";
-      output += `  • ${label} ${mark}${attemptSuffix}\n`;
-      const summaryLines = summarizeResult(result);
-      if (summaryLines.length > 0) {
-        output += `${summaryLines.join("\n")}\n`;
-      }
-    });
+      const mainRow = `${GUTTER} ${getToolIcon(result.tool)} ${label} ${mark}${retry}`;
+      const detailRows = detail.map((d) => `${GUTTER}   ${d.trim()}`);
 
-    output += this.SEPARATOR;
-    return output.trim();
+      return [mainRow, ...detailRows];
+    }).join("\n");
   }
 
   static formatRetryUpdate(attempt: number, tools: string[], _reason: string): string {
-    const uniqueTools = [...new Set(tools)];
-    const labels = uniqueTools.map((tool) => getToolLabel(tool)).join(", ");
-    const retryingWord = t("common.retrying") || "Retrying";
-    return `${this.SEPARATOR}\n  • ${retryingWord} (${attempt}) ${labels}\n${this.SEPARATOR}`.trim();
+    return [...new Set(tools)]
+      .map((t) => `${GUTTER} ↺ ${padLabel(getToolLabel(t))} · (${attempt})`)
+      .join("\n");
   }
 
   /**
@@ -199,42 +211,6 @@ export class ToolDisplay {
     }
 
     return callPart || resultPart;
-  }
-
-  /**
-   * Format tool calls for detailed display (debug/expanded view)
-   * Shows full tool names and arguments
-   */
-  static formatDetailed(calls: ParsedToolCall[]): string {
-    if (calls.length === 0) return "";
-
-    let output = `${this.SEPARATOR}\n🔧 ${t("tool.executing_actions")}\n${this.SEPARATOR}`;
-
-    calls.forEach((call) => {
-      const icon = getToolIcon(call.tool);
-      const label = getToolLabel(call.tool);
-      output += `\n${icon} ${label}`;
-    });
-
-    return output;
-  }
-
-  /**
-   * Format tool results for detailed display
-   * Shows full tool names and results
-   */
-  static formatResultsDetailed(results: ToolResult[]): string {
-    if (results.length === 0) return "";
-
-    let output = `${this.SEPARATOR}\n✓ ${t("tool.actions_completed")}\n${this.SEPARATOR}`;
-
-    results.forEach((r) => {
-      const icon = getToolIcon(r.tool);
-      const label = getToolResultLabel(r.tool);
-      output += `\n${icon} ${label}`;
-    });
-
-    return output;
   }
 }
 

@@ -38,6 +38,7 @@
     "attempt": "(attempt {count})",
     "save_exit": "Save & Exit",
     "search": "Search",
+    "default": "Default",
     "select": "Select",
     "send": "Send",
     "toggle": "Toggle",
@@ -70,6 +71,26 @@
   "history": {
     "tool_action": "Action",
     "tool_result": "Done"
+  },
+  "math": {
+    "result_label": "Result",
+    "expression_label": "Expression",
+    "loading": "Calculating...",
+    "error": {
+      "parse": "Unable to parse expression: {expression}",
+      "division_by_zero": "Division by zero",
+      "overflow": "Result is too large to represent",
+      "empty_expression": "Expression is empty",
+      "unsupported": "Operation not supported: {hint}",
+      "timeout": "Evaluation timed out",
+      "input_too_long": "Expression exceeds maximum length of {max} characters",
+      "forbidden_pattern": "Expression contains disallowed pattern"
+    },
+    "unit_result": "{value} {unit}"
+  },
+  "signal": {
+    "soft_fail": "I could not finish that request.",
+    "soft_fail_reason": "I ran into an issue while working on that: {reason}"
   },
   "security": {
     "approved": "Dangerous command approved by user",
@@ -178,6 +199,12 @@
     "select_chat": "Select Chat",
     "send_message": "Send message",
     "settings": {
+      "no_voices_for_language": "No voices available for your language",
+      "section": {
+        "ai": "AI Assistant",
+        "history": "History",
+        "system": "System"
+      },
       "change_tts_voice": "Change TTS Voice",
       "chat_history": "Chat History",
       "confirmation": "Confirmation",

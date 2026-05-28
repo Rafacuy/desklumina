@@ -5,6 +5,7 @@ import { fileOp } from "./files";
 import { music } from "./music";
 import { clipboard } from "./clipboard";
 import { notify } from "./notify";
+import { mathTool } from "./math";
 import { logger } from "../logger";
 import { CancellationError } from "../types";
 import type { ToolExecutionResult, ToolHandler, ToolRegistry } from "../types";
@@ -28,11 +29,12 @@ const tools: ToolRegistry = {
   },
   app: (alias) => launch(alias),
   file: (op) => fileOp(op),
-  // Legacy alias for the canonical music tool.
+  // Legacy alias for the canonical music tool
   media: (action) => music(action),
   music: (arg) => music(arg),
   clipboard: (action) => clipboard(action),
   notify: (args) => notify(args),
+  math: (expr) => mathTool(expr),
 };
 
 /**
@@ -92,3 +94,4 @@ export function registerTool(name: string, handler: ToolHandler): void {
   tools[name] = handler;
   logger.info("tools", `Tool ${name} registered`);
 }
+

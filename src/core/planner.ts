@@ -6,7 +6,7 @@ import type { ParsedToolCall } from "../types";
  * Valid tools that Lumina can execute
  * "media" is retained as a legacy alias for older model outputs.
  */
-const VALID_TOOLS = new Set(["app", "terminal", "file", "media", "music", "clipboard", "notify"]);
+const VALID_TOOLS = new Set(["app", "terminal", "file", "media", "music", "clipboard", "notify", "math"]);
 
 const MAX_JSON_LENGTH = 50000; // 50KB limit
 const MAX_JSON_DEPTH = 5;

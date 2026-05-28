@@ -129,6 +129,12 @@ FAILURE ESCALATION TREE:
 - Failure 2: Verify tool contract and local file system state. If arguments are correct but tool fails, do not retry with same arguments.
 - Failure 3: Stop execution. Produce a structured failure report explaining why the task cannot be completed.`;
 
+const AGENT_PROTOCOL = `AGENT PROTOCOL:
+When your task is complete and you have nothing more to do, end your response with [[DONE]].
+If you cannot complete the task and further attempts would not help, end with [[FAIL: reason]].
+If you need to call tools, emit them now without any terminal marker — the loop will continue.
+Do not emit [[DONE]] if you have just emitted tool calls in the same response.`;
+
 function generateFormatAnchors(): string {
   const anchors = TOOL_CONTRACTS.filter((c) => c.formatAnchors && c.formatAnchors.length > 0)
     .map((c) => {
@@ -166,6 +172,8 @@ export async function buildSystemPrompt(query: string = ""): Promise<string> {
 ${toolContracts}
 
 ${RULES_AND_ESCALATION}
+
+${AGENT_PROTOCOL}
 
 ${formatExamples}
 

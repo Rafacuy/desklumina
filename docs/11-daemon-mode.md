@@ -43,21 +43,21 @@ sequenceDiagram
     participant D as Daemon Service
 
     rect rgba(100, 149, 237, 0.08)
-        Note over F,D: Phase 1 — Initialization
+        Note over F,D: Phase 1 - Initialization
         D->>F: Generate session token
         D->>F: Set permissions (chmod 0600)
         D->>S: Bind & listen on socket
     end
 
     rect rgba(60, 179, 113, 0.08)
-        Note over C,S: Phase 2 — Client Request
+        Note over C,S: Phase 2 - Client Request
         C->>F: Read session token
         C->>S: Send request + Bearer token
         S->>D: Forward request & credentials
     end
 
     rect rgba(255, 165, 0, 0.08)
-        Note over C,D: Phase 3 — Authorization & Response
+        Note over C,D: Phase 3 - Authorization & Response
         D->>D: Validate token
         alt Authorized
             D-->>C: Return command output

@@ -69,11 +69,11 @@ Modern desktops are powerful but often complex. DeskLumina was created for users
 ## How It Works
 
 1.  **Input**: Receives your command via Rofi, the terminal, or a daemon socket.
-2.  **Intent Parsing**: Sends the input to the configured AI provider to determine required actions.
-3.  **Tool Selection**: The LLM generates structured tool calls.
-4.  **Security Check**: The system analyzes tools for dangerous patterns.
-5.  **Execution**: DeskLumina executes the tools, such as launching an app or running a script.
-6.  **Response**: The result is streamed back to the UI and spoken via TTS.
+2.  **Agent Reasoning**: The ReAct agent loop begins, analyzing the request and conversation history.
+3.  **Security & Execution**: The model emits tool calls; DeskLumina validates them against security policies and executes them.
+4.  **Feedback Loop**: Tool results are fed back to the model, which can decide to take further steps or correct errors.
+5.  **Termination**: The loop continues until the model signals completion or the turn budget is reached.
+6.  **Synthesis**: The final result is streamed back to the UI and spoken via TTS.
 
 ---
 
@@ -81,7 +81,7 @@ Modern desktops are powerful but often complex. DeskLumina was created for users
 
 - **Runtime**: [Bun](https://bun.sh/) (Fast JS/TS runtime)
 - **Language**: TypeScript
-- **AI Inference**: Multi-provider (Groq, OpenAI, Anthropic, Gemini, OpenRouter, Hugging Face) — model configured via `DESKLUMINA_MODEL` or `models.json`
+- **AI Inference**: Multi-provider (Groq, OpenAI, Anthropic, Gemini, OpenRouter, Hugging Face) - model configured via `DESKLUMINA_MODEL` or `models.json`
 - **UI Architecture**: [Rofi](https://github.com/davatorium/rofi)
 - **TTS Engine**: [Edge TTS](https://github.com/rany2/edge-tts) (Universal)
 - **Automation**: shell commands via `bash`, plus optional `dunstify` (notifications), `clipcatctl` (clipboard), and `mpc` (media).

@@ -2,6 +2,30 @@ import { describe, test, expect } from "bun:test";
 import { cleanAssistantResponse } from "../src/utils/response-cleaner";
 
 describe("Response Cleaner (Duplicate Logic)", () => {
+  test("removes [[DONE]] marker", () => {
+    const input = "Finished [[DONE]]";
+    const result = cleanAssistantResponse(input);
+    expect(result).toBe("Finished");
+  });
+
+  test("removes [[FAIL: reason]] marker", () => {
+    const input = "Could not proceed [[FAIL: missing dependency]]";
+    const result = cleanAssistantResponse(input);
+    expect(result).toBe("Could not proceed");
+  });
+
+  test("removes DONE marker from complex text", () => {
+    const input = "Task completed successfully. [[DONE]]";
+    const result = cleanAssistantResponse(input);
+    expect(result).toBe("Task completed successfully.");
+  });
+
+  test("removes FAIL marker from complex text", () => {
+    const input = "Cannot complete. [[FAIL: safety violation]]";
+    const result = cleanAssistantResponse(input);
+    expect(result).toBe("Cannot complete.");
+  });
+
   test("removes JSON code blocks", () => {
     const input = 'Some text\n```json\n{"tool":"app","args":"test"}\n```\nMore text';
     const result = cleanAssistantResponse(input);
@@ -38,8 +62,8 @@ describe("Response Cleaner (Duplicate Logic)", () => {
     expect(result).toBe("Text");
   });
 
-  test("removes separator lines", () => {
-    const input = "Text\n━━━━━━━━━━\nMore text";
+  test("removes pending tool lines", () => {
+    const input = "Text\n  · 💻 terminal  📁 file\nMore text";
     const result = cleanAssistantResponse(input);
     expect(result).toBe("Text\n\nMore text");
   });
@@ -63,7 +87,7 @@ Some text
 \`\`\`
 <tool:app>content</tool:app>
 Summary: Done
-━━━━━━━━━━
+  · 💻 terminal
 Final text`;
     
     const result = cleanAssistantResponse(input);
@@ -72,7 +96,7 @@ Final text`;
     expect(result).not.toContain("```json");
     expect(result).not.toContain("<tool:");
     expect(result).not.toContain("Summary:");
-    expect(result).not.toContain("━");
+    expect(result).not.toContain("·");
   });
 
   describe("Robustness - Tool Call Removal", () => {

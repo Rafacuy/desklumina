@@ -245,4 +245,55 @@ export const TOOL_CONTRACTS: ToolContract[] = [
       '{"tool":"file","args":"write \\"~/test.txt\\" \\"Line 1\\\\nLine 2\\""}',
     ],
   },
+  {
+    name: "math",
+    description: "Evaluate a mathematical expression, equation, formula, or computation. Use this tool for ALL arithmetic, algebraic, scientific, statistical, unit conversion, and multi-step mathematical operations.",
+    schema: "math <expression>",
+    types: { expression: "string" },
+    requiredArgs: ["expression"],
+    optionalArgs: [],
+    validFormats: [
+      "math 2 + 2",
+      "math sqrt(144)",
+      "math sin(pi / 4)",
+      "math 15% of 340",
+      "math (3^4 - 12) / 7",
+      "math log(1000, 10)",
+      "math mean([4, 8, 15, 16, 23, 42])",
+      "math factor(360)",
+      "math 100 km to miles",
+    ],
+    invalidFormats: [
+      "math '2 + 2'",
+      "math \"sqrt(144)\"",
+      "math $(echo 5+3)",
+      "math factor(3.5)",
+    ],
+    escapingRules:
+      "No quoting or shell escaping. Pass the expression as a plain string.",
+    quotingRules:
+      "Quotes forbidden. Do not wrap the expression in single or double quotes.",
+    output: {
+      success: "✓ {result}",
+      failure: "❌ Math error: {reason}",
+      empty: "N/A",
+    },
+    failure: {
+      retriable: [],
+      nonRetriable: [
+        "ParseError",
+        "DivisionByZero",
+        "Overflow",
+        "UnsupportedOperation",
+      ],
+      retryLimit: 0,
+      permissionBehavior: "N/A - no filesystem or system access required",
+      malformedInputBehavior:
+        "Returns error code 2 with a ParseError message",
+    },
+    formatAnchors: [
+      '{"tool":"math","args":"2 + 2"}',
+      '{"tool":"math","args":"sqrt(2^10 + 144) / 3"}',
+    ],
+  },
 ];

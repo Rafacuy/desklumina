@@ -7,6 +7,7 @@ A detailed reference for DeskLumina's internal APIs, tool contracts, and executi
 ## Table of Contents
 
 - [Core API (Lumina)](#core-api-lumina)
+- [Agent API](#agent-api)
 - [Tool Contracts API](#tool-contracts-api)
 - [Tool Handler Signature](#tool-handler-signature)
 - [Chat State API](#chat-state-api)
@@ -19,14 +20,44 @@ A detailed reference for DeskLumina's internal APIs, tool contracts, and executi
 
 **File**: `src/core/lumina.ts`
 
-The `Lumina` class is the main orchestrator.
+The `Lumina` class is the main orchestrator that coordinates between the UI and the Agent.
 
 ### `chat(userMessage: string, onChunk?: (chunk: string, callback?: ToolCallbackPayload) => void): Promise<string>`
-Processes user input, builds contract-driven prompts, executes tools (with retries), and returns the final assistant message.
+Processes user input by invoking the bounded ReAct agent loop. It handles context preparation, terminal signal translation, and final response synthesis.
 
 - **`userMessage`**: The user's natural language input.
-- **`onChunk`**: Optional callback invoked while streaming text. Receives `chunk` and optionally a structured callback payload.
-- **Returns**: The complete text response.
+- **`onChunk`**: Optional callback invoked while streaming text. Receives `chunk` and optionally a structured callback payload for tool execution updates.
+- **Returns**: The complete text response, cleaned of internal terminal markers.
+
+---
+
+## Agent API
+
+**Files**: `src/agent/agent.ts`, `src/agent/types.ts`
+
+### `runAgent(baseMessages: AIMessage[], options?: AgentRunOptions): Promise<AgentResult>`
+The entry point for the ReAct reasoning loop.
+
+- **`baseMessages`**: Initial conversation history including system prompt and user query.
+- **`options`**: Optional configuration including `maxTurns` and `onEvent` callback.
+
+### `AgentResult` Interface
+```typescript
+export interface AgentResult {
+  finalResponse: string;       // The last text response from the model
+  allToolResults: ToolResult[]; // Flattened list of all tool results in the run
+  history: AIMessage[];        // Final conversation history
+  terminalSignal?: TerminalSignal; // The signal that ended the loop
+}
+```
+
+### `TerminalSignal` Type
+```typescript
+export type TerminalSignal =
+  | { type: "NONE" }
+  | { type: "DONE" }
+  | { type: "FAIL"; reason: string };
+```
 
 ---
 
@@ -86,6 +117,8 @@ interface ToolExecutionResult {
   stderr?: string;        // Error output
   exitCode?: number;      // Process exit code
   status?: string;        // Machine-readable status code (e.g. "search_complete")
+  expression?: string;    // Normalized input expression (math tool only)
+  numericResult?: number; // Raw numeric result (math tool only)
   files?: FileMatch[];    // Structured results for file-related tools
   preview?: FilePreview;  // Preview data for file/directory tools
   actions?: string[];     // List of internal steps performed
@@ -102,12 +135,13 @@ interface ToolExecutionResult {
 Chats are saved under `~/.config/desklumina/chats/` as JSON files.
 
 ### Context Replay
-Tool execution results are persisted as first-class messages. When replaying context for the model, these results are formatted into compact summaries:
+Tool execution results are persisted as first-class messages. When replaying context for the model, these results are formatted into compact summaries within `user` messages:
 
 ```text
-[TOOL RESULT] tool=file status=ok args=~/todo.md matches=1
-files:
-  - /home/user/todo.md
+[TOOL RESULT: file]
+status=ok
+args=~/todo.md
+file=/home/user/todo.md
 preview=Task 1: Update docs...
 ```
 

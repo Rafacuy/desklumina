@@ -76,6 +76,12 @@ Try these commands to explore DeskLumina's capabilities:
 - `music volume up`
 - `music next`
 
+### Math Operations
+- `248 * 37`
+- `calculate 15% of 340`
+- `convert 100 km to miles`
+- `what is sqrt(144) / 2?`
+
 ### Information & Utility
 - `terminal date`
 - `terminal uname -a`

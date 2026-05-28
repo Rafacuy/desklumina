@@ -66,7 +66,7 @@ This file takes precedence when `DESKLUMINA_MODEL` is not set.
 {
   "primary": {
     "provider": "gemini",
-    "model": "gemini-3.1-flash-lite-preview"
+    "model": "gemini-3.1-flash-lite"
   },
   "fallbacks": [
     {

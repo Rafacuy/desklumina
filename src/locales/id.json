@@ -38,6 +38,7 @@
     "attempt": "(percobaan {count})",
     "save_exit": "Simpan & Keluar",
     "search": "Cari",
+    "default": "Default",
     "select": "Pilih",
     "send": "Kirim",
     "toggle": "Ganti",
@@ -70,6 +71,26 @@
   "history": {
     "tool_action": "Tindakan",
     "tool_result": "Selesai"
+  },
+  "math": {
+    "result_label": "Hasil",
+    "expression_label": "Ekspresi",
+    "loading": "Menghitung...",
+    "error": {
+      "parse": "Ekspresi tidak dapat diproses: {expression}",
+      "division_by_zero": "Pembagian dengan nol",
+      "overflow": "Hasil terlalu besar untuk direpresentasikan",
+      "empty_expression": "Ekspresi kosong",
+      "unsupported": "Operasi tidak didukung: {hint}",
+      "timeout": "Evaluasi melebihi batas waktu",
+      "input_too_long": "Ekspresi melebihi batas maksimum {max} karakter",
+      "forbidden_pattern": "Ekspresi mengandung pola yang tidak diizinkan"
+    },
+    "unit_result": "{value} {unit}"
+  },
+  "signal": {
+    "soft_fail": "Saya tidak dapat menyelesaikan permintaan itu.",
+    "soft_fail_reason": "Saya menemui kendala saat mengerjakan itu: {reason}"
   },
   "security": {
     "approved": "Perintah berbahaya disetujui pengguna",
@@ -178,6 +199,12 @@
     "select_chat": "Pilih Chat",
     "send_message": "Kirim pesan",
     "settings": {
+      "no_voices_for_language": "Tidak ada suara yang tersedia untuk bahasa Anda",
+      "section": {
+        "ai": "Asisten AI",
+        "history": "Riwayat",
+        "system": "Sistem"
+      },
       "change_tts_voice": "Ganti Suara TTS",
       "chat_history": "Riwayat Chat",
       "confirmation": "Konfirmasi",

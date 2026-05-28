@@ -31,7 +31,7 @@ export interface ToolExecutionSummary {
 }
 
 export interface ToolCallbackPayload {
-  type: "retry" | "results";
+  type: "pending" | "retry" | "results";
   text: string;
   results?: ToolResult[];
   tools?: string[];
@@ -48,6 +48,8 @@ export interface ToolExecutionResult {
   stderr?: string;
   exitCode?: number;
   status?: string;
+  expression?: string;
+  numericResult?: number;
   files?: FileMatch[];
   selectedFile?: string;
   preview?: FilePreview;
@@ -70,6 +72,8 @@ export interface ToolResult {
   exitCode?: number;
   attempt?: number;
   status?: string;
+  expression?: string;
+  numericResult?: number;
   files?: FileMatch[];
   selectedFile?: string;
   preview?: FilePreview;

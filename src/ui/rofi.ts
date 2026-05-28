@@ -4,8 +4,16 @@ import { t } from "../utils/i18n";
 import { CancellationError } from "../types";
 import { logger } from "../logger";
 import { escapeHtml } from "../utils/format";
+import { markdownToPango, wrapPangoText } from "../utils/pango";
+import { formatRofiResponse } from "../utils/table-formatter";
+import { randomLoader } from "./loader";
 
-const THEME_PATH = `${process.env.HOME}/.config/desklumina/src/ui/themes/lumina.rasi`;
+const STREAM_BATCH_MS = 50;
+const MAX_LISTVIEW_LINES = 12;
+const WRAP_WIDTH = 50;
+const MUTED_COLOR = "#888888";
+
+export const THEME_PATH = `${process.env.HOME}/.config/desklumina/src/ui/themes/lumina.rasi`;
 
 export async function rofiChatInput(
   chatManager: ChatManager,
@@ -90,12 +98,6 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
     return null;
   }
 
-  const items: string[] = [];
-  
-  // Clean Header
-  items.push(`󰗋 ${t("ui.select_chat")}`);
-  items.push("──────────────────");
-  
   const chatItems = chats.map((chat: any) => {
     const date = new Date(chat.updatedAt).toLocaleDateString(undefined, { 
       month: 'short', 
@@ -104,41 +106,38 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
     const lastMsg = chat.lastMessage || "";
     const previewChars = Array.from(lastMsg.replace(/\n/g, " "));
     const preview = previewChars.length > 30 
-      ? previewChars.slice(0, 30).join("") + "..."
+      ? previewChars.slice(0, 30).join("") + "…"
       : previewChars.join("");
       
-    // Format: 󰭹 Title [Date] (Count) - Preview...
-    return `󰭹 ${chat.title.padEnd(20)} │ 󰃭 ${date} │ 󰅒 ${chat.messageCount} │ ${preview}...`;
+    return `󰭹 ${chat.title.padEnd(20)} │ 󰃭 ${date} │ 󰅒 ${chat.messageCount} │ ${preview}`;
   });
   
-  items.push(...chatItems);
-  items.push("──────────────────");
-  items.push(`📝 ${t("ui.new_chat")}`);
-  items.push(`✕ ${t("common.cancel")}`);
+  const allItems = [
+    ...chatItems,
+    `📝 ${t("ui.new_chat")}`,
+    `✕ ${t("common.cancel")}`
+  ];
+
+  const headerHint = `󰗋 ${t("ui.select_chat")}  │  󰌑 ${t("common.select")} │ 󱊷 ${t("common.cancel")}`;
 
   const result = await rofiMenu(
-    items.join("\n"), 
+    allItems.join("\n"), 
     t("ui.select_chat"), 
     "listview { lines: 12; }",
     t("ui.search_chat"),
-    `󰌑 ${t("common.select")} │ 󱊷 ${t("common.cancel")} │ 󰍉 ${t("common.search")}`
+    headerHint
   );
 
-  if (!result.output || result.code !== 0 || result.output === `✕ ${t("common.cancel")}` || result.output.includes(t("ui.select_chat"))) {
+  if (!result.output || result.code !== 0 || result.output === `✕ ${t("common.cancel")}`) {
     return null;
   }
 
   const selected = result.output;
 
-  if (selected.includes("──────────────────")) {
-    return rofiSelectChat(chatManager);
-  }
-
   if (selected === `📝 ${t("ui.new_chat")}`) {
     return "__new__";
   }
 
-  // Extract title by getting everything before the first │
   const chatTitle = selected.split(" │ ")[0]?.replace("󰭹 ", "").trim();
   const chat = chats.find((c) => c.title === chatTitle);
   
@@ -147,7 +146,7 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
 }
 
 /**
- * Generic Rofi menu helper for consistent styling
+ * Generic Rofi menu helper
  */
 export async function rofiMenu(
   items: string, 
@@ -155,7 +154,9 @@ export async function rofiMenu(
   themeOverride: string = "",
   placeholder: string = "",
   hints: string = "",
-  message: string = ""
+  message: string = "",
+  isMessagePango: boolean = false,
+  isMarkupRows: boolean = false
 ): Promise<{ output: string | null; code: number }> {
   const args = [
     "rofi", 
@@ -169,14 +170,24 @@ export async function rofiMenu(
     "-kb-custom-1", "Tab"
   ];
   
-  const finalMessage = message || hints;
+  if (isMessagePango) {
+    args.push("-markup");
+  } else if (isMarkupRows) {
+    args.push("-markup-rows");
+  }
+  
+  const finalMessage = message && hints
+    ? `${message}\n\n${hints}`
+    : message || hints;
   if (finalMessage) {
-    args.push("-mesg", escapeHtml(finalMessage));
+    args.push("-mesg", isMessagePango ? finalMessage : escapeHtml(finalMessage));
   }
   
   let finalTheme = themeOverride;
   if (placeholder) {
-    finalTheme += ` entry { placeholder: "${placeholder}"; }`;
+    //escape quotes in placeholder to prevent RASI parser breakage
+    const safePlaceholder = placeholder.replace(/"/g, '\\"');
+    finalTheme += ` entry { placeholder: "${safePlaceholder}"; }`;
   }
 
   if (finalTheme) {
@@ -200,80 +211,33 @@ export async function rofiMenu(
   };
 }
 
-/**
- * Smarter word-aware wrapping
- * Respects spaces for word-based languages (English, Indonesian, etc.)
- * while correctly wrapping individual characters for CJK
- */
-function wrapLine(line: string, width: number): string[] {
-  if (!line) return [''];
-  
-  const result: string[] = [];
-  let currentLine = '';
-  let currentWidth = 0;
-
-  // Tokenize: CJK chars, non-space words, or whitespace
-  const tokens = line.match(/[\u4e00-\u9faf]|[\u3040-\u309f]|[\u30a0-\u30ff]|[\u3000-\u303f]|[^\s\u4e00-\u9faf\u3040-\u309f\u30a0-\u30ff\u3000-\u303f]+|\s+/g) || [];
-
-  for (const token of tokens) {
-    const tokenWidth = Array.from(token).reduce((sum, char) => 
-      sum + (/[^\x00-\xff]/.test(char) ? 2 : 1), 0);
-
-    if (currentWidth + tokenWidth > width) {
-      // Push current line if it has content
-      if (currentLine.trim()) result.push(currentLine.trimEnd());
-      
-      if (tokenWidth > width && !/^\s+$/.test(token)) {
-        // If a single word is too long, we must break it by character
-        const chars = Array.from(token);
-        currentLine = '';
-        currentWidth = 0;
-        for (const char of chars) {
-          const charW = /[^\x00-\xff]/.test(char) ? 2 : 1;
-          if (currentWidth + charW > width) {
-            result.push(currentLine);
-            currentLine = char;
-            currentWidth = charW;
-          } else {
-            currentLine += char;
-            currentWidth += charW;
-          }
-        }
-      } else {
-        // Start new line with token (skip if it's just whitespace)
-        if (/^\s+$/.test(token)) {
-          currentLine = '';
-          currentWidth = 0;
-        } else {
-          currentLine = token;
-          currentWidth = tokenWidth;
-        }
-      }
-    } else {
-      currentLine += token;
-      currentWidth += tokenWidth;
-    }
-  }
-
-  if (currentLine.trim()) result.push(currentLine.trimEnd());
-  return result.length > 0 ? result : [line];
-}
-
 export async function rofiExpandedResponse(fullMessage: string): Promise<void> {
   const WRAP_WIDTH = 62;
-  const formattedMessage = fullMessage.split('\n\n')
-    .map(p => p.trim())
-    .filter(Boolean)
-    .join('\n\n');
+  const cleanMessage = fullMessage
+    .replace(/^\s+·\s.+$/gm, "")
+    .trim();
 
-  const lines = formattedMessage.split('\n').flatMap(line => wrapLine(line, WRAP_WIDTH));
+  const firstPass = formatRofiResponse(cleanMessage, WRAP_WIDTH);
+
+  let windowWidth = 750;
+  let dynamicWrapWidth = WRAP_WIDTH;
+  let pangoLines = firstPass.lines;
+
+  if (firstPass.hasTable) {
+    const neededWidth = Math.floor(firstPass.maxTableWidth * 8.5) + 130;
+    windowWidth = Math.min(1200, Math.max(750, neededWidth));
+    dynamicWrapWidth = Math.floor((windowWidth - 130) / 10);
+    pangoLines = formatRofiResponse(cleanMessage, dynamicWrapWidth).lines;
+  }
+
+  const windowHeight = Math.min(800, Math.round(pangoLines.length * 22 + 80));
 
   const themeOverride = `
     window {
-      width: 750px;
-      height: 750px;
+      width: ${windowWidth}px;
+      height: ${windowHeight}px;
       border-radius: 20px;
-      border: 1px solid;
+      border: 1px;
       border-color: @border-subtle;
       background-color: @bg;
     }
@@ -283,56 +247,87 @@ export async function rofiExpandedResponse(fullMessage: string): Promise<void> {
     }
     listview {
       scrollbar: true;
-      fixed-height: false;
-      dynamic: true;
+      fixed-height: true;
+      expand: true;
     }
     element {
-      padding: 6px 16px;
+      padding: 4px 12px;
       text-color: @text-primary;
-      font: "JetBrainsMono Nerd Font 10.5";
+      font: "JetBrainsMono Nerd Font 10";
     }
     element selected.normal {
       background-color: @accent-light;
       text-color: @accent-color;
     }
+    element-text {
+      wrap: true;
+    }
+    scrollbar {
+      background-color: transparent;
+      handle-color: @text-muted;
+      handle-width: 4px;
+      border-radius: 2px;
+      width: 6px;
+      margin: 4px 2px;
+    }
   `;
 
   await rofiMenu(
-    lines.join('\n'),
+    pangoLines.join('\n'),
     t("ui.full_response"),
     themeOverride,
     "",
-    `󱊷 [ESC] ${t("common.back")}`
+    `󱊷 [ESC] ${t("common.back")}`,
+    "",
+    false,
+    true
   );
 }
 
-export async function rofiResponsePanel(message: string): Promise<{ action: "reply" | "expand" | "exit"; input?: string }> {
-  const MAX_LINES = 12;
-  const WRAP_WIDTH = 50;
-  
-  const allLines = message.split('\n').flatMap(line => wrapLine(line, WRAP_WIDTH));
-  const needsTruncation = allLines.length > MAX_LINES;
-  
-  const displayLines = needsTruncation 
-    ? allLines.slice(0, MAX_LINES) 
-    : allLines;
-
-  if (needsTruncation) {
-    displayLines.push("", t("ui.panel.truncated"));
+export async function rofiResponsePanel(
+  initialMessage: string,
+  onToolUpdate?: (id: string, status: string, detail?: string[]) => void
+): Promise<{ action: "reply" | "expand" | "exit"; input?: string }> {
+  if (onToolUpdate) {
+    onToolUpdate("", "", []);
   }
 
-  const cleanMessage = displayLines.join('\n')
-    .replace(/^━+$/gm, "")
+  const cleanMessage = initialMessage
+    .replace(/^\s+·\s.+$/gm, "")
     .trim();
 
-  const formattedMessage = `󱜙 ${t("common.lumina")}\n${"─".repeat(40)}\n\n${cleanMessage}`;
+  const firstPass = formatRofiResponse(cleanMessage, WRAP_WIDTH);
+
+  let windowWidth = 600;
+  let dynamicWrapWidth = WRAP_WIDTH;
+  let allLines = firstPass.lines;
+
+  if (firstPass.hasTable) {
+    const neededWidth = Math.floor(firstPass.maxTableWidth * 8.5) + 100;
+    windowWidth = Math.min(1100, Math.max(600, neededWidth));
+    dynamicWrapWidth = Math.floor((windowWidth - 100) / 10);
+    allLines = formatRofiResponse(cleanMessage, dynamicWrapWidth).lines;
+  }
+
+  const needsTruncation = allLines.length > MAX_LISTVIEW_LINES;
+
+  const displayLines = needsTruncation
+    ? allLines.slice(0, MAX_LISTVIEW_LINES)
+    : allLines;
+
+  let hintText = "";
+  if (needsTruncation) {
+    hintText = `<span foreground="${MUTED_COLOR}">  ${escapeHtml(t("ui.panel.truncated"))} </span>`;
+  }
+
+  const formattedMessage = `<b>󱜙 ${escapeHtml(t("common.lumina"))}</b>\n\n${displayLines.join('\n')}${hintText ? '\n' + hintText : ''}`;
 
   const themeOverride = `
     window {
-      width: 600px;
+      width: ${windowWidth}px;
       height: 550px;
       border-radius: 16px;
-      border: 1px solid;
+      border: 1px;
       border-color: @border-subtle;
       background-color: @bg;
     }
@@ -352,14 +347,14 @@ export async function rofiResponsePanel(message: string): Promise<{ action: "rep
       text-color: @text-primary;
       font: "JetBrainsMono Nerd Font 10";
       expand: true;
+      wrap: true;
     }
     inputbar {
-      padding: 14px 20px;
-      margin: 0px 24px 24px 24px;
-      background-color: @bg;
-      border: 2px;
-      border-color: @accent-color;
-      border-radius: 14px;
+      border: 1px 0px 0px 0px;
+      border-color: @border-subtle;
+      border-radius: 0px 0px 12px 12px;
+      margin: 0px;
+      padding: 12px 20px;
       children: [prompt, entry];
     }
     prompt {
@@ -379,12 +374,13 @@ export async function rofiResponsePanel(message: string): Promise<{ action: "rep
   `;
 
   const result = await rofiMenu(
-    "", 
+    "",
     t("common.lumina"),
     themeOverride,
     t("ui.type_reply"),
     "",
-    formattedMessage
+    formattedMessage,
+    true
   );
 
   if (result.code === 10 && needsTruncation) {
@@ -394,86 +390,38 @@ export async function rofiResponsePanel(message: string): Promise<{ action: "rep
   if (result.code === 0 && result.output) {
     return { action: "reply", input: result.output };
   }
-  
+
   return { action: "exit" };
 }
 
 export async function rofiSimpleInput(prompt: string, placeholder: string = ""): Promise<string> {
-  const proc = spawn([
-    "rofi", "-dmenu", "-p", prompt, 
-    "-theme", THEME_PATH,
-    "-theme-str", `entry { placeholder: "${placeholder}"; }`
-  ], {
-    stdin: "pipe",
-    stdout: "pipe",
-  });
-
-  const output = await new Response(proc.stdout).text();
-  await proc.exited;
-  
-  return output.trim();
-}
-
-async function rofiDmenu(items: string, prompt: string = "Lumina"): Promise<string> {
-  const args = [
-    "rofi", "-dmenu", "-i", "-p", prompt, 
-    "-theme", THEME_PATH, 
-    "-mesg", escapeHtml(`󰌑 ${t("common.send")} │ 󱊷 ${t("common.exit")} │ 󰍉 ${t("common.search")}`)
-  ];
-
-  const proc = spawn(args, {
-    stdin: "pipe",
-    stdout: "pipe",
-  });
-
-  proc.stdin.write(items);
-  proc.stdin.end();
-
-  const output = await new Response(proc.stdout).text();
-  await proc.exited;
-  
-  return output.trim();
-}
-
-async function rofiDmenuNoPrompt(items: string): Promise<string> {
-  const themeStr = 'mainbox { children: [listview]; }';
-  
-  const proc = spawn([
-    "rofi", "-dmenu", "-i",
-    "-theme", THEME_PATH,
-    "-theme-str", themeStr
-  ], {
-    stdin: "pipe",
-    stdout: "pipe",
-  });
-
-  proc.stdin.write(items);
-  proc.stdin.end();
-
-  const output = await new Response(proc.stdout).text();
-  await proc.exited;
-  
-  return output.trim();
+  const result = await rofiMenu(
+    "",
+    prompt,
+    "listview { enabled: false; } mainbox { children: [inputbar]; }",
+    placeholder
+  );
+  return result.output ?? "";
 }
 
 export async function rofiDisplay(message: string): Promise<void> {
   const cleanMessage = message
-    .replace(/^━+$/gm, "")
+    .replace(/^\s+·\s.+$/gm, "")
     .replace(/^\n+/, "")
     .replace(/\n+$/, "")
     .trim();
 
-  const formattedMessage = `󱜙 ${t("common.lumina")}\n${"─".repeat(40)}\n\n${cleanMessage}`;
-
+  const formattedMessage = `<b>󱜙 ${escapeHtml(t("common.lumina"))}</b>\n${"─".repeat(40)}\n\n${markdownToPango(cleanMessage)}`;
   const proc = spawn([
-    "rofi", "-e", escapeHtml(formattedMessage),
+    "rofi", "-e", formattedMessage,
+    "-markup",
     "-theme", THEME_PATH,
     "-theme-str", `
       window {
         width: 500px;
         height: 400px;
         border-radius: 12px;
-        border: 1px solid;
+        border: 1px;
         border-color: @border-subtle;
         background-color: @bg;
       }
@@ -491,6 +439,7 @@ export async function rofiDisplay(message: string): Promise<void> {
         horizontal-align: 0.5;
         padding: 0;
         margin: 0;
+        wrap: true;
       }
     `
   ], {
@@ -498,7 +447,7 @@ export async function rofiDisplay(message: string): Promise<void> {
   });
 
   await proc.exited;
-}
+}   
 
 export async function rofiChatLoop(
   chatManager: ChatManager,
@@ -524,7 +473,53 @@ export async function rofiChatLoop(
           while (currentInput) {
             const userMessageIndex = chatManager.getCurrentChat()?.messages.length || 0;
             try {
+              const loadingProc = spawn([
+                "rofi", "-dmenu",
+                "-theme", THEME_PATH,
+                "-theme-str", `
+                  window {
+                    location: southeast;
+                    anchor: southeast;
+                    width: 360px;
+                    height: 52px;
+                    border-radius: 14px;
+                    border: 1px;
+                    background-color: @bg;
+                    x-offset: -24px;
+                    y-offset: -12px;
+                  }
+                  mainbox {
+                    children: [message];
+                    padding: 0px;
+                    spacing: 0px;
+                  }
+                  inputbar {
+                    enabled: false;
+                  }
+                  listview {
+                    enabled: false;
+                  }
+                  message {
+                    padding: 14px 20px;
+                    background-color: transparent;
+                  }
+                  textbox {
+                    text-color: @accent-color;
+                    font: "JetBrainsMono Nerd Font 10";
+                    horizontal-align: 0.5;
+                    vertical-align: 0.5;
+                    wrap: false;
+                  }
+                `,
+                "-mesg", escapeHtml(randomLoader()),
+              ], { stdin: "pipe", stdout: "pipe" });
+
+              loadingProc.stdin.end();
+
               const response = await onMessage(currentInput);
+
+              loadingProc.kill();
+              await loadingProc.exited.catch(() => {});
               
               if (response && response !== "Done.") {
                 let showResponse = true;
@@ -535,7 +530,6 @@ export async function rofiChatLoop(
                   
                   if (panelResult.action === "expand") {
                     await rofiExpandedResponse(fullResponse);
-                    // After expanding, stay on the response panel
                   } else if (panelResult.action === "reply" && panelResult.input) {
                     currentInput = panelResult.input;
                     showResponse = false;
