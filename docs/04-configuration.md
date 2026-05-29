@@ -110,6 +110,7 @@ DeskLumina stores user preferences in `~/.config/desklumina/settings.json`.
 ```json
 {
   "language": "en",
+  "persona": "default",
   "features": {
     "tts": false,
     "toolDisplay": true,
@@ -126,6 +127,7 @@ DeskLumina stores user preferences in `~/.config/desklumina/settings.json`.
 - **`language`**: Primary language for the UI and AI. Supported: `"en"`, `"id"`, `"ja"`.
   - Changing the language automatically updates the `tts.voiceId` to a matching natural voice.
   - **Default**: `"en"`
+- **`persona`**: Assistant conversational personality. One of `"default"`, `"tsundere"`, `"catgirl"`, `"deredere"`, `"kuudere"`, or `"dandere"`. **Default**: `"default"`. Personas only affect conversational tone, not assistant capabilities.
 - **`features.tts`**: Enable or disable text-to-speech output.
 - **`features.toolDisplay`**: Show or hide tool execution details in the UI.
 - **`features.dangerousCommandConfirmation`**: Require confirmation for critical commands.
@@ -148,7 +150,7 @@ You can adjust most settings within the Rofi interface.
 1. Launch DeskLumina: `bun run start`.
 2. Press `Tab` to expand the menu.
 3. Select **Settings**.
-4. Navigate the menu to toggle features or change languages.
+4. Navigate the menu to toggle features, change languages, or select a **Persona**.
 5. Select **Save & Exit** to apply changes.
 
 ---

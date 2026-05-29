@@ -7,6 +7,7 @@ export interface FeatureFlags {
 
 export interface Settings {
   language: "id" | "en" | "ja";
+  persona: string;
   features: FeatureFlags;
   tts: {
     voiceId: string;
@@ -16,6 +17,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   language: "en",
+  persona: "default",
   features: {
     tts: false,
     toolDisplay: true,

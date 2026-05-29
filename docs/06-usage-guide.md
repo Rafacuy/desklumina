@@ -50,6 +50,7 @@ DeskLumina now uses a ReAct-based agent loop. This means it can:
 The settings menu allows you to customize DeskLumina's behavior without editing files:
 - **Toggle TTS**: Enable or disable voice output.
 - **Language**: Switch between English, Indonesian, and Japanese.
+- **Persona**: Choose an assistant conversational personality.
 - **Tool Display**: Show or hide real-time tool execution logs.
 - **Security Confirmation**: Toggle interactive checks for dangerous commands.
 - **TTS Voice & Speed**: Choose a voice and adjust playback speed.

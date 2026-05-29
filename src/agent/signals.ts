@@ -25,6 +25,5 @@ export function stripMarkers(text: string): string {
 export function stripMarkersForDisplay(text: string): string {
   return text
     .replace(/\[\[DONE\]\]/g, "")
-    .replace(/\[\[FAIL:.*?\]\]/g, "")
-    .trim();
+    .replace(/\[\[FAIL:.*?\]\]/g, "");
 }

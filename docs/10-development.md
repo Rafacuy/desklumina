@@ -145,6 +145,43 @@ Add the API key to `src/config/env.ts` and the endpoint constant to `src/constan
 
 ---
 
+## Multi-Persona System
+
+DeskLumina supports configurable assistant personas that alter conversational tone without affecting functionality.
+
+### Persona Definitions
+
+**Path**: `src/ai/personas.ts`
+
+Personas are defined as a typed `Record<PersonaType, PersonaDefinition>`. Each entry specifies:
+- **`id`**: Unique persona identifier (`"default"`, `"tsundere"`, `"catgirl"`, `"deredere"`, `"kuudere"`, `"dandere"`).
+- **`translationKey`**: i18n key for UI labels (e.g. `ui.settings.personas.tsundere`).
+- **`prompt`**: A compact (1–3 sentence) system prompt fragment. Empty for the default persona.
+
+### Prompt Injection
+
+**File**: `src/ai/prompts.ts` — `buildSystemPrompt()`
+
+The function reads the current persona ID from `settingsManager.get().persona`, resolves it via `getPersona()`, and conditionally prepends the persona prompt to the identity section. Non-default personas produce `identity + "\n\n" + persona.prompt`. The default persona produces `identity` alone with no added text.
+
+### Settings Persistence
+
+**File**: `src/core/settings-manager.ts`
+
+`setPersona(persona: string)` updates the in-memory settings and persists to `settings.json` using the same atomic write pattern (temp file + rename) as all other settings. The `Settings` type stores `persona` as a plain `string`.
+
+### Fallback Handling
+
+`getPersona(id)` in `src/ai/personas.ts` casts the input to `PersonaType` and falls back to `PERSONAS.default` for any unrecognized value. This ensures unknown or corrupted persona IDs never break prompt generation.
+
+### Extending Personas
+
+1. Add the new ID to the `PersonaType` union in `src/ai/personas.ts`.
+2. Add a `PersonaDefinition` entry to the `PERSONAS` record with a 1–3 sentence `prompt` (single paragraph, no double newlines).
+3. Add i18n keys under `ui.settings.personas.<id>` in each locale file (`src/locales/*.json`).
+
+---
+
 ## Adding New i18n Strings
 
 DeskLumina uses a centralized i18n system located in `src/utils/i18n.ts`.

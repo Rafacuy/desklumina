@@ -217,7 +217,17 @@
       "tts": "Text-to-Speech",
       "tts_speed": "TTS Speed",
       "tts_speed_settings": "TTS Speed Settings",
-      "type_to_search": "Type to search..."
+      "type_to_search": "Type to search...",
+      "persona": "Persona",
+      "select_persona": "Select Persona",
+      "personas": {
+        "default": "Neutral deterministic assistant.",
+        "tsundere": "Cold but occasionally caring.",
+        "catgirl": "Playful cat-like speech.",
+        "deredere": "Very affectionate and supportive.",
+        "kuudere": "Calm, logical, and concise.",
+        "dandere": "Quiet, shy, and polite."
+      }
     },
     "type_message": "Type your message...",
     "type_reply": "Type a reply..."

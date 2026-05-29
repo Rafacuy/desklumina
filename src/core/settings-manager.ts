@@ -112,6 +112,11 @@ export class SettingsManager {
     this.settings.tts.speed = Math.max(0.5, Math.min(2.0, speed));
     this.save().catch(() => {});
   }
+
+  setPersona(persona: string) {
+    this.settings.persona = persona;
+    this.save().catch(() => {});
+  }
 }
 
 export const settingsManager = new SettingsManager();

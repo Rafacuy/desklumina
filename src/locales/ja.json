@@ -217,7 +217,17 @@
       "tts": "テキスト読み上げ (TTS)",
       "tts_speed": "TTS 速度",
       "tts_speed_settings": "TTS 速度設定",
-      "type_to_search": "検索ワードを入力..."
+      "type_to_search": "検索ワードを入力...",
+      "persona": "ペルソナ",
+      "select_persona": "ペルソナを選択",
+      "personas": {
+        "default": "ニュートラルな決定論的アシスタント",
+        "tsundere": "ツンデレで時々優しい",
+        "catgirl": "遊び心のある猫耳口調",
+        "deredere": "愛情深くサポートする",
+        "kuudere": "冷静、論理的、簡潔",
+        "dandere": "無口で恥ずかしがり屋"
+      }
     },
     "type_message": "メッセージを入力...",
     "type_reply": "返信を入力..."

@@ -57,6 +57,9 @@ Yes. Edit `src/ui/themes/lumina.rasi` to change colors, fonts, and layout.
 ### How do I add my own application aliases?
 Modify `src/config/apps.json`. You can map any name to any shell command.
 
+### Can I change the assistant's personality?
+Yes. Use the **Settings** menu (press `Tab`, select **Settings**, then **Persona**) or set the `persona` field in `~/.config/desklumina/settings.json`. Available options: `default`, `tsundere`, `catgirl`, `deredere`, `kuudere`, `dandere`. Personas only affect conversational tone, not assistant functionality. An unknown persona ID safely falls back to `default`.
+
 ---
 
 ## Next Steps

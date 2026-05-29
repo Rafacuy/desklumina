@@ -27,6 +27,7 @@ export async function rofiSettings(): Promise<boolean> {
 
   const menuItems: string[] = [
     section(t("ui.settings.section.ai")),
+    `󰙨 ${t("ui.settings.persona")} │ ${settings.persona} ›`,
     getToggleLabel("tts", "󰔡", t("ui.settings.tts")),
     ...(settings.features.tts ? [
       `  󰔊 ${t("ui.settings.change_tts_voice")} ›`,
@@ -90,6 +91,31 @@ export async function rofiSettings(): Promise<boolean> {
 
   if (is("󱇎", t("ui.settings.confirmation"))) {
     settingsManager.toggleFeature("dangerousCommandConfirmation");
+    return rofiSettings();
+  }
+
+  // Persona submenu
+  if (is("󰙨", t("ui.settings.persona"))) {
+    const personas = ["default", "tsundere", "catgirl", "deredere", "kuudere", "dandere"];
+    const personaOptions = personas.map((p) => {
+      const desc = t(`ui.settings.personas.${p}`);
+      return `${settings.persona === p ? "󰄬 " : "   "}${p} - ${desc}`;
+    });
+    personaOptions.push(`󰜺 ${t("common.back")}`);
+
+    const personaRes = await rofiMenu(
+      personaOptions.join("\n"),
+      t("ui.settings.select_persona"),
+      "",
+      t("ui.settings.type_to_search"),
+      `󰌑 ${t("common.select")} │ 󱊷 ${t("common.back")} │ 󰍉 ${t("common.search")}`
+    );
+    const selection = personaRes.output;
+    if (personaRes.code === 0 && selection && !selection.startsWith("󰜺")) {
+      const cleanLabel = selection.trimStart().replace(/^󰄬\s+/, "");
+      const selectedId = cleanLabel.split(" - ")[0];
+      if (selectedId) settingsManager.setPersona(selectedId);
+    }
     return rofiSettings();
   }
 

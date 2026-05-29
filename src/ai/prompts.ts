@@ -1,5 +1,7 @@
 import { logger } from "../logger";
 import { TOOL_CONTRACTS, ToolContract } from "../tools/contracts";
+import { settingsManager } from "../core/settings-manager";
+import { getPersona } from "./personas";
 
 async function runProbe(command: string): Promise<string | null> {
   try {
@@ -167,7 +169,13 @@ export async function buildSystemPrompt(query: string = ""): Promise<string> {
   const systemContext = selectContext(query, fullContext);
   const formatExamples = generateFormatAnchors();
 
-  return `${IDENTITY}
+  const personaId = settingsManager.get().persona;
+  const persona = getPersona(personaId);
+  const identityWithPersona = persona.prompt
+    ? `${IDENTITY}\n\n${persona.prompt}`
+    : IDENTITY;
+
+  return `${identityWithPersona}
 
 ${toolContracts}
 

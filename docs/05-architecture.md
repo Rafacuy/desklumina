@@ -130,6 +130,10 @@ DeskLumina generates prompts dynamically from **Tool Contracts** (`src/tools/con
 - **Failure Behavior**: Specific retry limits and retriable vs. non-retriable errors.
 - **Path/Quoting Rules**: Precise constraints for argument formatting.
 
+### Persona Injection
+
+The prompt builder (`src/ai/prompts.ts`) supports runtime persona injection. When a non-default persona is selected in settings, the persona's compact prompt string is appended to the assistant identity section of the system prompt. The default persona uses the identity directly with no appended text. Invalid persona identifiers fall back safely to the default.
+
 ### Live Context Injection
 DeskLumina injects real-time system state into every request:
 - **Probing**: Uses `pactl`, `playerctl`, and `xdotool` to gather volume, media state, and active window info.
