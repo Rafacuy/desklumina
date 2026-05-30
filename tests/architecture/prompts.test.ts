@@ -56,9 +56,8 @@ describe("Prompt Architecture", () => {
   test("should have language-neutral formatting examples from contracts", async () => {
     const prompt = await buildSystemPrompt();
     expect(prompt).toContain("FORMAT ANCHORS:");
-    // Check for JSON blocks generated from contracts
     expect(prompt).toContain(
-      '{"tool":"music","args":"{\\"action\\":\\"play\\"}"}',
+      '{"tool":"music","args":"{\\"action\\":\\"play\\",\\"backend\\":\\"mpc\\"}"}',
     );
     expect(prompt).toContain('{"tool":"app","args":"firefox"}');
   });

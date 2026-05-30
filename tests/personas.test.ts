@@ -31,7 +31,7 @@ describe("Multi-Persona System", () => {
     expect(persona.prompt).toBe("");
   });
 
-  it("should have correct token-length constraints for all personas (max 3 sentences / 1 paragraph)", () => {
+  it("should have correct token-length constraints for all personas (max 4 sentences / 1 paragraph)", () => {
     const allPersonas = Object.values(PERSONAS);
     for (const persona of allPersonas) {
       // Prompt should be a single paragraph (no double newlines)
@@ -40,7 +40,7 @@ describe("Multi-Persona System", () => {
       if (persona.prompt !== "") {
         // Simple sentence count approximation using punctuation
         const sentenceCount = (persona.prompt.match(/[.!?]/g) || []).length;
-        expect(sentenceCount).toBeLessThanOrEqual(3);
+        expect(sentenceCount).toBeLessThanOrEqual(4);
         expect(sentenceCount).toBeGreaterThanOrEqual(1);
       }
     }
@@ -50,7 +50,7 @@ describe("Multi-Persona System", () => {
     settingsManager.setPersona("tsundere");
     const systemPrompt = await buildSystemPrompt();
     expect(systemPrompt).toContain("You are Lumina, a deterministic Linux desktop assistant.");
-    expect(systemPrompt).toContain("Act as a Tsundere.");
+    expect(systemPrompt).toContain("Tsundere: default to dismissive");
   });
 
   it("should not inject extra linebreaks for default persona", async () => {

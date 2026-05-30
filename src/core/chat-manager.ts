@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync, renameSync, statSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
-import type { AIMessage, AIRequestContext, Chat, ChatMessage, ToolCall, ToolResult, ChatMetadata } from "../types";
+import type { AIMessage, AIRequestContext, Chat, ChatMessage, ToolCall, ToolResult, ChatMetadata, ToolExtraData } from "../types";
 import { settingsManager } from "./settings-manager";
 import { logger } from "../logger";
 import { t, cleanAssistantResponse } from "../utils";
@@ -52,6 +52,57 @@ function cleanContent(content: string): string {
   return cleanAssistantResponse(content);
 }
 
+type ExtraFormatter = (value: unknown) => string;
+
+const EXTRA_FORMATTERS: Record<string, ExtraFormatter> = {
+  tracks: (val) => {
+    const tracks = val as ToolExtraData["tracks"];
+    if (!tracks || tracks.length === 0) return "";
+    const lines = tracks.map((t) => {
+      const parts: string[] = [];
+      if (t.status) parts.push(t.status);
+      if (t.title) parts.push(`"${t.title}"`);
+      if (t.artist) parts.push(`by ${t.artist}`);
+      if (t.album) parts.push(`on ${t.album}`);
+      if (t.elapsed && t.duration) parts.push(`[${t.elapsed}/${t.duration}]`);
+      if (t.backend) parts.push(`(${t.backend})`);
+      return `  - ${parts.join(" ")}`;
+    });
+    return `tracks:\n${lines.join("\n")}`;
+  },
+  activePrimaryBackend: (val) => {
+    const backend = val as ToolExtraData["activePrimaryBackend"];
+    return backend ? `active_backend=${backend}` : "";
+  },
+  files: (val) => {
+    const files = val as ToolExtraData["files"];
+    if (!files || files.length === 0) return "";
+    const lines = files.slice(0, 10).map((f) => `  - ${f.path}${f.type === "directory" ? "/" : ""}`);
+    return `files:\n${lines.join("\n")}`;
+  },
+  selectedFile: (val) => `selected=${val}`,
+  preview: (val) => {
+    const p = val as ToolExtraData["preview"];
+    if (!p) return "";
+    if (p.type === "missing") return `preview=${p.path} (missing)`;
+    if (p.type === "directory" && p.entries) return `preview=${p.path}/ [${p.entries.length} entries]`;
+    if (p.content) {
+      const truncated = p.content.length > 300 ? p.content.slice(0, 300) + "..." : p.content;
+      return `preview=${p.path}:\n${truncated}`;
+    }
+    return "";
+  },
+  summary: (val) => {
+    const s = val as ToolExtraData["summary"];
+    if (!s) return "";
+    const parts: string[] = [];
+    if (s.query) parts.push(`query="${s.query}"`);
+    if (s.totalMatches !== undefined) parts.push(`total=${s.totalMatches}`);
+    if (s.returnedMatches !== undefined) parts.push(`returned=${s.returnedMatches}`);
+    return parts.length > 0 ? `summary: ${parts.join(", ")}` : "";
+  },
+};
+
 function formatToolContext(result: ToolResult): string {
   const status = result.success === false ? "FAILED" : "OK";
   const segments = [
@@ -60,9 +111,19 @@ function formatToolContext(result: ToolResult): string {
     result.stdout ? `stdout=${result.stdout.slice(0, 200).trim()}` : "",
     result.stderr ? `stderr=${result.stderr.slice(0, 150).trim()}` : "",
     `msg=${result.result.slice(0, 150).trim()}`,
-  ].filter(Boolean);
+  ];
 
-  return segments.join("\n");
+  if (result.extra) {
+    for (const [key, formatter] of Object.entries(EXTRA_FORMATTERS)) {
+      const value = (result.extra as Record<string, unknown>)[key];
+      if (value !== undefined && value !== null) {
+        const formatted = formatter(value);
+        if (formatted) segments.push(formatted);
+      }
+    }
+  }
+
+  return segments.filter(Boolean).join("\n");
 }
 
 function summarizeMessage(message: InternalMessage): string {
@@ -198,13 +259,13 @@ export class ChatManager {
   addToolResults(results: ToolResult[]): void {
     if (!this.currentChat || results.length === 0) return;
 
-    // Optimization: Strip redundant fields before saving to disk
     const compressedResults = results.map(r => ({
       tool: r.tool,
       success: r.success,
-      result: r.result.slice(0, 500), // Hard cap result length on disk
+      result: r.result.slice(0, 500),
       normalizedArg: r.normalizedArg,
-      attempt: r.attempt
+      attempt: r.attempt,
+      extra: r.extra,
     })) as ToolResult[];
 
     const toolMessage: InternalMessage = {

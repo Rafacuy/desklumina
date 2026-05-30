@@ -20,10 +20,12 @@ const mockCurrentChat = {
           result: "search output",
           success: true,
           status: "search_complete",
-          files: [{ path: "/tmp/example.txt", name: "example.txt", directory: "/tmp", type: "file", hidden: false }],
-          selectedFile: "/tmp/example.txt",
           actions: ["locate:name", "filter_results"],
-          summary: { mode: "name", query: "example", totalMatches: 1, filteredMatches: 1, returnedMatches: 1 },
+          extra: {
+            files: [{ path: "/tmp/example.txt", name: "example.txt", directory: "/tmp", type: "file", hidden: false }],
+            selectedFile: "/tmp/example.txt",
+            summary: { mode: "name", query: "example", totalMatches: 1, filteredMatches: 1, returnedMatches: 1 },
+          }
         },
       ],
     },

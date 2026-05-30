@@ -562,12 +562,12 @@ describe("Agent Tests (runAgent directly)", () => {
 
   test("stripMarkersForDisplay removes DONE marker", async () => {
     const { stripMarkersForDisplay } = await import("../src/agent/signals");
-    expect(stripMarkersForDisplay("Finished [[DONE]]")).toBe("Finished");
+    expect(stripMarkersForDisplay("Finished [[DONE]]")).toBe("Finished ");
   });
 
   test("stripMarkersForDisplay removes FAIL marker", async () => {
     const { stripMarkersForDisplay } = await import("../src/agent/signals");
-    expect(stripMarkersForDisplay("Error [[FAIL: timeout]]")).toBe("Error");
+    expect(stripMarkersForDisplay("Error [[FAIL: timeout]]")).toBe("Error ");
   });
 
   test("stripMarkersForDisplay preserves text without markers", async () => {

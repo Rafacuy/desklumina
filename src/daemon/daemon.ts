@@ -110,10 +110,10 @@ export class DeskLuminaDaemon {
               .filter((message) => message.role === "tool")
               .flatMap((message) => message.toolResults || []) || [];
             const fileResults = toolResults.filter((result) => result.tool === "file");
-            const files = fileResults.flatMap((result) => result.files || []);
-            const selectedFile = fileResults.map((result) => result.selectedFile).find(Boolean);
+            const files = fileResults.flatMap((result) => result.extra?.files || []);
+            const selectedFile = fileResults.map((result) => result.extra?.selectedFile).find(Boolean);
             const actions = fileResults.flatMap((result) => result.actions || []);
-            const summary = fileResults.map((result) => result.summary).find(Boolean) || undefined;
+            const summary = fileResults.map((result) => result.extra?.summary).find(Boolean) || undefined;
             const status = fileResults.map((result) => result.status).find(Boolean) || "completed";
 
             return new Response(JSON.stringify({ 

@@ -36,23 +36,13 @@ export async function getSystemContext(): Promise<string> {
     return cachedContext;
   }
 
-  const [volume, playerctlStatus, mpcStatus, activePlayers, currentTrack, activeWindow] = await Promise.all([
+  const [volume, activeWindow] = await Promise.all([
     runProbe("pactl get-sink-volume @DEFAULT_SINK@ | head -n 1 | sed -E 's/.* ([0-9]+%) .*/\\1/'"),
-    runProbe("playerctl status 2>/dev/null"),
-    runProbe("mpc status '%state%' 2>/dev/null"),
-    runProbe("playerctl --list-all 2>/dev/null"),
-    runProbe("playerctl metadata --format '{{artist}} - {{title}}' 2>/dev/null || mpc current"),
     runProbe("xdotool getactivewindow getwindowname 2>/dev/null || wmctrl -lp | awk '$1 {print substr($0, index($0,$5))}' | head -n 1"),
   ]);
 
-  const mediaState = playerctlStatus || mpcStatus || "Stopped";
-  const players = activePlayers ? activePlayers.split("\n").join(", ") : "None";
-
   cachedContext = [
     `Volume: ${volume || "Unavailable"}`,
-    `Media State: ${mediaState}`,
-    `Active Players: ${players}`,
-    `Current Track: ${currentTrack || "None"}`,
     `Active window: ${activeWindow || "Unavailable"}`,
   ].join("\n");
 
@@ -149,24 +139,9 @@ function generateFormatAnchors(): string {
   return `FORMAT ANCHORS:\n\n${anchors}`;
 }
 
-function selectContext(query: string, context: string): string {
-  const lines = context.split("\n");
-  const mediaKeywords = ["music", "play", "pause", "track", "volume", "player", "song", "album", "artist"];
-  const isMediaIntent = mediaKeywords.some((k) => query.toLowerCase().includes(k));
-
-  if (isMediaIntent) {
-    return context;
-  }
-
-  // Filter out media-related context if not media intent
-  const mediaKeys = ["Media State:", "Active Players:", "Current Track:"];
-  return lines.filter((line) => !mediaKeys.some((key) => line.startsWith(key))).join("\n");
-}
-
 export async function buildSystemPrompt(query: string = ""): Promise<string> {
   const toolContracts = TOOL_CONTRACTS.map(formatToolContract).join("\n\n---\n\n");
-  const fullContext = await getSystemContext();
-  const systemContext = selectContext(query, fullContext);
+  const systemContext = await getSystemContext();
   const formatExamples = generateFormatAnchors();
 
   const personaId = settingsManager.get().persona;

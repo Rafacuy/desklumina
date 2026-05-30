@@ -38,6 +38,33 @@ export interface ToolCallbackPayload {
   reason?: string;
 }
 
+export interface TrackInfo {
+  backend: "mpc" | "playerctl";
+  player: string;
+  status: "playing" | "paused" | "stopped";
+  title: string | null;
+  artist: string | null;
+  album: string | null;
+  elapsed: string | null;
+  duration: string | null;
+}
+
+/**
+ * Extensible container for structured tool data sent to the AI.
+ * Each field is optional — tools only populate what's relevant.
+ * To add a new extra type:
+ *   1. Add an optional field here
+ *   2. Add a formatter in EXTRA_FORMATTERS (chat-manager.ts)
+ */
+export interface ToolExtraData {
+  tracks?: TrackInfo[];
+  activePrimaryBackend?: "mpc" | "playerctl" | null;
+  files?: FileMatch[];
+  selectedFile?: string;
+  preview?: FilePreview;
+  summary?: ToolExecutionSummary;
+}
+
 export interface ToolExecutionResult {
   tool: string;
   result: string;
@@ -50,11 +77,9 @@ export interface ToolExecutionResult {
   status?: string;
   expression?: string;
   numericResult?: number;
-  files?: FileMatch[];
-  selectedFile?: string;
-  preview?: FilePreview;
   actions?: string[];
-  summary?: ToolExecutionSummary;
+  resolvedBackend?: "mpc" | "playerctl";
+  extra?: ToolExtraData;
 }
 
 export type ToolHandler = (arg: string) => Promise<ToolExecutionResult>;
@@ -74,11 +99,9 @@ export interface ToolResult {
   status?: string;
   expression?: string;
   numericResult?: number;
-  files?: FileMatch[];
-  selectedFile?: string;
-  preview?: FilePreview;
   actions?: string[];
-  summary?: ToolExecutionSummary;
+  resolvedBackend?: "mpc" | "playerctl";
+  extra?: ToolExtraData;
 }
 
 export interface ParsedToolCall {

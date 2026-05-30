@@ -46,7 +46,7 @@ function getToolIcon(tool: string): string {
 
 function formatFileResult(result: ToolResult): string[] {
   const lines: string[] = [];
-  const files = result.files || [];
+  const files = result.extra?.files || [];
 
   if (result.status === "search_complete") {
     const matchCount = files.length;
@@ -63,8 +63,8 @@ function formatFileResult(result: ToolResult): string[] {
     lines.push(t("tool.result.invalid_request"));
   }
 
-  if (result.selectedFile) {
-    lines.push(tf("tool.result.selected", { path: result.selectedFile }));
+  if (result.extra?.selectedFile) {
+    lines.push(tf("tool.result.selected", { path: result.extra.selectedFile }));
   } else {
     files.slice(0, 3).forEach((file) => {
       lines.push(`• ${file.path}`);
@@ -75,8 +75,8 @@ function formatFileResult(result: ToolResult): string[] {
     }
   }
 
-  if (result.preview?.path && result.preview.path !== result.selectedFile) {
-    lines.push(tf("tool.result.preview", { path: result.preview.path }));
+  if (result.extra?.preview?.path && result.extra.preview.path !== result.extra?.selectedFile) {
+    lines.push(tf("tool.result.preview", { path: result.extra.preview.path }));
   }
 
   if (result.success === false) {
@@ -100,6 +100,43 @@ function formatMathResult(result: ToolResult): string[] {
   return lines;
 }
 
+function formatMusicTracksResult(result: ToolResult): string[] {
+  const lines: string[] = [];
+  const tracks = result.extra?.tracks || [];
+
+  if (tracks.length === 0) {
+    lines.push(t("tool.result.no_song"));
+    return lines;
+  }
+
+  tracks.forEach((track, index) => {
+    const statusIcon = track.status === "playing" ? "▶" : track.status === "paused" ? "Ⅱ" : "■";
+    const primaryMarker = result.extra?.activePrimaryBackend === track.backend ? "⭐ " : "";
+    lines.push(`${primaryMarker}${statusIcon} ${track.title || "Unknown Title"}`);
+    
+    if (track.artist || track.album) {
+      const artist = track.artist || "Unknown Artist";
+      const album = track.album ? ` (${track.album})` : "";
+      lines.push(`  👤 ${artist}${album}`);
+    }
+
+    const timeInfo = [];
+    if (track.elapsed) timeInfo.push(track.elapsed);
+    if (track.duration) timeInfo.push(track.duration);
+    
+    const timeStr = timeInfo.length === 2 ? `${timeInfo[0]} / ${timeInfo[1]}` : timeInfo[0] || "";
+    const backendInfo = `[${track.backend}${track.player !== "mpd" ? `:${track.player}` : ""}]`;
+    
+    lines.push(`  🕒 ${timeStr || "--:--"}  ${backendInfo}`);
+    
+    if (index < tracks.length - 1) {
+      lines.push("  ---");
+    }
+  });
+
+  return lines;
+}
+
 function summarizeResult(result: ToolResult): string[] {
   if (result.tool === "file") {
     return formatFileResult(result);
@@ -110,8 +147,11 @@ function summarizeResult(result: ToolResult): string[] {
   }
 
   if (result.tool === "music") {
+    if (result.extra?.tracks !== undefined) {
+      return formatMusicTracksResult(result);
+    }
     const lines: string[] = [];
-    const files = result.files || [];
+    const files = result.extra?.files || [];
     if (files.length > 0) {
       files.slice(0, 3).forEach((f) => lines.push(`• ${f.name}`));
       if (files.length > 3) {

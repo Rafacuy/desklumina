@@ -41,8 +41,8 @@ The system analyzes every command for safety. Destructive or sensitive operation
 > **User:** "create a folder on Desktop"
 > **DeskLumina:** (executes tool call `{"tool": "file", "args": "create_dir ~/Desktop/NewFolder"}`)
 
-> **User:** "play music"
-> **DeskLumina:** (executes tool call `{"tool": "music", "args": "{\"action\": \"play\"}"}`)
+> **User:** "what's playing?"
+> **DeskLumina:** (executes tool call `{"tool": "music", "args": "{\"current\": true}"}`)
 
 ---
 

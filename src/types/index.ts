@@ -14,9 +14,11 @@ export type {
   ToolCallbackPayload,
   ToolExecutionResult,
   ToolExecutionSummary,
+  ToolExtraData,
   ToolHandler,
   ToolRegistry,
   ToolResult,
+  TrackInfo,
 } from "./tool";
 
 /**

@@ -29,7 +29,6 @@ const tools: ToolRegistry = {
   },
   app: (alias) => launch(alias),
   file: (op) => fileOp(op),
-  // Legacy alias for the canonical music tool
   media: (action) => music(action),
   music: (arg) => music(arg),
   clipboard: (action) => clipboard(action),

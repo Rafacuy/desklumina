@@ -494,9 +494,11 @@ export async function handleFileManagement(operation: string): Promise<ToolExecu
       true,
       {
         status: "history_ready",
-        files,
         actions: ["read_history"],
-        summary: { returnedMatches: Math.min(history.length, limit) },
+        extra: {
+          files,
+          summary: { returnedMatches: Math.min(history.length, limit) },
+        },
       }
     );
   }
@@ -542,10 +544,12 @@ export async function handleFileManagement(operation: string): Promise<ToolExecu
       success,
       {
         status: success ? "preview_ready" : "preview_unavailable",
-        preview,
-        selectedFile: preview.path,
         actions: ["preview"],
-        summary: { returnedMatches: success ? 1 : 0 },
+        extra: {
+          preview,
+          selectedFile: preview.path,
+          summary: { returnedMatches: success ? 1 : 0 },
+        },
         stderr: success ? undefined : preview.unavailableReason,
         exitCode: success ? 0 : 404,
       }
@@ -629,11 +633,13 @@ export async function handleFileManagement(operation: string): Promise<ToolExecu
     matches.length > 0,
     {
       status: matches.length > 0 ? "search_complete" : "no_matches",
-      files: matches,
-      selectedFile,
-      preview,
       actions,
-      summary,
+      extra: {
+        files: matches,
+        selectedFile,
+        preview,
+        summary,
+      },
       stdout: lines.join("\n"),
       stderr: matches.length > 0 ? undefined : "No files matched the request",
       exitCode: matches.length > 0 ? 0 : 404,

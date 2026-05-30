@@ -54,8 +54,8 @@ describe("Advanced File Management", () => {
     const result = await handleFileManagement(`preview ${filePath}`);
 
     expect(result?.success).toBe(true);
-    expect(result?.preview?.content).toContain("DeskLumina preview content");
-    expect(result?.selectedFile).toBe(filePath);
+    expect(result?.extra?.preview?.content).toContain("DeskLumina preview content");
+    expect(result?.extra?.selectedFile).toBe(filePath);
   });
 
   test("searches with locate, stores history, and can replay the last query", async () => {
@@ -74,8 +74,8 @@ describe("Advanced File Management", () => {
 
     const search = await handleFileManagement(`search_name report base=${tempDir} type=file ext=md preview=true`);
     expect(search?.success).toBe(true);
-    expect(search?.files?.[0]?.path).toBe(target);
-    expect(search?.preview?.path).toBe(target);
+    expect(search?.extra?.files?.[0]?.path).toBe(target);
+    expect(search?.extra?.preview?.path).toBe(target);
     expect(search?.actions).toContain("locate:name");
 
     const history = await handleFileManagement("history 5");
@@ -84,6 +84,6 @@ describe("Advanced File Management", () => {
 
     const replay = await handleFileManagement("repeat_last");
     expect(replay?.success).toBe(true);
-    expect(replay?.files?.[0]?.path).toBe(target);
+    expect(replay?.extra?.files?.[0]?.path).toBe(target);
   });
 });

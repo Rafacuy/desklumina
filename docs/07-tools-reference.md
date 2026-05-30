@@ -100,17 +100,22 @@ Filters use `key=value` syntax after the query.
 
 ## Music Tool (`music`)
 
-Control media playback using a JSON action payload.
+Control media playback and inspect current track status using a JSON payload. Before performing playback-affecting actions (play, pause, etc.), the agent typically performs a track query to resolve the active backend.
 
-- **Schema**: `music {"action": "..."}`
+- **Schema**: `music {"action"?: "...", "backend"?: "...", "current"?: boolean, "backends"?: [...]}`
 - **Quoting**: Arguments MUST be a valid JSON object string. Double quotes for keys and values.
 - **Escaping**: JSON-standard backslash escaping for quotes in payload.
 
-### Supported Actions:
-`play`, `resume`, `pause`, `stop`, `next`, `prev`, `volume_up`, `volume_down`.
+### Parameters:
+- **`action`**: `play`, `resume`, `pause`, `stop`, `next`, `prev`, `volume_up`, `volume_down`.
+- **`current`**: Set to `true` to query active track information.
+- **`backend`**: Explicitly target `mpc` or `playerctl`.
+- **`backends`**: List of backends to query (e.g., `["all"]`, `["mpc"]`).
 
 ### Examples:
-- `{"tool": "music", "args": "{\"action\": \"play\"}"}`
+- `{"tool": "music", "args": "{\"current\": true}"}`
+- `{"tool": "music", "args": "{\"action\": \"play\", \"backend\": \"mpc\"}"}`
+- `{"tool": "music", "args": "{\"action\": \"pause\", \"backend\": \"playerctl\"}"}`
 - `{"tool": "music", "args": "{\"action\": \"volume_up\"}"}`
 
 ---

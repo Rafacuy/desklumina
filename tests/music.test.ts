@@ -126,4 +126,77 @@ describe("Music Tool (Generalized Media Controller)", () => {
       expect(result.normalizedArg).toBe(expected);
     }
   });
+
+  test("explicit backend dispatch fails hard if unavailable", async () => {
+    spyOn(Bun, "spawn").mockImplementation((args: any) => {
+      const cmd = args[0];
+      if (cmd === "which") return { exited: Promise.resolve(0) } as any;
+      if (cmd === "mpc") return { exited: Promise.resolve(1), stdout: new Response("").body, stderr: new Response("err").body } as any;
+      return { exited: Promise.resolve(0) } as any;
+    });
+
+    const result = await music('{"action": "play", "backend": "mpc"}');
+    expect(result.success).toBe(false);
+    expect(result.result).toContain("Backend not available");
+    expect(result.resolvedBackend).toBeUndefined();
+  });
+
+  test("explicit backend dispatch works if available", async () => {
+    let callCount = 0;
+    spyOn(Bun, "spawn").mockImplementation((args: any) => {
+      callCount++;
+      return { exited: Promise.resolve(0), stdout: new Response("ok").body, stderr: new Response("").body } as any;
+    });
+
+    const result = await music('{"action": "play", "backend": "playerctl"}');
+    expect(result.success).toBe(true);
+    expect(result.resolvedBackend).toBe("playerctl");
+  });
+
+  test("explicit backend fails if unknown", async () => {
+    const result = await music('{"action": "play", "backend": "spotify"}');
+    expect(result.success).toBe(false);
+    expect(result.result).toContain("Unknown backend name");
+  });
+});
+
+describe("Music Tool Current Track Introspection", () => {
+  afterEach(() => {
+    // @ts-ignore
+    if (Bun.spawn.mock) {
+      // @ts-ignore
+      Bun.spawn.mockRestore();
+    }
+  });
+
+  test("returns malformed for invalid backends", async () => {
+    const result = await music('{"current": true, "backends": ["invalid"]}');
+    expect(result.success).toBe(false);
+    expect(result.exitCode).toBe(2);
+    expect(result.result).toContain("Malformed backends value");
+  });
+
+  test("queries both backends successfully", async () => {
+    spyOn(Bun, "spawn").mockImplementation((args: any) => {
+      const cmd = args.join(" ");
+      if (cmd === "which mpc" || cmd === "which playerctl") return { exited: Promise.resolve(0) } as any;
+      if (cmd === "mpc status") return { exited: Promise.resolve(0), stdout: new Response("Song\n[playing] #1/1   1:23/4:56 (28%)\nvolume:100%").body, stderr: new Response("").body } as any;
+      if (cmd === "playerctl -l") return { exited: Promise.resolve(0), stdout: new Response("firefox\n").body, stderr: new Response("").body } as any;
+      if (cmd.includes("playerctl -p firefox metadata")) {
+        return { exited: Promise.resolve(0), stdout: new Response("Playing\tVid\t\t\t42000000\t180000000").body, stderr: new Response("").body } as any;
+      }
+      return { exited: Promise.resolve(1), stdout: new Response("").body, stderr: new Response("").body } as any;
+    });
+
+    const result = await music('{"current": true}');
+    expect(result.success).toBe(true);
+    expect(result.extra?.activePrimaryBackend).toBe("mpc");
+    expect(result.extra?.tracks?.length).toBe(2);
+    const mpcTrack = result.extra?.tracks?.find((t: any) => t.backend === "mpc");
+    expect(mpcTrack?.title).toBe("Song");
+    expect(mpcTrack?.elapsed).toBe("1:23");
+    expect(mpcTrack?.duration).toBe("4:56");
+    const plTrack = result.extra?.tracks?.find((t: any) => t.backend === "playerctl");
+    expect(plTrack?.title).toBe("Vid");
+  });
 });

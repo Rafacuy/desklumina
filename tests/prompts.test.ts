@@ -27,23 +27,10 @@ describe("System Prompt Caching", () => {
     spawnSpy.mockRestore();
   });
 
-  test("should selectively include media context based on query", { timeout: 30000 }, async () => {
+  test("getSystemContext returns volume and active window", { timeout: 30000 }, async () => {
     _resetPromptCache();
-    const { buildSystemPrompt } = await import("../src/ai/prompts");
-    
-    const mediaPrompt = await buildSystemPrompt("play some music");
-    expect(mediaPrompt).toContain("Media State:");
-    expect(mediaPrompt).toContain("Active Players:");
-    expect(mediaPrompt).toContain("Current Track:");
-
-    _resetPromptCache();
-    const nonMediaPrompt = await buildSystemPrompt("ls -la");
-    expect(nonMediaPrompt).not.toContain("Media State:");
-    expect(nonMediaPrompt).not.toContain("Active Players:");
-    expect(nonMediaPrompt).not.toContain("Current Track:");
-    
-    // Volume and Active window should still be there
-    expect(nonMediaPrompt).toContain("Volume:");
-    expect(nonMediaPrompt).toContain("Active window:");
+    const context = await getSystemContext();
+    expect(context).toContain("Volume:");
+    expect(context).toContain("Active window:");
   });
 });

@@ -69,7 +69,9 @@ describe("ToolDisplay", () => {
           result: "found", 
           success: true, 
           status: "search_complete",
-          files: [{ path: "file1.ts" }, { path: "file2.ts" }],
+          extra: {
+            files: [{ path: "file1.ts" }, { path: "file2.ts" }],
+          },
           arg: "",
           normalizedArg: ""
         },

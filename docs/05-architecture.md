@@ -136,9 +136,9 @@ The prompt builder (`src/ai/prompts.ts`) supports runtime persona injection. Whe
 
 ### Live Context Injection
 DeskLumina injects real-time system state into every request:
-- **Probing**: Uses `pactl`, `playerctl`, and `xdotool` to gather volume, media state, and active window info.
+- **Probing**: Uses `pactl` and `xdotool` to gather volume and active window info.
 - **Caching**: Probes are cached for 30 seconds to minimize system overhead.
-- **Selective Injection**: A relevance filter (`selectContext`) ensures only pertinent state (e.g., media state for music queries) is sent to the model, saving tokens.
+- **Media Context**: Media state is queried on-demand via the `music` tool (using `{"current": true}`) rather than injected into every prompt.
 
 ---
 

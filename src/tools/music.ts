@@ -1,6 +1,6 @@
 import { logger } from "../logger";
-import { t } from "../utils/i18n";
-import type { ToolExecutionResult } from "../types";
+import { t, tf } from "../utils/i18n";
+import type { ToolExecutionResult, TrackInfo } from "../types";
 
 /**
  * Supported Media Actions
@@ -14,6 +14,14 @@ type MediaAction =
   | "prev"
   | "volume_up"
   | "volume_down";
+
+/**
+ * Music Intent
+ */
+interface MusicIntent {
+  action: MediaAction;
+  backend?: string;
+}
 
 /**
  * Internal result for backend execution
@@ -61,15 +69,17 @@ async function runCommand(args: string[]): Promise<BackendResult> {
       proc.exited,
     ]);
 
-    const trimmedStdout = stdout.trim();
-    const trimmedStderr = stderr.trim();
+    // Only trim trailing newlines to preserve tabs/internal whitespace
+    const cleanedStdout = stdout.replace(/\r?\n$/, "");
+    const cleanedStderr = stderr.replace(/\r?\n$/, "");
+    const message = cleanedStdout.trim() || (exitCode === 0 ? t("tool.result.done") : cleanedStderr.trim());
 
     return {
       success: exitCode === 0,
-      message: trimmedStdout || (exitCode === 0 ? t("tool.result.done") : trimmedStderr),
+      message,
       command,
-      stdout: trimmedStdout,
-      stderr: trimmedStderr,
+      stdout,
+      stderr,
       exitCode: exitCode ?? 0,
     };
   } catch (error) {
@@ -154,6 +164,96 @@ class MediaController {
   }
 
   async handle(rawArg: string): Promise<ToolExecutionResult> {
+    const trimmed = rawArg.trim();
+
+    if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (parsed && parsed.current === true) {
+          let backendsToQuery: ("mpc" | "playerctl")[] = ["mpc", "playerctl"];
+
+          if (parsed.backends !== undefined) {
+            if (Array.isArray(parsed.backends)) {
+              if (parsed.backends.includes("all")) {
+                backendsToQuery = ["mpc", "playerctl"];
+              } else if (parsed.backends.every((b: any) => b === "mpc" || b === "playerctl")) {
+                backendsToQuery = parsed.backends;
+              } else {
+                return {
+                  tool: "music",
+                  result: "❌ Malformed backends value",
+                  success: false,
+                  normalizedArg: rawArg,
+                  stderr: "Malformed backends value",
+                  exitCode: 2,
+                };
+              }
+            } else {
+              return {
+                tool: "music",
+                result: "❌ Malformed backends value",
+                success: false,
+                normalizedArg: rawArg,
+                stderr: "Malformed backends value",
+                exitCode: 2,
+              };
+            }
+          } else {
+            // Check if there are keys other than "current"
+            const allowedKeys = new Set(["current", "backends"]);
+            const hasInvalidKeys = Object.keys(parsed).some(k => !allowedKeys.has(k));
+            if (hasInvalidKeys) {
+              return {
+                tool: "music",
+                result: "❌ Malformed backends value",
+                success: false,
+                normalizedArg: rawArg,
+                stderr: "Malformed input",
+                exitCode: 2,
+              };
+            }
+          }
+
+          const tracks: TrackInfo[] = [];
+
+          if (backendsToQuery.includes("mpc")) {
+            const mpcTrack = await this.queryMPC();
+            if (mpcTrack) tracks.push(mpcTrack);
+          }
+
+          if (backendsToQuery.includes("playerctl")) {
+            const playerctlTracks = await this.queryPlayerctl();
+            tracks.push(...playerctlTracks);
+          }
+
+          let activePrimaryBackend: "mpc" | "playerctl" | null = null;
+          const mpcActive = tracks.some(t => t.backend === "mpc" && (t.status === "playing" || t.status === "paused"));
+          const playerctlActive = tracks.some(t => t.backend === "playerctl" && (t.status === "playing" || t.status === "paused"));
+
+          if (mpcActive) {
+            activePrimaryBackend = "mpc";
+          } else if (playerctlActive) {
+            activePrimaryBackend = "playerctl";
+          }
+
+          const resultMessage = tracks.length > 0
+            ? tf("tool.result.tracks_found", { count: tracks.length })
+            : t("tool.result.no_song");
+
+          return {
+            tool: "music",
+            result: resultMessage,
+            success: true,
+            normalizedArg: rawArg,
+            extra: { tracks, activePrimaryBackend },
+            exitCode: 0,
+          };
+        }
+      } catch (e) {
+        // Failed to parse or validate JSON, we let it fall through to action parsing.
+      }
+    }
+
     const intent = this.resolveIntent(rawArg);
     
     if (!intent) {
@@ -170,6 +270,44 @@ class MediaController {
 
     const action = intent.action;
     let lastError: BackendResult | null = null;
+
+    if (intent.backend) {
+      const target = this.backends.find(b => b.name === intent.backend);
+      if (!target) {
+        return {
+          tool: "music",
+          result: `❌ Unknown backend name: ${intent.backend}`,
+          success: false,
+          normalizedArg: action,
+          command: "",
+          stderr: "Unknown backend name",
+          exitCode: 2,
+        };
+      }
+      if (!(await target.isAvailable())) {
+        return {
+          tool: "music",
+          result: `❌ Backend not available: ${intent.backend}`,
+          success: false,
+          normalizedArg: action,
+          command: "",
+          stderr: "Explicit backend unavailable",
+          exitCode: 1,
+        };
+      }
+      const result = await target.execute(action);
+      return {
+        tool: "music",
+        result: result.success ? result.message : `❌ ${result.message}`,
+        success: result.success,
+        normalizedArg: action,
+        command: result.command,
+        stdout: result.stdout,
+        stderr: result.stderr,
+        exitCode: result.exitCode,
+        resolvedBackend: intent.backend as "mpc" | "playerctl",
+      };
+    }
 
     for (const backend of this.backends) {
       logger.debug("music", `Attempting action "${action}" via backend: ${backend.name}`);
@@ -188,6 +326,7 @@ class MediaController {
             stdout: result.stdout,
             stderr: result.stderr,
             exitCode: result.exitCode,
+            resolvedBackend: backend.name as "mpc" | "playerctl",
           };
         }
 
@@ -227,26 +366,32 @@ class MediaController {
   }
 
   /**
-   * Resolves raw input into a strict MediaAction intent.
-   * Supports both JSON {"action": "..."} and natural language strings.
+   * Resolves raw input into a strict MediaAction intent,
+   * Supports both JSON {"action": "...", "backend": "..."} and natural language strings
    */
-  private resolveIntent(arg: string): { action: MediaAction } | null {
+  private resolveIntent(arg: string): MusicIntent | null {
     const trimmed = arg.trim();
 
-    // 1. Try parsing as structured JSON (Primary Inference Format)
+    // try parsing as structured JSON
     if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
       try {
         const parsed = JSON.parse(trimmed);
         if (parsed && typeof parsed.action === "string") {
           const action = this.normalizeAction(parsed.action);
-          if (action) return { action };
+          if (action) {
+            const intent: MusicIntent = { action };
+            if (parsed.backend) {
+              intent.backend = parsed.backend;
+            }
+            return intent;
+          }
         }
       } catch (e) {
         logger.debug("music", "Failed to parse arg as JSON, falling back to string mapping");
       }
     }
 
-    // 2. Fallback to robust string mapping (Resiliency Layer)
+    // Fallback to robust string mapping (Resiliency Layer)
     const action = this.normalizeAction(trimmed);
     return action ? { action } : null;
   }
@@ -291,6 +436,93 @@ class MediaController {
     if (n.includes("down") || n.includes("quiet") || n.includes("lower")) return "volume_down";
 
     return null;
+  }
+
+  private async queryMPC(): Promise<TrackInfo | null> {
+    if (!(await commandExists("mpc"))) return null;
+
+    const statusRes = await runCommand(["mpc", "status"]);
+    if (!statusRes.success) return null;
+
+    const lines = statusRes.stdout.split("\n").filter(l => l.trim());
+    const statusLine = lines[1];
+    if (!statusLine) return null;
+
+    let status: "playing" | "paused" | "stopped" = "stopped";
+    if (statusLine.includes("[playing]")) status = "playing";
+    else if (statusLine.includes("[paused]")) status = "paused";
+
+    if (status === "stopped") return null;
+
+    let elapsed: string | null = null;
+    let duration: string | null = null;
+    const timeMatch = statusLine.match(/(\d+:\d+)\/(\d+:\d+)/);
+    if (timeMatch) {
+      elapsed = timeMatch[1] ?? null;
+      duration = timeMatch[2] ?? null;
+    }
+
+    return {
+      backend: "mpc",
+      player: "mpd",
+      status,
+      title: lines[0]?.trim() || null,
+      artist: null,
+      album: null,
+      duration,
+      elapsed,
+    };
+  }
+
+  private async queryPlayerctl(): Promise<TrackInfo[]> {
+    if (!(await commandExists("playerctl"))) return [];
+
+    const listRes = await runCommand(["playerctl", "-l"]);
+    if (!listRes.success || !listRes.stdout.trim()) return [];
+
+    const players = listRes.stdout.trim().split("\n").map(p => p.trim()).filter(Boolean);
+    const tracks: TrackInfo[] = [];
+
+    const formatTime = (usStr: string) => {
+        const us = parseInt(usStr, 10);
+        if (isNaN(us)) return null;
+        const secs = Math.floor(us / 1000000);
+        const m = Math.floor(secs / 60);
+        const s = Math.floor(secs % 60);
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    };
+
+    for (const player of players) {
+      const metaRes = await runCommand([
+        "playerctl",
+        "-p",
+        player,
+        "metadata",
+        "--format",
+        "{{status}}\\t{{title}}\\t{{artist}}\\t{{album}}\\t{{position}}\\t{{mpris:length}}"
+      ]);
+
+      if (metaRes.success && metaRes.stdout.trim()) {
+        const rawOutput = metaRes.stdout.replace(/\r?\n$/, "");
+        const parts = rawOutput.split("\t");
+        const rawStatus = (parts[0] || "").toLowerCase();
+        let status: "playing" | "paused" | "stopped" = "stopped";
+        if (rawStatus === "playing") status = "playing";
+        else if (rawStatus === "paused") status = "paused";
+
+        tracks.push({
+          backend: "playerctl",
+          player,
+          status,
+          title: parts[1]?.trim() || null,
+          artist: parts[2]?.trim() || null,
+          album: parts[3]?.trim() || null,
+          elapsed: parts[4] ? formatTime(parts[4]) : null,
+          duration: parts[5] ? formatTime(parts[5]) : null,
+        });
+      }
+    }
+    return tracks;
   }
 }
 
