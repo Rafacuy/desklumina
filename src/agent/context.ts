@@ -2,6 +2,7 @@ import { logger } from "../logger";
 import { providerTokenCounter } from "../ai/middleware";
 import type { AIMessage, ToolResult } from "../types";
 import { SAFE_TOKEN_LIMIT } from "../constants";
+import { cleanTrackTitle } from "../utils/format";
 
 export function formatToolResults(results: ToolResult[]): string {
   return results
@@ -12,9 +13,27 @@ export function formatToolResults(results: ToolResult[]): string {
         return str.length > maxLen ? str.slice(0, maxLen).trim() + `\n...(truncated, original length: ${str.length})` : str.trim();
       };
 
+      const trackLines = r.extra?.tracks && r.extra.tracks.length > 0
+        ? [
+            "tracks:",
+            ...r.extra.tracks.map((t: any) => {
+              const parts: string[] = [];
+              if (t.status) parts.push(t.status);
+              if (t.title) parts.push(`"${cleanTrackTitle(t.title)}"`);
+              if (t.artist) parts.push(`by ${t.artist}`);
+              if (t.album) parts.push(`on ${t.album}`);
+              if (t.elapsed && t.duration) parts.push(`[${t.elapsed}/${t.duration}]`);
+              if (t.backend) parts.push(`(${t.backend})`);
+              return `  - ${parts.join(" ")}`;
+            }),
+          ]
+        : [];
+
       const lines = [
         `status=${r.success === false ? "failed" : "ok"}`,
         r.normalizedArg ? `args=${r.normalizedArg}` : "",
+        r.extra?.activePrimaryBackend ? `active_backend=${r.extra.activePrimaryBackend}` : "",
+        ...trackLines,
         r.extra?.summary?.totalMatches !== undefined ? `matches=${r.extra.summary.totalMatches}` : "",
         r.extra?.selectedFile ? `file=${r.extra.selectedFile}` : "",
         r.extra?.files && r.extra.files.length > 0 ? "files:" : "",

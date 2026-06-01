@@ -21,7 +21,7 @@ A guide for developers looking to extend DeskLumina or contribute to the core pr
 2.  **Dependencies**: Run `bun install`.
 3.  **Dev Mode**: Use `bun run dev` for a persistent terminal chat loop.
 4.  **Linting**: Run `bun run lint` to check for TypeScript errors.
-5.  **Provider Setup**: Set at least one provider API key in `.env`. Use `bun run start -- provider list` to verify which providers are registere.
+5.  **Provider Setup**: Set at least one provider API key in `.env`. Use `bun run start -- provider list` to verify which providers are registered.
 
 ---
 

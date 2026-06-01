@@ -1,5 +1,6 @@
 import type { ParsedToolCall, ToolResult } from "../types";
 import { t, tf } from "../utils/i18n";
+import { cleanTrackTitle } from "../utils/format";
 
 interface ToolConfig {
   icon: string;
@@ -112,7 +113,7 @@ function formatMusicTracksResult(result: ToolResult): string[] {
   tracks.forEach((track, index) => {
     const statusIcon = track.status === "playing" ? "▶" : track.status === "paused" ? "Ⅱ" : "■";
     const primaryMarker = result.extra?.activePrimaryBackend === track.backend ? "⭐ " : "";
-    lines.push(`${primaryMarker}${statusIcon} ${track.title || "Unknown Title"}`);
+    lines.push(`${primaryMarker}${statusIcon} ${cleanTrackTitle(track.title) || "Unknown Title"}`);
     
     if (track.artist || track.album) {
       const artist = track.artist || "Unknown Artist";

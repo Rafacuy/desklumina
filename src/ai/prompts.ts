@@ -2,6 +2,7 @@ import { logger } from "../logger";
 import { TOOL_CONTRACTS, ToolContract } from "../tools/contracts";
 import { settingsManager } from "../core/settings-manager";
 import { getPersona } from "./personas";
+import { getLang, getLangName } from "../utils";
 
 async function runProbe(command: string): Promise<string | null> {
   try {
@@ -144,6 +145,20 @@ export async function buildSystemPrompt(query: string = ""): Promise<string> {
   const systemContext = await getSystemContext();
   const formatExamples = generateFormatAnchors();
 
+  const lang = getLang();
+  const langName = getLangName(lang);
+
+  const styleGuides: Record<string, string> = {
+    id: "For Indonesian: Use natural, modern Indonesian. Avoid overly formal 'Baku' language unless the persona is very formal. Feel free to use common particles like 'ya', 'nih', 'deh' where appropriate for the persona to sound natural.",
+    ja: "For Japanese: Use appropriate politeness levels (Desu/Masu) by default, adjusted by persona. Use kanji, hiragana, and katakana naturally.",
+    en: "For English: Use natural, conversational English.",
+  };
+
+  const languageDirective = `LANGUAGE:
+  You must respond using ${langName} for all natural language text.
+  You must stay in ${langName} unless specifically asked to translate.
+  ${styleGuides[lang] || ""}`;
+
   const personaId = settingsManager.get().persona;
   const persona = getPersona(personaId);
   const identityWithPersona = persona.prompt
@@ -151,6 +166,8 @@ export async function buildSystemPrompt(query: string = ""): Promise<string> {
     : IDENTITY;
 
   return `${identityWithPersona}
+
+${languageDirective}
 
 ${toolContracts}
 
@@ -163,3 +180,4 @@ ${formatExamples}
 LIVE SYSTEM CONTEXT:
 ${systemContext}`;
 }
+

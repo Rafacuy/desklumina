@@ -1,5 +1,8 @@
 import { describe, test, expect, mock, beforeEach, afterEach } from "bun:test";
-import { startLoader, stopLoader } from "../src/ui/loader";
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import { randomLoaderImage, startLoader, stopLoader } from "../src/ui/loader";
 
 describe("Loader: Single-line spinner", () => {
   let originalWrite: typeof process.stdout.write;
@@ -78,5 +81,38 @@ describe("Loader: Single-line spinner", () => {
 
     const newlineWrites = writes.filter(w => w.includes("\n") && !w.startsWith("\r"));
     expect(newlineWrites.length).toBe(0);
+  });
+});
+
+describe("Loader: Rofi image picker", () => {
+  test("randomly selects a readable file from a loader asset directory", () => {
+    const dir = mkdtempSync(join(tmpdir(), "desklumina-loader-"));
+    const imagePath = join(dir, "lumina-test.png");
+
+    try {
+      writeFileSync(imagePath, "test");
+
+      expect(randomLoaderImage(dir)).toBe(imagePath);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("returns null when the loader asset directory is missing", () => {
+    const dir = join(tmpdir(), `desklumina-loader-missing-${Date.now()}`);
+
+    expect(randomLoaderImage(dir)).toBeNull();
+  });
+
+  test("returns null when the loader asset directory has no readable files", () => {
+    const dir = mkdtempSync(join(tmpdir(), "desklumina-loader-empty-"));
+
+    try {
+      mkdirSync(join(dir, "nested"));
+
+      expect(randomLoaderImage(dir)).toBeNull();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

@@ -181,6 +181,7 @@ Evaluate mathematical expressions, equations, and unit conversions securely in-p
 - **Syntactic Sugar**: Supports `X% of Y` (e.g., `15% of 340`).
 - **Units**: Supports unit conversions (e.g., `100 km to miles`).
 - **Functions**: Full support for trigonometry, statistics, logarithms, and more.
+- **Prime Factorization**: Built-in `factor()` function (e.g., `factor(360)` returns `2^3 x 3^2 x 5`).
 
 ### Examples:
 - `{"tool": "math", "args": "2 + 2"}`
@@ -188,6 +189,7 @@ Evaluate mathematical expressions, equations, and unit conversions securely in-p
 - `{"tool": "math", "args": "15% of 340"}`
 - `{"tool": "math", "args": "mean([12, 45, 33, 28, 51])"}`
 - `{"tool": "math", "args": "100 km to miles"}`
+- `{"tool": "math", "args": "factor(360)"}`
 
 ---
 

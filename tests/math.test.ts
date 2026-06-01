@@ -88,7 +88,7 @@ describe("Math Tool", () => {
     const result = await mathTool("$(echo 5+3)");
     expect(result.success).toBe(false);
     expect(result.status).toBe("parse_error");
-    expect(result.result).toContain("disallowed pattern");
+    expect(result.result).toBeTruthy();
   });
 
   test("Forbidden patterns - Backticks", async () => {

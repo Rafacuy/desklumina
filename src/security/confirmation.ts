@@ -4,8 +4,7 @@ import { settingsManager } from "../core/settings-manager";
 import { t } from "../utils/i18n";
 import { escapeHtml } from "../utils/format";
 import { CancellationError } from "../types";
-
-const THEME_PATH = `${process.env.HOME}/.config/desklumina/src/ui/themes/lumina.rasi`;
+import { getThemePath } from "../ui/theme-cache";
 
 type Severity = "critical" | "high" | "medium";
 type AlertSeverity = "info" | "warning" | "error";
@@ -66,7 +65,7 @@ export async function rofiConfirm(
       mesg,
       "-markup-rows",
       "-theme",
-      THEME_PATH,
+      getThemePath(),
       "-theme-str",
       themeOverride,
       "-i",
@@ -121,7 +120,7 @@ export async function rofiAlert(
       "-e",
       escapeHtml(fullMessage),
       "-theme",
-      THEME_PATH,
+      getThemePath(),
       "-theme-str",
       themeOverride,
     ],

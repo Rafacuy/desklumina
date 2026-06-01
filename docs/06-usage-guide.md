@@ -91,6 +91,8 @@ DeskLumina supports several CLI flags for different use cases:
 | `--send "<message>"` | Send a command to the running daemon. |
 | `--exec "<message>"` | Execute a single message through the agent loop. |
 | `--version` | Display the current version and configured model. |
+| `provider list` | List all registered providers with API keys. |
+| `provider current` | Show the currently configured primary model and resolved provider. |
 
 ### Passing flags via Bun scripts
 

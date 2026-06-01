@@ -6,14 +6,22 @@ import { logger } from "../logger";
 import { escapeHtml } from "../utils/format";
 import { markdownToPango, wrapPangoText } from "../utils/pango";
 import { formatRofiResponse } from "../utils/table-formatter";
-import { randomLoader } from "./loader";
+import { randomLoader, randomLoaderImage } from "./loader";
+import { getThemePath } from "./theme-cache";
 
 const STREAM_BATCH_MS = 50;
 const MAX_LISTVIEW_LINES = 12;
 const WRAP_WIDTH = 50;
 const MUTED_COLOR = "#888888";
 
-export const THEME_PATH = `${process.env.HOME}/.config/desklumina/src/ui/themes/lumina.rasi`;
+//Pre-computed static theme fragments 
+// to avoid re-allocation on every spawn
+const STATIC_LISTVIEW_DISABLED = "listview { enabled: false; } mainbox { children: [inputbar, message]; }";
+const STATIC_INPUTBAR_ONLY = "listview { enabled: false; } mainbox { children: [inputbar]; }";
+
+function escapeRasiString(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
 
 export async function rofiChatInput(
   chatManager: ChatManager,
@@ -40,7 +48,7 @@ export async function rofiChatInput(
 
   const themeOverride = isExpanded 
     ? "" 
-    : "listview { enabled: false; } mainbox { children: [inputbar, message]; }";
+    : STATIC_LISTVIEW_DISABLED;
     
     const hints = isExpanded
     ? `󰌑 ${t("common.send")} │ 󱊷 [ESC] ${t("common.exit")} │ 󰌓 [TAB] ${t("common.hide")}`
@@ -163,7 +171,7 @@ export async function rofiMenu(
     "-dmenu", 
     "-i", 
     "-p", prompt,
-    "-theme", THEME_PATH,
+    "-theme", getThemePath(),
     "-kb-mode-next", "",
     "-kb-row-tab", "",
     "-kb-element-next", "",
@@ -398,7 +406,7 @@ export async function rofiSimpleInput(prompt: string, placeholder: string = ""):
   const result = await rofiMenu(
     "",
     prompt,
-    "listview { enabled: false; } mainbox { children: [inputbar]; }",
+    STATIC_INPUTBAR_ONLY,
     placeholder
   );
   return result.output ?? "";
@@ -415,7 +423,7 @@ export async function rofiDisplay(message: string): Promise<void> {
   const proc = spawn([
     "rofi", "-e", formattedMessage,
     "-markup",
-    "-theme", THEME_PATH,
+    "-theme", getThemePath(),
     "-theme-str", `
       window {
         width: 500px;
@@ -473,10 +481,70 @@ export async function rofiChatLoop(
           while (currentInput) {
             const userMessageIndex = chatManager.getCurrentChat()?.messages.length || 0;
             try {
-              const loadingProc = spawn([
-                "rofi", "-dmenu",
-                "-theme", THEME_PATH,
-                "-theme-str", `
+              const loaderImage = randomLoaderImage();
+              const loaderTheme = loaderImage
+                ? `
+                  window {
+                    location: southeast;
+                    anchor: southeast;
+                    width: 360px;
+                    border-radius: 0px;
+                    border: 0px;
+                    background-color: transparent;
+                    x-offset: -24px;
+                    y-offset: -12px;
+                  }
+                  mainbox {
+                    orientation: vertical;
+                    children: [icon-loader, loader-frame];
+                    padding: 0px;
+                    spacing: 0px;
+                    background-color: transparent;
+                  }
+                  icon-loader {
+                    filename: "${escapeRasiString(loaderImage)}";
+                    width: 200px;
+                    size: 200px;
+                    expand: false;
+                    horizontal-align: 0.5;
+                    vertical-align: 1.0;
+                    margin: 0px;
+                    padding: 0px;
+                    border: 0px;
+                    background-color: transparent;
+                  }
+                  loader-frame {
+                    orientation: vertical;
+                    children: [message];
+                    padding: 0px;
+                    spacing: 0px;
+                    margin: 0px;
+                    border: 1px;
+                    border-radius: 14px;
+                    border-color: @border-subtle;
+                    background-color: @bg;
+                  }
+                  inputbar {
+                    enabled: false;
+                  }
+                  listview {
+                    enabled: false;
+                  }
+                  message {
+                    padding: 14px 20px;
+                    border: 0px;
+                    border-radius: 0px;
+                    background-color: transparent;
+                  }
+                  textbox {
+                    text-color: @accent-color;
+                    font: "JetBrainsMono Nerd Font 10";
+                    horizontal-align: 0.5;
+                    vertical-align: 0.5;
+                    wrap: false;
+                  }
+                `
+                : `
                   window {
                     location: southeast;
                     anchor: southeast;
@@ -484,6 +552,7 @@ export async function rofiChatLoop(
                     height: 52px;
                     border-radius: 14px;
                     border: 1px;
+                    border-color: @border-subtle;
                     background-color: @bg;
                     x-offset: -24px;
                     y-offset: -12px;
@@ -510,7 +579,12 @@ export async function rofiChatLoop(
                     vertical-align: 0.5;
                     wrap: false;
                   }
-                `,
+                `;
+
+              const loadingProc = spawn([
+                "rofi", "-dmenu",
+                "-theme", getThemePath(),
+                "-theme-str", loaderTheme,
                 "-mesg", escapeHtml(randomLoader()),
               ], { stdin: "pipe", stdout: "pipe" });
 

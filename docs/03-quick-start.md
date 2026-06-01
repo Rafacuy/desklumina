@@ -42,6 +42,7 @@ This is the recommended way to use DeskLumina for daily tasks. It provides a vis
   - `Enter`: submit message.
   - `Tab`: toggle expanded menu (shows recent messages, chat selection, settings).
   - `Esc`: exit.
+- **Loading Animation**: A themed loader appears while processing your request.
 
 ### Terminal Mode
 

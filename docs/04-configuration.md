@@ -75,8 +75,8 @@ This file takes precedence when `DESKLUMINA_MODEL` is not set.
       "reason": "provider-down"
     },
     {
-      "provider": "openrouter"
-      "model": "deepseek/deepseek-v4-flash:free"
+      "provider": "openrouter",
+      "model": "deepseek/deepseek-v4-flash:free",
       "reason": "provider-down"
     }
   ],
@@ -172,6 +172,7 @@ DeskLumina uses **Rofi** for its graphical interface. You can customize the appe
 
 - **Main Theme**: `src/ui/themes/lumina.rasi`
 - **Colors & Styles**: Edit the variables at the top of the `.rasi` file to change background colors, fonts, and borders.
+- **Theme Caching**: DeskLumina caches the resolved theme path to avoid repeated filesystem lookups. The cache is invalidated when the theme file is modified.
 
 ---
 

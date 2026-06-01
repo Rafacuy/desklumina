@@ -5,6 +5,7 @@ import type { AIMessage, AIRequestContext, Chat, ChatMessage, ToolCall, ToolResu
 import { settingsManager } from "./settings-manager";
 import { logger } from "../logger";
 import { t, cleanAssistantResponse } from "../utils";
+import { cleanTrackTitle } from "../utils/format";
 import { tokenManager } from "./token-manager";
 
 const TOOL_LABELS: Record<string, string> = {
@@ -61,7 +62,7 @@ const EXTRA_FORMATTERS: Record<string, ExtraFormatter> = {
     const lines = tracks.map((t) => {
       const parts: string[] = [];
       if (t.status) parts.push(t.status);
-      if (t.title) parts.push(`"${t.title}"`);
+      if (t.title) parts.push(`"${cleanTrackTitle(t.title)}"`);
       if (t.artist) parts.push(`by ${t.artist}`);
       if (t.album) parts.push(`on ${t.album}`);
       if (t.elapsed && t.duration) parts.push(`[${t.elapsed}/${t.duration}]`);
@@ -132,6 +133,19 @@ function summarizeMessage(message: InternalMessage): string {
     return toolResults
       .map((result) => {
         const status = result.success === false ? "failed" : "ok";
+        const tracks = result.extra?.tracks;
+        if (tracks && tracks.length > 0) {
+          const trackSummaries = tracks
+            .map((t) => {
+              const parts: string[] = [];
+              if (t.title) parts.push(`"${cleanTrackTitle(t.title)}"`);
+              if (t.artist) parts.push(`by ${t.artist}`);
+              if (t.status) parts.push(`[${t.status}]`);
+              return parts.join(" ");
+            })
+            .join("; ");
+          return `${result.tool}(${status}): ${trackSummaries}`;
+        }
         return `${result.tool}(${status})`;
       })
       .join(", ");
@@ -353,14 +367,15 @@ export class ChatManager {
     let totalTokens = 0;
     const recentMessages: AIMessage[] = [];
     const olderMessages: InternalMessage[] = [];
+    const PROTECTED_RECENT = 3;
 
-    // Iterate backwards to keep the most recent messages
     for (let i = relevant.length - 1; i >= 0; i--) {
       const msg = relevant[i]!;
       const apiMsg = this.toAPIMessage(msg);
       const tokens = tokenManager.estimateTokens(apiMsg.content);
+      const isProtected = (relevant.length - 1 - i) < PROTECTED_RECENT;
 
-      if (totalTokens + tokens <= MAX_HISTORY_TOKENS) {
+      if (totalTokens + tokens <= MAX_HISTORY_TOKENS || isProtected) {
         recentMessages.unshift(apiMsg);
         totalTokens += tokens;
       } else {

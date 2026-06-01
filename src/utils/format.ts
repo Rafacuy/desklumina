@@ -45,6 +45,18 @@ export function truncate(text: string, length: number): string {
 }
 
 /**
+ * Remove music extensions and paths
+ */
+const AUDIO_EXT_RE = /\.(mp3|wav|flac|m4a|ogg|aac|opus)$/i;
+
+export function cleanTrackTitle(title: string | null): string | null {
+  if (!title) return title;
+  let cleaned = title.includes("/") ? title.split("/").pop()! : title;
+  cleaned = cleaned.replace(AUDIO_EXT_RE, "");
+  return cleaned || title;
+}
+
+/**
  * Escape special characters for display in Pango/HTML markup.
  * Uses a negative lookahead to avoid double-escaping common entities.
  */
