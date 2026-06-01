@@ -50,7 +50,7 @@ Quick fixes for common issues encountered while using or installing DeskLumina.
 
 ### "Tool Not Found"
 - **Symptom**: AI says it is executing a tool, but nothing happens.
-- **Fix**: Check `src/tools/registry.ts` to ensure the tool is correctly registered.
+- **Fix**: Check `src/tools/registry/registry.ts` to ensure the tool is correctly registered.
 
 ### App alias rejected
 - **Symptom**: Lumina says an application alias is unknown instead of executing it.

@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach, spyOn } from "bun:test";
-import { TokenManager, tokenManager } from "../src/core/token-manager";
+import { TokenManager, tokenManager } from "../src/core/services/token-manager";
 import { logger } from "../src/logger";
 
 describe("TokenManager", () => {

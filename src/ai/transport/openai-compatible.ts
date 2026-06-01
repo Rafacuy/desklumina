@@ -1,4 +1,4 @@
-import { StreamingBaseProvider } from "../provider/streaming-base";
+import { StreamingBaseProvider } from "../providers/streaming-base";
 import type {
   ProviderCapability,
   ProviderId,

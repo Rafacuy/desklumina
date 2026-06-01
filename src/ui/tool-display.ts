@@ -1,6 +1,6 @@
 import type { ParsedToolCall, ToolResult } from "../types";
-import { t, tf } from "../utils/i18n";
-import { cleanTrackTitle } from "../utils/format";
+import { t, tf } from "../utils/localization/i18n";
+import { cleanTrackTitle } from "../utils/formatting/format";
 
 interface ToolConfig {
   icon: string;

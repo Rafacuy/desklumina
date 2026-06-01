@@ -2,7 +2,7 @@ import { logger } from "../logger";
 import { providerTokenCounter } from "../ai/middleware";
 import type { AIMessage, ToolResult } from "../types";
 import { SAFE_TOKEN_LIMIT } from "../constants";
-import { cleanTrackTitle } from "../utils/format";
+import { cleanTrackTitle } from "../utils/formatting/format";
 
 export function formatToolResults(results: ToolResult[]): string {
   return results

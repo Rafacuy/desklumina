@@ -38,7 +38,7 @@ Specifically designed to test TTS chunking and error handling, such as `tts-edge
 
 These critical tests ensure the behavior of the AI by verifying the generated system prompt:
 - **Prompt Structure**: Validates the required order (Identity -> Tools -> Rules -> Examples -> Context).
-- **Contract Inclusion**: Ensures every tool registered in `src/tools/contracts.ts` is correctly rendered into the prompt with its schema, types, and escalation rules.
+- **Contract Inclusion**: Ensures every tool registered in `src/tools/contracts/contracts.ts` is correctly rendered into the prompt with its schema, types, and escalation rules.
 - **Escalation Tree**: Verifies that the 3-stage failure logic is present and correctly phrased.
 - **Format Anchors**: Confirms that JSON examples from tool contracts are properly injected.
 
@@ -76,7 +76,7 @@ All test files must reside in the `tests/` directory and follow the naming conve
 
 ```typescript
 import { describe, it, expect } from "bun:test";
-import { expandTilde } from "../src/utils/path";
+import { expandTilde } from "../src/utils/system/path";
 
 describe("Path Utils", () => {
   it("should expand ~ to the home directory", () => {

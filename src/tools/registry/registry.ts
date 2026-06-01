@@ -1,14 +1,14 @@
-import { t, tf } from "../utils";
-import { execute } from "./terminal";
-import { launch } from "./apps";
-import { fileOp } from "./files";
-import { music } from "./music";
-import { clipboard } from "./clipboard";
-import { notify } from "./notify";
-import { mathTool } from "./math";
-import { logger } from "../logger";
-import { CancellationError } from "../types";
-import type { ToolExecutionResult, ToolHandler, ToolRegistry } from "../types";
+import { t, tf } from "../../utils";
+import { execute } from "../frameworks/terminal";
+import { launch } from "../frameworks/apps";
+import { fileOp } from "../frameworks/files";
+import { music } from "../frameworks/music";
+import { clipboard } from "../frameworks/clipboard";
+import { notify } from "../frameworks/notify";
+import { mathTool } from "../frameworks/math";
+import { logger } from "../../logger";
+import { CancellationError } from "../../types";
+import type { ToolExecutionResult, ToolHandler, ToolRegistry } from "../../types";
 
 const tools: ToolRegistry = {
   terminal: async (cmd) => {

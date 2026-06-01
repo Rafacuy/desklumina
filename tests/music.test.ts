@@ -1,5 +1,5 @@
 import { describe, test, expect, spyOn, afterEach } from "bun:test";
-import { music } from "../src/tools/music";
+import { music } from "../src/tools/frameworks/music";
 
 describe("Music Tool (Generalized Media Controller)", () => {
   afterEach(() => {

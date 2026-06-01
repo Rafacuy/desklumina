@@ -1,7 +1,7 @@
-import { t, tf } from "../utils";
-import { logger } from "../logger";
-import appsData from "../config/apps.json";
-import type { ToolExecutionResult } from "../types";
+import { t, tf } from "../../utils";
+import { logger } from "../../logger";
+import appsData from "../../config/apps.json";
+import type { ToolExecutionResult } from "../../types";
 
 const apps = appsData as Record<string, string>;
 

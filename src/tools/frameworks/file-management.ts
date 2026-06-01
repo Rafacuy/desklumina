@@ -1,11 +1,11 @@
-import { t, tf } from "../utils/i18n";
+import { t, tf } from "../../utils/localization/i18n";
 import { homedir } from "os";
 import { basename, dirname, extname, join } from "path";
 import { existsSync } from "fs";
 import { mkdir, readFile, readdir, stat, writeFile } from "fs/promises";
-import { logger } from "../logger";
-import { expandTilde } from "../utils/path";
-import type { FileMatch, FilePreview, ToolExecutionResult, ToolExecutionSummary } from "../types";
+import { logger } from "../../logger";
+import { expandTilde } from "../../utils/system/path";
+import type { FileMatch, FilePreview, ToolExecutionResult, ToolExecutionSummary } from "../../types";
 
 const HISTORY_DIR = join(homedir(), ".config/desklumina");
 const HISTORY_PATH = join(HISTORY_DIR, "file-search-history.json");

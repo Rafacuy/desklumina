@@ -1,5 +1,5 @@
 import { logger } from "../../logger";
-import { tokenManager } from "../../core/token-manager";
+import { tokenManager } from "../../core/services/token-manager";
 import { providerRegistry } from "../registry";
 import type { MiddlewareContext, MiddlewareNext } from "./types";
 

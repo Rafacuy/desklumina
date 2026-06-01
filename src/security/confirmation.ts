@@ -1,8 +1,8 @@
 import { spawn } from "bun";
 import { logger } from "../logger";
-import { settingsManager } from "../core/settings-manager";
-import { t } from "../utils/i18n";
-import { escapeHtml } from "../utils/format";
+import { settingsManager } from "../core/services/settings-manager";
+import { t } from "../utils/localization/i18n";
+import { escapeHtml } from "../utils/formatting/format";
 import { CancellationError } from "../types";
 import { getThemePath } from "../ui/theme-cache";
 

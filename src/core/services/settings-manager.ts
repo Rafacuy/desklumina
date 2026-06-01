@@ -1,10 +1,10 @@
 import { homedir } from "os";
 import { join } from "path";
 import { existsSync, readFileSync, mkdirSync, writeFileSync, renameSync } from "fs";
-import type { Settings } from "../types";
-import { DEFAULT_SETTINGS } from "../types";
-import { logger } from "../logger";
-import { setLang } from "../utils/i18n";
+import type { Settings } from "../../types";
+import { DEFAULT_SETTINGS } from "../../types";
+import { logger } from "../../logger";
+import { setLang } from "../../utils/localization/i18n";
 
 const SETTINGS_DIR = join(homedir(), ".config/desklumina");
 const SETTINGS_PATH = join(SETTINGS_DIR, "settings.json");

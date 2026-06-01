@@ -1,7 +1,7 @@
 import { create, all } from "mathjs";
-import { t, tf } from "../utils/i18n";
-import { logger } from "../logger";
-import type { ToolExecutionResult } from "../types";
+import { t, tf } from "../../utils/localization/i18n";
+import { logger } from "../../logger";
+import type { ToolExecutionResult } from "../../types";
 
 //create a restricted mathjs instance
 const math = create(all as any, {

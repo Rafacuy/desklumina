@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach, mock } from "bun:test";
-import { settingsManager } from "../src/core/settings-manager";
-import { getPersona, PERSONAS, PersonaType } from "../src/ai/personas";
-import { buildSystemPrompt } from "../src/ai/prompts";
+import { settingsManager } from "../src/core/services/settings-manager";
+import { getPersona, PERSONAS, PersonaType } from "../src/ai/runtime/personas";
+import { buildSystemPrompt } from "../src/ai/runtime/prompts";
 import { DEFAULT_SETTINGS } from "../src/types/settings";
 
 describe("Multi-Persona System", () => {

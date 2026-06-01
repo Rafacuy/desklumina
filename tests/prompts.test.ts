@@ -1,5 +1,5 @@
 import { describe, test, expect, spyOn, beforeEach } from "bun:test";
-import { getSystemContext, _resetPromptCache } from "../src/ai/prompts";
+import { getSystemContext, _resetPromptCache } from "../src/ai/runtime/prompts";
 
 describe("System Prompt Caching", () => {
   beforeEach(() => {

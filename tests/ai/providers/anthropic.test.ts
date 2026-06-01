@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { AnthropicProvider } from "../../../src/ai/provider/anthropic";
+import { AnthropicProvider } from "../../../src/ai/providers/anthropic";
 import { ProviderAPIError } from "../../../src/ai/errors";
 import { createStream } from "../../shared/fixtures";
 

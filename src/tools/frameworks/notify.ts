@@ -1,6 +1,6 @@
-import { t, tf, escapeHtml } from "../utils";
-import { logger } from "../logger";
-import type { ToolExecutionResult } from "../types";
+import { t, tf, escapeHtml } from "../../utils";
+import { logger } from "../../logger";
+import type { ToolExecutionResult } from "../../types";
 
 function buildResult(
   normalizedArg: string,

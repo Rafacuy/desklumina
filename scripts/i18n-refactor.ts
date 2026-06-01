@@ -3,7 +3,7 @@ import { join, relative, dirname } from "path";
 
 const SRC_DIR = join(process.cwd(), "src");
 const LOCALES_FILE = join(SRC_DIR, "locales/dictionary.json");
-const EXCLUDED_FILES = ["locales/dictionary.json", "utils/i18n.ts"];
+const EXCLUDED_FILES = ["locales/dictionary.json", "utils/localization/i18n.ts"];
 
 const collectedStrings = new Set<string>();
 

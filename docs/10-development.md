@@ -29,9 +29,9 @@ A guide for developers looking to extend DeskLumina or contribute to the core pr
 
 DeskLumina's core is the **`Lumina` orchestrator** at `src/core/lumina.ts`. It follows a deterministic lifecycle:
 - **Build System Prompt**: Generates prompt from **Tool Contracts** and **Live Context**.
-- **Stream Response**: Managed via `src/ai/orchestrator.ts` through the multi-provider layer.
-- **Parse & Dispatch**: `src/core/planner.ts` parses tool calls, which are then dispatched via `src/tools/registry.ts`.
-- **AI Orchestration**: `src/ai/orchestrator.ts` resolves the primary model and fallback chain through `ModelRegistry`, routes requests through `ProviderRegistry`, and handles circuit-breaker-based failover.
+- **Stream Response**: Managed via `src/ai/runtime/orchestrator.ts` through the multi-provider layer.
+- **Parse & Dispatch**: `src/core/planner.ts` parses tool calls, which are then dispatched via `src/tools/registry/registry.ts`.
+- **AI Orchestration**: `src/ai/runtime/orchestrator.ts` resolves the primary model and fallback chain through `ModelRegistry`, routes requests through `ProviderRegistry`, and handles circuit-breaker-based failover.
 - **Retry Logic**: Lumina automatically handles retries for retriable tool failures (up to 2 times).
 
 ---
@@ -41,7 +41,7 @@ DeskLumina's core is the **`Lumina` orchestrator** at `src/core/lumina.ts`. It f
 Follow these steps to add a new desktop capability:
 
 ### 1. Define the Tool Contract
-Add a new `ToolContract` to `src/tools/contracts.ts`. This is the single source of truth for the AI model:
+Add a new `ToolContract` to `src/tools/contracts/contracts.ts`. This is the single source of truth for the AI model:
 
 ```typescript
 {
@@ -72,7 +72,7 @@ Add a new `ToolContract` to `src/tools/contracts.ts`. This is the single source 
 ```
 
 ### 2. Implement the Tool Logic
-Create a new file in `src/tools/`, such as `src/tools/my-tool.ts`. Ensure it returns a `ToolExecutionResult`:
+Create a new file in `src/tools/frameworks/`, such as `src/tools/frameworks/my-tool.ts`. Ensure it returns a `ToolExecutionResult`:
 
 ```typescript
 import { ToolExecutionResult } from "../types";
@@ -91,10 +91,10 @@ export async function myTool(arg: string): Promise<ToolExecutionResult> {
 ```
 
 ### 3. Register the Tool
-Add your tool to the central registry in `src/tools/registry.ts`:
+Add your tool to the central registry in `src/tools/registry/registry.ts`:
 
 ```typescript
-import { myTool } from "./my-tool";
+import { myTool } from "../frameworks/my-tool";
 
 export const tools: ToolRegistry = {
   // ...
@@ -110,17 +110,17 @@ To add a new AI provider:
 
 ### 1. Create the Provider Implementation
 
-Create a directory under `src/ai/provider/<name>/` with a `provider.ts` file. Providers should extend either `OpenAICompatibleAdapter` (for OpenAI-compatible APIs) or `StreamingBaseProvider` (for custom protocols).
+Create a directory under `src/ai/providers/<name>/` with a `provider.ts` file. Providers should extend either `OpenAICompatibleAdapter` (for OpenAI-compatible APIs) or `StreamingBaseProvider` (for custom protocols).
 
 ```typescript
-// src/ai/provider/example/provider.ts
+// src/ai/providers/example/provider.ts
 import { StreamingBaseProvider } from "../streaming-base";
 // ... implement id, name, validateConfig, capabilities, getEndpoint, getHeaders, getRequestBody, parseChunk
 ```
 
 ### 2. Export from the Provider Index
 
-Add the export to `src/ai/provider/index.ts`:
+Add the export to `src/ai/providers/index.ts`:
 
 ```typescript
 export { ExampleProvider, EXAMPLE_PROVIDER_ID } from "./example";
@@ -131,7 +131,7 @@ export { ExampleProvider, EXAMPLE_PROVIDER_ID } from "./example";
 Add the import and conditional registration to `src/ai/registry/provider-registry.ts`:
 
 ```typescript
-import { ExampleProvider, EXAMPLE_PROVIDER_ID } from "../provider/example";
+import { ExampleProvider, EXAMPLE_PROVIDER_ID } from "../providers/example";
 
 // In initialize():
 if (env.EXAMPLE_API_KEY) {
@@ -151,7 +151,7 @@ DeskLumina supports configurable assistant personas that alter conversational to
 
 ### Persona Definitions
 
-**Path**: `src/ai/personas.ts`
+**Path**: `src/ai/runtime/personas.ts`
 
 Personas are defined as a typed `Record<PersonaType, PersonaDefinition>`. Each entry specifies:
 - **`id`**: Unique persona identifier (`"default"`, `"tsundere"`, `"catgirl"`, `"deredere"`, `"kuudere"`, `"dandere"`).
@@ -160,23 +160,23 @@ Personas are defined as a typed `Record<PersonaType, PersonaDefinition>`. Each e
 
 ### Prompt Injection
 
-**File**: `src/ai/prompts.ts` — `buildSystemPrompt()`
+**File**: `src/ai/runtime/prompts.ts` — `buildSystemPrompt()`
 
 The function reads the current persona ID from `settingsManager.get().persona`, resolves it via `getPersona()`, and conditionally prepends the persona prompt to the identity section. Non-default personas produce `identity + "\n\n" + persona.prompt`. The default persona produces `identity` alone with no added text.
 
 ### Settings Persistence
 
-**File**: `src/core/settings-manager.ts`
+**File**: `src/core/services/settings-manager.ts`
 
 `setPersona(persona: string)` updates the in-memory settings and persists to `settings.json` using the same atomic write pattern (temp file + rename) as all other settings. The `Settings` type stores `persona` as a plain `string`.
 
 ### Fallback Handling
 
-`getPersona(id)` in `src/ai/personas.ts` casts the input to `PersonaType` and falls back to `PERSONAS.default` for any unrecognized value. This ensures unknown or corrupted persona IDs never break prompt generation.
+`getPersona(id)` in `src/ai/runtime/personas.ts` casts the input to `PersonaType` and falls back to `PERSONAS.default` for any unrecognized value. This ensures unknown or corrupted persona IDs never break prompt generation.
 
 ### Extending Personas
 
-1. Add the new ID to the `PersonaType` union in `src/ai/personas.ts`.
+1. Add the new ID to the `PersonaType` union in `src/ai/runtime/personas.ts`.
 2. Add a `PersonaDefinition` entry to the `PERSONAS` record with a 1–3 sentence `prompt` (single paragraph, no double newlines).
 3. Add i18n keys under `ui.settings.personas.<id>` in each locale file (`src/locales/*.json`).
 
@@ -184,7 +184,7 @@ The function reads the current persona ID from `settingsManager.get().persona`, 
 
 ## Adding New i18n Strings
 
-DeskLumina uses a centralized i18n system located in `src/utils/i18n.ts`.
+DeskLumina uses a centralized i18n system located in `src/utils/localization/i18n.ts`.
 
 1. Add your new string key to `src/locales/en.json` and `src/locales/id.json`.
    ```json
@@ -221,7 +221,7 @@ When adding a new tool, please add a corresponding test in the `tests/` director
 
 - **TypeScript First**: Use proper types from `src/types/`.
 - **Structured Results**: Tool handlers MUST return `ToolExecutionResult` with appropriate `success` and `status` fields.
-- **Deterministic Prompts**: Never hardcode tool descriptions in `src/ai/prompts.ts`; always use `ToolContract`.
+- **Deterministic Prompts**: Never hardcode tool descriptions in `src/ai/runtime/prompts.ts`; always use `ToolContract`.
 - **Logging**: Use the built-in `logger` for debugging.
 - **Asynchronicity**: Prefer `async/await` over raw Promises.
 

@@ -18,7 +18,7 @@ Complete documentation for all available tools in DeskLumina's contract-driven a
 
 ## Overview
 
-DeskLumina uses a **Contract-Driven** tool architecture. Each tool's behavior, schema, and failure logic are defined in `src/tools/contracts.ts`, which the system uses to generate deterministic prompts.
+DeskLumina uses a **Contract-Driven** tool architecture. Each tool's behavior, schema, and failure logic are defined in `src/tools/contracts/contracts.ts`, which the system uses to generate prompts.
 
 ### Tool Call Format
 

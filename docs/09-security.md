@@ -89,7 +89,7 @@ flowchart LR
 
 The **File** tool implements its own internal restrictions to prevent accidental modification of system-critical files.
 
-**Logic**: `src/tools/files.ts` (using `isDangerousPath`)
+**Logic**: `src/tools/frameworks/files.ts` (using `isDangerousPath`)
 
 ### Protected Directories:
 - `/bin`, `/boot`, `/dev`, `/etc`, `/lib`, `/root`, `/sys`, `/usr`, `/var`

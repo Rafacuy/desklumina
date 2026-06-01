@@ -4,7 +4,7 @@ import type { ToolResult, ParsedToolCall } from "../src/types";
 
 // Mock i18n
 import { mock } from "bun:test";
-mock.module("../src/utils/i18n", () => ({
+mock.module("../src/utils/localization/i18n", () => ({
   t: (key: string) => {
     if (key === "tool.running_terminal") return "Terminal";
     if (key === "tool.managing_files") return "Files";

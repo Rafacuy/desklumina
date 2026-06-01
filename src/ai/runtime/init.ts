@@ -1,4 +1,4 @@
-import { providerRegistry, modelRegistry } from "./registry";
+import { providerRegistry, modelRegistry } from "../registry";
 
 /**
  * registering all available providers and loading model overrides

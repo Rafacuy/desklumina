@@ -1,4 +1,4 @@
-import { t, tf } from "./i18n";
+import { t, tf } from "../localization/i18n";
 
 /**
  * Format file size to human-readable format

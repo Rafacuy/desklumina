@@ -1,10 +1,10 @@
-import { t, tf } from "../utils";
+import { t, tf } from "../../utils";
 import { execute } from "./terminal";
 import { handleFileManagement, parseQuotedArgs } from "./file-management";
-import { logger } from "../logger";
-import { rofiConfirm } from "../security/confirmation";
-import { CancellationError } from "../types";
-import type { ToolExecutionResult } from "../types";
+import { logger } from "../../logger";
+import { rofiConfirm } from "../../security/confirmation";
+import { CancellationError } from "../../types";
+import type { ToolExecutionResult } from "../../types";
 
 function expandPath(path: string): string {
   return path.replace(/^~/, process.env.HOME || "");

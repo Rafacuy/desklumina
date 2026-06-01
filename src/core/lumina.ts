@@ -1,10 +1,10 @@
 import { t, tf, cleanAssistantResponse } from "../utils";
 import { textToSpeech, initializeAI } from "../ai";
-import { buildSystemPrompt } from "../ai/prompts";
+import { buildSystemPrompt } from "../ai/runtime/prompts";
 import { Context } from "./context";
-import { ChatManager } from "./chat-manager";
+import { ChatManager } from "./services/chat-manager";
 import { logger } from "../logger";
-import { settingsManager } from "./settings-manager";
+import { settingsManager } from "./services/settings-manager";
 import { CancellationError } from "../types";
 import { runAgent } from "../agent/agent";
 import { stripMarkersForDisplay } from "../agent/signals";

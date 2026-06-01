@@ -1,5 +1,5 @@
 import { describe, test, expect, spyOn, beforeEach, afterEach } from "bun:test";
-import { settingsManager } from "../src/core/settings-manager";
+import { settingsManager } from "../src/core/services/settings-manager";
 import * as fs from "fs";
 
 describe("SettingsManager", () => {

@@ -1,5 +1,5 @@
 import { expect, test, describe } from "bun:test";
-import { markdownToPango } from "../src/utils/pango";
+import { markdownToPango } from "../src/utils/formatting/pango";
 
 describe("markdownToPango", () => {
   test("escapes unsafe characters", () => {

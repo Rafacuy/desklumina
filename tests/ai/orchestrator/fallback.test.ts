@@ -1,10 +1,10 @@
 import { describe, test, expect, beforeEach } from "bun:test";
 import { ProviderRegistry } from "../../../src/ai/registry/provider-registry";
 import { ModelRegistry } from "../../../src/ai/registry/models";
-import { NoModelsConfiguredError, AllModelsFailedError } from "../../../src/ai/orchestrator";
+import { NoModelsConfiguredError, AllModelsFailedError } from "../../../src/ai/runtime/orchestrator";
 import { ProviderError } from "../../../src/ai/errors";
-import { GroqProvider } from "../../../src/ai/provider/groq";
-import { OpenAIProvider } from "../../../src/ai/provider/openai";
+import { GroqProvider } from "../../../src/ai/providers/groq";
+import { OpenAIProvider } from "../../../src/ai/providers/openai";
 import { createStream } from "../../shared/fixtures";
 
 describe("Orchestrator fallback", () => {

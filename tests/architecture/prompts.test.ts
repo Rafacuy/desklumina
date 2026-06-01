@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { buildSystemPrompt } from "../../src/ai/prompts";
+import { buildSystemPrompt } from "../../src/ai/runtime/prompts";
 import { TOOL_CONTRACTS } from "../../src/tools/contracts";
 
 describe("Prompt Architecture", () => {

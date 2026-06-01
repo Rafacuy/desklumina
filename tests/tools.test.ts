@@ -1,10 +1,10 @@
 import { describe, test, expect, beforeAll } from "bun:test";
-import { fileOp } from "../src/tools/files";
-import { music } from "../src/tools/music";
-import { clipboard } from "../src/tools/clipboard";
-import { notify } from "../src/tools/notify";
-import { launch, lookup } from "../src/tools/apps";
-import { t, setLang } from "../src/utils/i18n";
+import { fileOp } from "../src/tools/frameworks/files";
+import { music } from "../src/tools/frameworks/music";
+import { clipboard } from "../src/tools/frameworks/clipboard";
+import { notify } from "../src/tools/frameworks/notify";
+import { launch, lookup } from "../src/tools/frameworks/apps";
+import { t, setLang } from "../src/utils/localization/i18n";
 
 describe("File Tool", () => {
   beforeAll(() => {

@@ -1,10 +1,10 @@
 import { describe, test, expect, beforeEach, spyOn, mock } from "bun:test";
 import { Lumina } from "../src/core/lumina";
-import { tokenManager } from "../src/core/token-manager";
+import { tokenManager } from "../src/core/services/token-manager";
 import { logger } from "../src/logger";
 
 // Mock the real streamGroq to simulate behavior without using mock.module on the whole file
-import * as orchestratorModule from "../src/ai/orchestrator";
+import * as orchestratorModule from "../src/ai/runtime/orchestrator";
 
 describe("Token Flow Integration", () => {
   let lumina: Lumina;

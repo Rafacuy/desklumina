@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { OpenAIProvider } from "../../../src/ai/provider/openai";
+import { OpenAIProvider } from "../../../src/ai/providers/openai";
 import { AuthenticationError } from "../../../src/ai/errors";
 import { createStream } from "../../shared/fixtures";
 

@@ -1,8 +1,8 @@
-import { t } from "../utils";
-import { logger } from "../logger";
-import { analyzeCommand, rofiConfirm } from "../security";
-import { COMMAND_TIMEOUT } from "../constants";
-import { CancellationError } from "../types";
+import { t } from "../../utils";
+import { logger } from "../../logger";
+import { analyzeCommand, rofiConfirm } from "../../security";
+import { COMMAND_TIMEOUT } from "../../constants";
+import { CancellationError } from "../../types";
 
 export interface CommandResult {
   stdout: string;

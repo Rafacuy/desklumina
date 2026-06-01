@@ -1,6 +1,6 @@
-import id from "../locales/id.json";
-import en from "../locales/en.json";
-import ja from "../locales/ja.json";
+import id from "../../locales/id.json";
+import en from "../../locales/en.json";
+import ja from "../../locales/ja.json";
 
 type LocaleTree = Record<string, unknown>;
 

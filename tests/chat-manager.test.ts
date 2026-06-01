@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, spyOn } from "bun:test";
-import { ChatManager } from "../src/core/chat-manager";
+import { ChatManager } from "../src/core/services/chat-manager";
 import * as fs from "fs";
 
 describe("ChatManager", () => {

@@ -1,11 +1,11 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync, renameSync, statSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
-import type { AIMessage, AIRequestContext, Chat, ChatMessage, ToolCall, ToolResult, ChatMetadata, ToolExtraData } from "../types";
+import type { AIMessage, AIRequestContext, Chat, ChatMessage, ToolCall, ToolResult, ChatMetadata, ToolExtraData } from "../../types";
 import { settingsManager } from "./settings-manager";
-import { logger } from "../logger";
-import { t, cleanAssistantResponse } from "../utils";
-import { cleanTrackTitle } from "../utils/format";
+import { logger } from "../../logger";
+import { t, cleanAssistantResponse } from "../../utils";
+import { cleanTrackTitle } from "../../utils/formatting/format";
 import { tokenManager } from "./token-manager";
 
 const TOOL_LABELS: Record<string, string> = {

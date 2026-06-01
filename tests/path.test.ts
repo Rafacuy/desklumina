@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { expandTilde, normalizePath } from "../src/utils/path";
+import { expandTilde, normalizePath } from "../src/utils/system/path";
 
 describe("Path Utilities", () => {
   test("expandTilde expands ~ to home directory", () => {

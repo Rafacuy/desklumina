@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { cleanTrackTitle } from "../src/utils/format";
+import { cleanTrackTitle } from "../src/utils/formatting/format";
 
 describe("cleanTrackTitle", () => {
   test("strips .mp3 extension", () => {

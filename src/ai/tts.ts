@@ -1,6 +1,6 @@
 import { t } from "../utils";
 import { logger } from "../logger";
-import { settingsManager } from "../core/settings-manager";
+import { settingsManager } from "../core/services/settings-manager";
 import { Communicate } from "edge-tts-universal";
 import { spawn } from "bun";
 import { randomUUID } from "crypto";

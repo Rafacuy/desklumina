@@ -1,7 +1,7 @@
-import { t, tf } from "../utils";
+import { t, tf } from "../../utils";
 import { execute } from "./terminal";
-import { logger } from "../logger";
-import type { ToolExecutionResult } from "../types";
+import { logger } from "../../logger";
+import type { ToolExecutionResult } from "../../types";
 
 function success(
   normalizedArg: string,

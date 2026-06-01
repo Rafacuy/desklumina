@@ -1,5 +1,5 @@
-import { getLang, t } from "../utils/i18n";
-import { settingsManager } from "../core/settings-manager";
+import { getLang, t } from "../utils/localization/i18n";
+import { settingsManager } from "../core/services/settings-manager";
 import type { Settings } from "../types";
 import { spawn } from "bun";
 import { rofiMenu } from "./rofi";

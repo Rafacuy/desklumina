@@ -63,7 +63,7 @@ export type TerminalSignal =
 
 ## Tool Contracts API
 
-**File**: `src/tools/contracts.ts`
+**File**: `src/tools/contracts/contracts.ts`
 
 DeskLumina's prompt engine is driven by formal tool contracts.
 
@@ -96,7 +96,7 @@ export interface ToolContract {
 
 ## Tool Handler Signature
 
-All tools registered in `src/tools/registry.ts` must implement the following signature:
+All tools registered in `src/tools/registry/registry.ts` must implement the following signature:
 
 ```typescript
 type ToolHandler = (arg: string) => Promise<ToolExecutionResult>;
@@ -129,7 +129,7 @@ interface ToolExecutionResult {
 
 ## Chat State API
 
-**File**: `src/core/chat-manager.ts`
+**File**: `src/core/services/chat-manager.ts`
 
 ### Storage location
 Chats are saved under `~/.config/desklumina/chats/` as JSON files.
@@ -149,7 +149,7 @@ preview=Task 1: Update docs...
 
 ## Internationalization API (i18n)
 
-**File**: `src/utils/i18n.ts`
+**File**: `src/utils/localization/i18n.ts`
 
 ### `t(key: string): string`
 Returns the translated string for the given key based on the current system language.

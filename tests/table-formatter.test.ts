@@ -1,5 +1,5 @@
 import { expect, test, describe } from "bun:test";
-import { formatRofiResponse, isTableRow, isSeparatorRow, partitionBlocks } from "../src/utils/table-formatter";
+import { formatRofiResponse, isTableRow, isSeparatorRow, partitionBlocks } from "../src/utils/formatting/table-formatter";
 
 describe("table-formatter utilities", () => {
   test("detects table rows", () => {

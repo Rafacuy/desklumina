@@ -2,9 +2,9 @@ import { describe, test, expect } from "bun:test";
 import { parseModelsConfig } from "../../../src/ai/config/models-config";
 import { ModelRegistry } from "../../../src/ai/registry/models";
 import { providerRegistry } from "../../../src/ai/registry/provider-registry";
-import { GroqProvider } from "../../../src/ai/provider/groq/provider";
-import { AnthropicProvider } from "../../../src/ai/provider/anthropic/provider";
-import { GeminiProvider } from "../../../src/ai/provider/gemini/provider";
+import { GroqProvider } from "../../../src/ai/providers/groq/provider";
+import { AnthropicProvider } from "../../../src/ai/providers/anthropic/provider";
+import { GeminiProvider } from "../../../src/ai/providers/gemini/provider";
 
 describe("models.json Parser", () => {
   test("Valid models.json with primary only parses correctly", () => {

@@ -1,11 +1,11 @@
 import type { AIProvider, ProviderId } from "../types";
-import { CircuitBreaker } from "../provider/circuit-breaker";
-import { GroqProvider, GROQ_PROVIDER_ID } from "../provider/groq";
-import { OpenAIProvider, OPENAI_PROVIDER_ID } from "../provider/openai";
-import { AnthropicProvider, ANTHROPIC_PROVIDER_ID } from "../provider/anthropic";
-import { GeminiProvider, GEMINI_PROVIDER_ID } from "../provider/gemini";
-import { OpenRouterProvider, OPENROUTER_PROVIDER_ID } from "../provider/openrouter";
-import { HuggingFaceProvider, HF_PROVIDER_ID } from "../provider/huggingface";
+import { CircuitBreaker } from "../providers/circuit-breaker";
+import { GroqProvider, GROQ_PROVIDER_ID } from "../providers/groq";
+import { OpenAIProvider, OPENAI_PROVIDER_ID } from "../providers/openai";
+import { AnthropicProvider, ANTHROPIC_PROVIDER_ID } from "../providers/anthropic";
+import { GeminiProvider, GEMINI_PROVIDER_ID } from "../providers/gemini";
+import { OpenRouterProvider, OPENROUTER_PROVIDER_ID } from "../providers/openrouter";
+import { HuggingFaceProvider, HF_PROVIDER_ID } from "../providers/huggingface";
 import { env } from "../../config/env";
 import { logger } from "../../logger";
 

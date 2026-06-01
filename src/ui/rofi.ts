@@ -1,11 +1,11 @@
 import { spawn } from "bun";
-import type { ChatManager, Chat } from "../core/chat-manager";
-import { t } from "../utils/i18n";
+import type { ChatManager, Chat } from "../core/services/chat-manager";
+import { t } from "../utils/localization/i18n";
 import { CancellationError } from "../types";
 import { logger } from "../logger";
-import { escapeHtml } from "../utils/format";
-import { markdownToPango, wrapPangoText } from "../utils/pango";
-import { formatRofiResponse } from "../utils/table-formatter";
+import { escapeHtml } from "../utils/formatting/format";
+import { markdownToPango, wrapPangoText } from "../utils/formatting/pango";
+import { formatRofiResponse } from "../utils/formatting/table-formatter";
 import { randomLoader, randomLoaderImage } from "./loader";
 import { getThemePath } from "./theme-cache";
 

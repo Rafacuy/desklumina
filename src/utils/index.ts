@@ -2,11 +2,11 @@
  * Utility functions for DeskLumina
  */
 
-export * from "./path";
-export * from "./format";
-export * from "./log-viewer";
-export * from "./i18n";
-export * from "./lang-map";
-export * from "./version";
+export * from "./system/path";
+export * from "./formatting/format";
+export * from "./system/log-viewer";
+export * from "./localization/i18n";
+export * from "./localization/lang-map";
+export * from "./system/version";
 export * from "./response-cleaner";
-export * from "./pango";
+export * from "./formatting/pango";

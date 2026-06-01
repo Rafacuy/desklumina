@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { CircuitBreaker } from "../../../src/ai/provider/circuit-breaker";
+import { CircuitBreaker } from "../../../src/ai/providers/circuit-breaker";
 
 describe("CircuitBreaker", () => {
   test("starts healthy for unknown provider", () => {

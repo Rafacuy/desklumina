@@ -1,6 +1,6 @@
 import { describe, test, expect, spyOn, afterEach } from "bun:test";
 import { rofiConfirm } from "../src/security/confirmation";
-import { settingsManager } from "../src/core/settings-manager";
+import { settingsManager } from "../src/core/services/settings-manager";
 
 describe("Security Confirmation", () => {
   afterEach(async () => {

@@ -1,8 +1,8 @@
-import { logger } from "../logger";
-import { TOOL_CONTRACTS, ToolContract } from "../tools/contracts";
-import { settingsManager } from "../core/settings-manager";
+import { logger } from "../../logger";
+import { TOOL_CONTRACTS, ToolContract } from "../../tools/contracts";
+import { settingsManager } from "../../core/services/settings-manager";
 import { getPersona } from "./personas";
-import { getLang, getLangName } from "../utils";
+import { getLang, getLangName } from "../../utils";
 
 async function runProbe(command: string): Promise<string | null> {
   try {

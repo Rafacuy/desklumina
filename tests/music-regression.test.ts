@@ -1,5 +1,5 @@
 import { describe, test, expect, spyOn, afterEach, beforeEach } from "bun:test";
-import { music } from "../src/tools/music";
+import { music } from "../src/tools/frameworks/music";
 
 describe("Music System Regression Tests", () => {
   beforeEach(() => {

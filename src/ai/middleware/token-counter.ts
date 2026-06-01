@@ -1,4 +1,4 @@
-import { tokenManager } from "../../core/token-manager";
+import { tokenManager } from "../../core/services/token-manager";
 import type { AIMessage } from "../../types";
 import type { MiddlewareContext, MiddlewareHandler } from "./types";
 

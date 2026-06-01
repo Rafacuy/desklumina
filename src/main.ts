@@ -3,7 +3,7 @@ import { t, tf, getAppVersion, cleanAssistantResponse } from "./utils";
 import { Lumina, ChatManager } from "./core";
 import { initializeAI } from "./ai";
 import { providerRegistry } from "./ai/registry";
-import { settingsManager } from "./core/settings-manager";
+import { settingsManager } from "./core/services/settings-manager";
 import { rofiChatLoop } from "./ui";
 import { startLoader, stopLoader } from "./ui/loader";
 import { logger } from "./logger";

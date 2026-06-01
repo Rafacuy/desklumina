@@ -2,9 +2,9 @@
  * AI module exports
  */
 
-export { streamAI, getAvailableModels, getModelInfo } from "./orchestrator";
-export { initializeAI } from "./init";
-export { buildSystemPrompt } from "./prompts";
+export { streamAI, getAvailableModels, getModelInfo } from "./runtime/orchestrator";
+export { initializeAI } from "./runtime/init";
+export { buildSystemPrompt } from "./runtime/prompts";
 export { textToSpeech } from "./tts";
 export type {
   AIProvider,
@@ -29,5 +29,5 @@ export {
   GeminiProvider,
   OpenRouterProvider,
   HuggingFaceProvider,
-} from "./provider";
+} from "./providers";
 export { providerRegistry, modelRegistry } from "./registry";

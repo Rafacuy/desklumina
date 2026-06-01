@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:
 import { existsSync, mkdirSync, rmSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
-import { handleFileManagement, parseFileManagementCommand } from "../src/tools/file-management";
+import { handleFileManagement, parseFileManagementCommand } from "../src/tools/frameworks/file-management";
 
 const historyPath = join(homedir(), ".config/desklumina/file-search-history.json");
 const tempDir = join(process.cwd(), "tmp-file-management-tests");

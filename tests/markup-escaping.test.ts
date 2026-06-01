@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { escapeHtml } from "../src/utils/format";
+import { escapeHtml } from "../src/utils/formatting/format";
 
 describe("Pango Markup Escaping", () => {
   test("should handle the reported failing payload", () => {

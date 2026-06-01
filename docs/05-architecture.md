@@ -84,12 +84,12 @@ The project is organized into several key directories under `src/`:
 DeskLumina features a robust, multi-provider intelligence layer designed for high availability and reliability.
 
 ### Multi-Provider Orchestration
-**Path**: `src/ai/orchestrator.ts`
+**Path**: `src/ai/runtime/orchestrator.ts`
 The orchestrator manages the lifecycle of an AI request across multiple providers. It uses a **provider-agnostic model resolution** system that allows fallback chains to span different platforms (e.g., failing over from Groq to OpenAI).
 
 ### Fallback & Resilience Strategy
 1.  **Model Resolution**: The system expands configured models and aliases (like `fast` or `smart`) into a prioritized list of `{ providerId, modelId }`.
-2.  **Circuit Breaking**: The `CircuitBreaker` (`src/ai/provider/circuit-breaker.ts`) tracks the health of each provider. If a provider consistently fails (e.g., returns 5xx or 429), it is temporarily marked as "unhealthy" and skipped in the fallback chain.
+2.  **Circuit Breaking**: The `CircuitBreaker` (`src/ai/providers/circuit-breaker.ts`) tracks the health of each provider. If a provider consistently fails (e.g., returns 5xx or 429), it is temporarily marked as "unhealthy" and skipped in the fallback chain.
 3.  **Automatic Failover**: When a primary model fails with a retriable error (Rate Limit, Server Error, or Model Not Found), the orchestrator immediately moves to the next model in the resolved list, regardless of whether it belongs to the same provider.
 4.  **Health Recovery**: Providers are automatically re-tested after a cooldown period to restore them to the active pool once they become responsive.
 
@@ -123,8 +123,8 @@ DeskLumina uses a turn-based reasoning loop to solve complex tasks:
 The central hub coordinates activity between the UI and the Agent. It prepares the initial context, triggers the agent loop, and handles terminal signals. It also manages the final presentation, including i18n-aware failure messaging and TTS.
 
 ### Contract-Driven Prompts
-**Path**: `src/ai/prompts.ts`
-DeskLumina generates prompts dynamically from **Tool Contracts** (`src/tools/contracts.ts`). Each contract defines:
+**Path**: `src/ai/runtime/prompts.ts`
+DeskLumina generates prompts dynamically from **Tool Contracts** (`src/tools/contracts/contracts.ts`). Each contract defines:
 - **Schema & Types**: Formal syntax for tool calls.
 - **Valid/Invalid Formats**: Examples that ground the model's output.
 - **Failure Behavior**: Specific retry limits and retriable vs. non-retriable errors.
@@ -132,7 +132,7 @@ DeskLumina generates prompts dynamically from **Tool Contracts** (`src/tools/con
 
 ### Persona Injection
 
-The prompt builder (`src/ai/prompts.ts`) supports runtime persona injection. When a non-default persona is selected in settings, the persona's compact prompt string is appended to the assistant identity section of the system prompt. The default persona uses the identity directly with no appended text. Invalid persona identifiers fall back safely to the default.
+The prompt builder (`src/ai/runtime/prompts.ts`) supports runtime persona injection. When a non-default persona is selected in settings, the persona's compact prompt string is appended to the assistant identity section of the system prompt. The default persona uses the identity directly with no appended text. Invalid persona identifiers fall back safely to the default.
 
 ### Live Context Injection
 DeskLumina injects real-time system state into every request:

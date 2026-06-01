@@ -1,7 +1,7 @@
 import { describe, test, expect } from "bun:test";
 import { parseSSEEvents } from "../../../src/ai/stream/sse-parser";
 import { OpenAICompatibleAdapter } from "../../../src/ai/transport/openai-compatible";
-import { GroqProvider } from "../../../src/ai/provider/groq";
+import { GroqProvider } from "../../../src/ai/providers/groq";
 import { AuthenticationError, ProviderAPIError, RateLimitError } from "../../../src/ai/errors";
 import { validateProviderRuntimeConfig } from "../../../src/ai/config/runtime";
 import { createStream } from "../../shared/fixtures";

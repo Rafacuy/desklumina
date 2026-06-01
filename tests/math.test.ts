@@ -1,5 +1,5 @@
 import { expect, test, describe, beforeAll } from "bun:test";
-import { mathTool } from "../src/tools/math";
+import { mathTool } from "../src/tools/frameworks/math";
 import { getRegisteredTools } from "../src/tools/registry";
 import { TOOL_CONTRACTS } from "../src/tools/contracts";
 

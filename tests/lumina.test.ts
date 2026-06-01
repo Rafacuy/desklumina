@@ -115,9 +115,9 @@ mock.module("../src/utils", () => ({
 }));
 
 import { Lumina } from "../src/core/lumina";
-import { ChatManager } from "../src/core/chat-manager";
-import { settingsManager } from "../src/core/settings-manager";
-import * as prompts from "../src/ai/prompts";
+import { ChatManager } from "../src/core/services/chat-manager";
+import { settingsManager } from "../src/core/services/settings-manager";
+import * as prompts from "../src/ai/runtime/prompts";
 
 describe("Lumina ReAct Agent Loop", () => {
   let getSpy: any;

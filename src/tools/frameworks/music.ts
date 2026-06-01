@@ -1,6 +1,6 @@
-import { logger } from "../logger";
-import { t, tf } from "../utils/i18n";
-import type { ToolExecutionResult, TrackInfo } from "../types";
+import { logger } from "../../logger";
+import { t, tf } from "../../utils/localization/i18n";
+import type { ToolExecutionResult, TrackInfo } from "../../types";
 
 /**
  * Supported Media Actions
