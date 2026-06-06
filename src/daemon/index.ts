@@ -1,4 +1,3 @@
-import { DeskLuminaDaemon } from "./daemon";
 import { logger } from "../logger";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
@@ -7,21 +6,50 @@ import { homedir } from "os";
 export class DaemonClient {
   private socketPath: string;
   private tokenPath: string;
+  private pidPath: string;
+  private cachedToken: string | null = null;
+  private cachedPid: number | null = null;
 
   constructor() {
-    this.socketPath = join(homedir(), ".config/desklumina/daemon.sock");
+    const runtimeDir = process.env.XDG_RUNTIME_DIR || join(homedir(), ".config/desklumina");
+    this.socketPath = join(runtimeDir, "desklumina.sock");
     this.tokenPath = join(homedir(), ".config/desklumina/.daemon-token");
+    this.pidPath = join(runtimeDir, "desklumina.pid");
   }
 
   private getToken(): string | null {
+    if (this.cachedToken) return this.cachedToken;
     try {
       if (existsSync(this.tokenPath)) {
-        return readFileSync(this.tokenPath, "utf8").trim();
+        this.cachedToken = readFileSync(this.tokenPath, "utf8").trim();
+        this.cachedPid = this.readPid();
+        return this.cachedToken;
       }
     } catch (err) {
       logger.error("daemon-client", `Failed to read token: ${err}`);
     }
     return null;
+  }
+
+  private readPid(): number | null {
+    try {
+      if (!existsSync(this.pidPath)) return null;
+      const raw = readFileSync(this.pidPath, "utf-8").trim();
+      const pid = Number(raw);
+      if (!Number.isInteger(pid) || pid <= 0) return null;
+      return pid;
+    } catch {
+      return null;
+    }
+  }
+
+  private isPidAlive(pid: number): boolean {
+    try {
+      process.kill(pid, 0);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async sendCommand(command: string): Promise<string> {
@@ -40,7 +68,7 @@ export class DaemonClient {
         headers: {
           "Authorization": `Bearer ${token}`
         }
-      } as any);
+      } as RequestInit & { unix: string });
       const data = await response.json() as { success?: boolean; response?: string; error?: string };
 
       if (!response.ok) {
@@ -51,6 +79,8 @@ export class DaemonClient {
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error("daemon-client", `Failed to send command: ${err.message}`, err);
+      this.cachedToken = null;
+      this.cachedPid = null;
       throw err;
     }
   }
@@ -60,15 +90,22 @@ export class DaemonClient {
       return false;
     }
 
+    const pid = this.readPid();
+    if (pid !== null && this.isPidAlive(pid)) {
+      if (this.cachedPid !== null && pid !== this.cachedPid) {
+        this.cachedToken = null;
+      }
+      return true;
+    }
+
     try {
-      // Perform health check to ensure it's not a stale socket
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 1000);
 
       const response = await fetch("http://localhost/health", {
         unix: this.socketPath,
         signal: controller.signal,
-      } as any);
+      } as RequestInit & { unix: string });
 
       clearTimeout(timeout);
       return response.ok;
@@ -77,9 +114,27 @@ export class DaemonClient {
     }
   }
 
+  async getThemePath(): Promise<string | null> {
+    const token = this.getToken();
+    if (!token) return null;
+
+    try {
+      const response = await fetch("http://localhost/v1/theme/default", {
+        unix: this.socketPath,
+        headers: { "Authorization": `Bearer ${token}` },
+      } as RequestInit & { unix: string });
+
+      if (!response.ok) return null;
+      const data = await response.json() as { path?: string };
+      return data.path ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   getSocketPath(): string {
     return this.socketPath;
   }
 }
 
-export { DeskLuminaDaemon };
+export { DeskLuminaDaemon } from "./daemon";

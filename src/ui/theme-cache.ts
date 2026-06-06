@@ -146,6 +146,17 @@ export function getThemePath(): string {
   return CACHE_PATH;
 }
 
+let themePathOverride: string | null = null;
+
+export function setThemePathOverride(path: string | null): void {
+  themePathOverride = path;
+}
+
+export function getThemePathWithOverride(): string {
+  if (themePathOverride && existsSync(themePathOverride)) return themePathOverride;
+  return getThemePath();
+}
+
 /**
  * Force an immediate rebuild of the cached theme.
  * Useful after programmatic edits or for benchmarkin

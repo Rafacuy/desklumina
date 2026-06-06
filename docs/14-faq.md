@@ -45,7 +45,7 @@ If the primary model request fails before any output is streamed, DeskLumina tri
 DeskLumina uses an Adaptive Chunking strategy. Instead of waiting for the full response, it breaks the incoming AI stream into small, natural sentences and starts generating audio for the first sentence immediately.
 
 ### What is the purpose of the Daemon?
-The daemon keeps DeskLumina running and exposes a Unix-socket HTTP endpoint at `~/.config/desklumina/daemon.sock`. This is useful for hotkeys and scripts that want to send commands without starting a new process each time.
+The daemon keeps DeskLumina running and exposes a Unix-socket HTTP endpoint at `$XDG_RUNTIME_DIR/desklumina.sock` (or `~/.config/desklumina/desklumina.sock`). This is useful for hotkeys and scripts that want to send commands without starting a new process each time.
 
 ---
 

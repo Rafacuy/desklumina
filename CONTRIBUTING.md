@@ -10,7 +10,7 @@ Thank you for your interest in contributing to DeskLumina! We welcome all kinds 
 2.  **Fork & Clone**: Fork the repository and clone it to your local machine.
 3.  **Install Bun**: Ensure you have [Bun](https://bun.sh/) installed.
 4.  **Install Deps**: Run `bun install`.
-5.  **Setup .env**: Copy `.env.example` to `.env` and set `GROQ_API_KEY` and `MODEL_NAME`.
+5.  **Setup .env**: Copy `.env.example` to `.env` and set `GROQ_API_KEY` and `DESKLUMINA_MODEL`.
 
 ---
 

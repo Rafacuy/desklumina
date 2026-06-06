@@ -18,7 +18,7 @@ Optimize DeskLumina for instant response times with persistent background execut
 
 ## Introduction
 
-Daemon mode runs DeskLumina as a persistent background process. The daemon stays active and listens for incoming commands over a **Unix Domain Socket** at `~/.config/desklumina/daemon.sock`.
+Daemon mode runs DeskLumina as a persistent background process. The daemon stays active and listens for incoming commands over a **Unix Domain Socket** at `$XDG_RUNTIME_DIR/desklumina.sock` (falls back to `~/.config/desklumina/desklumina.sock` if `XDG_RUNTIME_DIR` is not set).
 
 ---
 

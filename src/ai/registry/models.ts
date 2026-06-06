@@ -32,6 +32,7 @@ export class ModelRegistry {
   private aliases: Record<string, string[]> = { ...DEFAULT_ALIASES };
 
   initialize(): void {
+    this.aliases = { ...DEFAULT_ALIASES };
     this.loadOverrides();
   }
 
@@ -61,15 +62,22 @@ export class ModelRegistry {
     const seen = new Set<string>();
 
     const addModel = (modelStr: string) => {
+      const trimmed = modelStr.trim();
+      if (!trimmed) return;
+
       let providerId: string;
       let modelId: string;
       
-      const colonIdx = modelStr.indexOf(":");
+      const colonIdx = trimmed.indexOf(":");
       if (colonIdx > 0) {
-        providerId = modelStr.slice(0, colonIdx);
-        modelId = modelStr.slice(colonIdx + 1);
+        providerId = trimmed.slice(0, colonIdx).toLowerCase();
+        modelId = trimmed.slice(colonIdx + 1);
       } else {
         throw new Error(`Model format must be provider:model (e.g. gemini:gemini-2.5-flash). Invalid model: ${modelStr}`);
+      }
+
+      if (!modelId) {
+        throw new Error(`Model identifier is empty after provider prefix: ${modelStr}`);
       }
 
       const key = `${providerId}:${modelId}`;

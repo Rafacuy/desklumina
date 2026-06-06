@@ -70,7 +70,7 @@ Quick fixes for common issues encountered while using or installing DeskLumina.
 
 ### `EADDRINUSE` or Socket Already Exists
 - **Symptom**: The daemon fails to start with "Address already in use".
-- **Fix**: A stale socket file might be present. Run `rm ~/.config/desklumina/daemon.sock` and try again.
+- **Fix**: A stale socket file might be present. Run `rm $XDG_RUNTIME_DIR/desklumina.sock` (or `rm ~/.config/desklumina/desklumina.sock`) and try again.
 
 ### Connection Refused (Send Command)
 - **Symptom**: `bun run send` fails to connect.

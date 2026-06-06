@@ -7,7 +7,7 @@ import { escapeHtml } from "../utils/formatting/format";
 import { markdownToPango, wrapPangoText } from "../utils/formatting/pango";
 import { formatRofiResponse } from "../utils/formatting/table-formatter";
 import { randomLoader, randomLoaderImage } from "./loader";
-import { getThemePath } from "./theme-cache";
+import { getThemePathWithOverride } from "./theme-cache";
 
 const STREAM_BATCH_MS = 50;
 const MAX_LISTVIEW_LINES = 12;
@@ -171,7 +171,7 @@ export async function rofiMenu(
     "-dmenu", 
     "-i", 
     "-p", prompt,
-    "-theme", getThemePath(),
+    "-theme", getThemePathWithOverride(),
     "-kb-mode-next", "",
     "-kb-row-tab", "",
     "-kb-element-next", "",
@@ -423,7 +423,7 @@ export async function rofiDisplay(message: string): Promise<void> {
   const proc = spawn([
     "rofi", "-e", formattedMessage,
     "-markup",
-    "-theme", getThemePath(),
+    "-theme", getThemePathWithOverride(),
     "-theme-str", `
       window {
         width: 500px;
@@ -583,7 +583,7 @@ export async function rofiChatLoop(
 
               const loadingProc = spawn([
                 "rofi", "-dmenu",
-                "-theme", getThemePath(),
+                "-theme", getThemePathWithOverride(),
                 "-theme-str", loaderTheme,
                 "-mesg", escapeHtml(randomLoader()),
               ], { stdin: "pipe", stdout: "pipe" });

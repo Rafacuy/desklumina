@@ -160,7 +160,7 @@ Personas are defined as a typed `Record<PersonaType, PersonaDefinition>`. Each e
 
 ### Prompt Injection
 
-**File**: `src/ai/runtime/prompts.ts` — `buildSystemPrompt()`
+**File**: `src/ai/runtime/prompts.ts` (`buildSystemPrompt()`)
 
 The function reads the current persona ID from `settingsManager.get().persona`, resolves it via `getPersona()`, and conditionally prepends the persona prompt to the identity section. Non-default personas produce `identity + "\n\n" + persona.prompt`. The default persona produces `identity` alone with no added text.
 

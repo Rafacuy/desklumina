@@ -51,15 +51,66 @@ mock.module("../src/logger", () => ({
   },
 }));
 
-mock.module("../src/utils", () => ({ t: (s: string) => s }));
+function cleanAssistantResponse(text: string): string {
+  if (!text) return "";
+  let cleaned = text;
+  cleaned = cleaned.replace(/\[\[DONE\]\]/g, "").replace(/\[\[FAIL:.*?\]\]/g, "");
+  cleaned = cleaned.replace(/```(?:json|JSON)?\s*([\s\S]*?)\s*```/g, (match, content) => {
+    if (content.includes('"tool"') || content.includes('"args"')) return "";
+    return match;
+  });
+  cleaned = cleaned.replace(/\{(?:[^{}]|\{[^{}]*\})*\}/g, (match) => {
+    if (match.includes('"tool"') && (match.includes('"args"') || match.includes('"action"'))) return "";
+    return match;
+  });
+  return cleaned.replace(/<tool:\w+>.*?<\/tool:\w+>/gs, "")
+    .replace(/\n?Status:\s.*?(?=\n\n|$)/gis, "")
+    .replace(/\n?Summary:\s.*?(?=\n|$)/gis, "")
+    .replace(/\n?Actions:\s.*?(?=\n|$)/gis, "")
+    .replace(/\n?Results:\s*\n(?:\d+\.\s[a-zA-Z0-9._\-\/ ]+\n?)+/gis, "")
+    .replace(/^\s+·\s.+$/gm, "")
+    .replace(/^\n+/, "").replace(/\n+$/, "").trim();
+}
+
+mock.module("../src/utils", () => ({ t: (s: string) => s, tf: (s: string) => s, cleanAssistantResponse, getAppVersion: async () => "0.0.0" }));
 mock.module("../src/config/env", () => ({ env: {} }));
+
+mock.module("../src/daemon/cache/cache-manager", () => ({
+  CacheManager: class {
+    theme = { getOrLoad: mock(async () => "/tmp/theme.rasi"), get: mock(() => null), invalidate: mock(() => {}) };
+    settings = { getOrLoad: mock(async () => ({})), get: mock(() => null), set: mock(() => {}), invalidate: mock(() => {}) };
+    apps = { getOrLoad: mock(async () => ({})), get: mock(() => null), invalidate: mock(() => {}) };
+    models = { getOrLoad: mock(async () => null), get: mock(() => null), invalidate: mock(() => {}) };
+    i18n = { getOrLoad: mock(async () => ({})), get: mock(() => null), invalidate: mock(() => {}) };
+    prompt = { get: mock(() => null), set: mock(() => {}), invalidate: mock(() => {}) };
+    rofiArgs = { get: mock(() => null), set: mock(() => {}), invalidate: mock(() => {}) };
+    warmup = mock(async () => {});
+    warmupHotCaches = mock(async () => {});
+    invalidate = mock(() => {});
+    diag = mock(() => ({}));
+  },
+}));
+
+mock.module("../src/daemon/cache/file-watcher", () => ({
+  startFileWatcher: mock(() => {}),
+  stopFileWatcher: mock(() => {}),
+}));
+
+mock.module("../src/utils/async-mutex", () => ({
+  AsyncMutex: class {
+    async runExclusive<T>(fn: () => Promise<T> | T): Promise<T> {
+      return fn();
+    }
+  },
+}));
 
 import { DeskLuminaDaemon } from "../src/daemon/daemon";
 
 // ---------------------------------------------------------------------------
 
 describe("DeskLuminaDaemon", () => {
-  const socketPath = join(homedir(), ".config/desklumina/daemon.sock");
+  const runtimeDir = process.env.XDG_RUNTIME_DIR || join(homedir(), ".config/desklumina");
+  const socketPath = join(runtimeDir, "desklumina.sock");
 
   let daemon: DeskLuminaDaemon;
   let serveSpy: ReturnType<typeof spyOn>;
@@ -101,7 +152,7 @@ describe("DeskLuminaDaemon", () => {
 
   test("getSocketPath returns correct unix socket path", () => {
     expect(daemon.getSocketPath()).toBe(socketPath);
-    expect(daemon.getSocketPath()).toContain("daemon.sock");
+    expect(daemon.getSocketPath()).toContain("desklumina.sock");
   });
 
   // --- start() ---
@@ -153,10 +204,10 @@ describe("DeskLuminaDaemon", () => {
     expect(daemon.isActive()).toBe(false);
   });
 
-  test("stop calls process.exit(0) on clean shutdown", async () => {
+  test("stop does not call process.exit", async () => {
     await daemon.start();
     await daemon.stop();
-    expect(exitSpy).toHaveBeenCalledWith(0);
+    expect(exitSpy).not.toHaveBeenCalled();
   });
 
   test("stop removes socket file", async () => {
@@ -181,8 +232,8 @@ describe("DeskLuminaDaemon", () => {
     test("returns 200 on health check (no auth needed)", async () => {
       const res = await capturedFetch!(new Request("http://localhost/health"));
       expect(res.status).toBe(200);
-      const body = await res.json() as any;
-      expect(body).toHaveProperty("status", "ok");
+      const body = await res.text();
+      expect(body).toContain("OK");
     });
 
     test("returns 401 when Authorization header is missing", async () => {

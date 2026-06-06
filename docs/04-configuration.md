@@ -81,21 +81,21 @@ This file takes precedence when `DESKLUMINA_MODEL` is not set.
     }
   ],
   "aliases": {
-    "fast": [
-      "openai:gpt-5.4-mini",
-      "groq:llama-3.3-70b-versatile"
-    ],
-    "smart": [
-      "anthropic:claude-opus-4-7",
-      "openai:gpt-5.5"
-    ]
+    "fast": {
+      "provider": "openai",
+      "model": "gpt-5.4-mini"
+    },
+    "smart": {
+      "provider": "anthropic",
+      "model": "claude-opus-4-7"
+    }
   }
 }
 ```
 
 - **`primary`**: The default model for all requests. Must include `provider` and `model`.
 - **`fallbacks`**: Ordered list of models to try when the primary fails. The `reason` field documents the intended trigger (`rate-limit`, `provider-down`, or `model-not-found`).
-- **`aliases`**: Named model groups that expand into an ordered chain. Useful for switching between "fast" and "smart" profiles without changing the primary config.
+- **`aliases`**: Named shortcuts that map to a single `{ provider, model }` binding. Useful for switching between profiles (e.g., "fast" vs "smart") without changing the primary config.
 
 Valid provider values: `openai`, `anthropic`, `gemini`, `groq`, `openrouter`, `huggingface`.
 
@@ -208,4 +208,3 @@ The `src/config/apps.json` file contains a mapping of natural names to system co
 ---
 
 [← Quick Start](03-quick-start.md) | [Architecture →](05-architecture.md)
-Architecture →](05-architecture.md)

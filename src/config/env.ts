@@ -2,82 +2,131 @@ import { Validation } from "../utils/validation";
 import { validateProviderRuntimeConfig, type ProviderRuntimeConfig } from "../ai/config/runtime";
 import { loadModelsConfig } from "../ai/config/models-config";
 
-const GROQ_API_KEY = Bun.env.GROQ_API_KEY;
-const OPENAI_API_KEY = Bun.env.OPENAI_API_KEY;
-const ANTHROPIC_API_KEY = Bun.env.ANTHROPIC_API_KEY;
-const GEMINI_API_KEY = Bun.env.GEMINI_API_KEY;
-const OPENROUTER_API_KEY = Bun.env.OPENROUTER_API_KEY;
-const HF_API_KEY = Bun.env.HF_API_KEY;
+let deprecationWarningsEmitted = false;
 
-// CLI flags or env vars for backwards compatibility/overrides
-const DESKLUMINA_MODEL = Bun.env.DESKLUMINA_MODEL || Bun.env.MODEL_NAME;
-const DESKLUMINA_FALLBACKS = Bun.env.DESKLUMINA_FALLBACKS || Bun.env.FALLBACK_MODELS;
+function emitDeprecationWarnings(): void {
+  if (deprecationWarningsEmitted) return;
+  deprecationWarningsEmitted = true;
 
-// Deprecation warnings for legacy env vars
-if (!Bun.env.DESKLUMINA_MODEL && Bun.env.MODEL_NAME) {
-  console.warn("\x1b[33m[DEPRECATED] MODEL_NAME is deprecated. Use DESKLUMINA_MODEL instead (format: provider:model). Create models.json for full configuration.\x1b[0m");
-}
-if (!Bun.env.DESKLUMINA_FALLBACKS && Bun.env.FALLBACK_MODELS) {
-  console.warn("\x1b[33m[DEPRECATED] FALLBACK_MODELS is deprecated. Use DESKLUMINA_FALLBACKS instead (format: provider:model,...). Create models.json for full configuration.\x1b[0m");
-}
-
-let primaryModel = DESKLUMINA_MODEL || "";
-let fallbackModels: string[] = DESKLUMINA_FALLBACKS
-  ? DESKLUMINA_FALLBACKS.split(",").map((m) => m.trim()).filter((m) => m.length > 0)
-  : [];
-
-// If env vars didn't provide a model, fall back to models.json
-if (!primaryModel) {
-  const modelsConfig = loadModelsConfig();
-  if (modelsConfig) {
-    primaryModel = `${modelsConfig.primary.provider}:${modelsConfig.primary.model}`;
-    fallbackModels = modelsConfig.fallbacks.map(f => `${f.provider}:${f.model}`);
+  if (!Bun.env.DESKLUMINA_MODEL && Bun.env.MODEL_NAME) {
+    console.warn("\x1b[33m[DEPRECATED] MODEL_NAME is deprecated. Use DESKLUMINA_MODEL instead (format: provider:model). Create models.json for full configuration.\x1b[0m");
+  }
+  if (!Bun.env.DESKLUMINA_FALLBACKS && Bun.env.FALLBACK_MODELS) {
+    console.warn("\x1b[33m[DEPRECATED] FALLBACK_MODELS is deprecated. Use DESKLUMINA_FALLBACKS instead (format: provider:model,...). Create models.json for full configuration.\x1b[0m");
   }
 }
 
-if (!primaryModel && Bun.env.NODE_ENV !== "test") {
-  console.error("\x1b[31mNo model configured. Create models.json or set DESKLUMINA_MODEL\x1b[0m");
-  process.exit(1);
+/**
+ * Resolves the effective provider runtime configuration from current
+ * environment variables and models.json. This function reads fresh
+ * values on every call and never relies on stale cached state.
+ */
+export function resolveProviderRuntimeConfig(): ProviderRuntimeConfig {
+  emitDeprecationWarnings();
+
+  const groqApiKey = Bun.env.GROQ_API_KEY;
+  const openaiApiKey = Bun.env.OPENAI_API_KEY;
+  const anthropicApiKey = Bun.env.ANTHROPIC_API_KEY;
+  const geminiApiKey = Bun.env.GEMINI_API_KEY;
+  const openrouterApiKey = Bun.env.OPENROUTER_API_KEY;
+  const hfApiKey = Bun.env.HF_API_KEY;
+
+  const deskluminaModel = Bun.env.DESKLUMINA_MODEL || Bun.env.MODEL_NAME;
+  const deskluminaFallbacks = Bun.env.DESKLUMINA_FALLBACKS || Bun.env.FALLBACK_MODELS;
+
+  let primaryModel = deskluminaModel || "";
+  let fallbackModels: string[] = deskluminaFallbacks
+    ? deskluminaFallbacks.split(",").map((m) => m.trim()).filter((m) => m.length > 0)
+    : [];
+
+  // Always consult models.json so that fallbacks configured there are
+  // respected even when the primary model comes from an env var.
+  const modelsConfig = loadModelsConfig();
+  if (modelsConfig) {
+    if (!primaryModel) {
+      primaryModel = `${modelsConfig.primary.provider}:${modelsConfig.primary.model}`;
+    }
+    if (fallbackModels.length === 0 && modelsConfig.fallbacks.length > 0) {
+      fallbackModels = modelsConfig.fallbacks.map(f => `${f.provider}:${f.model}`);
+    }
+  }
+
+  return {
+    groqApiKey,
+    openaiApiKey,
+    anthropicApiKey,
+    geminiApiKey,
+    openrouterApiKey,
+    hfApiKey,
+    primaryModel,
+    fallbackModels,
+  };
 }
 
-const runtimeProviderConfig: ProviderRuntimeConfig = {
-  groqApiKey: GROQ_API_KEY,
-  openaiApiKey: OPENAI_API_KEY,
-  anthropicApiKey: ANTHROPIC_API_KEY,
-  geminiApiKey: GEMINI_API_KEY,
-  openrouterApiKey: OPENROUTER_API_KEY,
-  hfApiKey: HF_API_KEY,
-  primaryModel: primaryModel,
-  fallbackModels: fallbackModels,
-};
+export function validateOrExit(): void {
+  if (Bun.env.NODE_ENV === "test") return;
 
-try {
-  // If we have a primary model, skip the validateEnv strict MODEL_NAME check by passing it.
-  Validation.validateEnv({ MODEL_NAME: primaryModel });
-  validateProviderRuntimeConfig(runtimeProviderConfig);
-} catch (error) {
-  if (Bun.env.NODE_ENV !== "test") {
+  const config = resolveProviderRuntimeConfig();
+
+  if (!config.primaryModel) {
+    console.error("\x1b[31mNo model configured. Create models.json or set DESKLUMINA_MODEL\x1b[0m");
+    process.exit(1);
+  }
+
+  try {
+    Validation.validateEnv({ MODEL_NAME: config.primaryModel });
+    validateProviderRuntimeConfig(config);
+  } catch (error) {
     console.error(`\x1b[31m${(error as Error).message}\x1b[0m`);
     process.exit(1);
   }
 }
 
+/**
+ * Runtime-resolving model configuration. Accessing these properties
+ * re-evaluates the underlying environment and models.json on every
+ * read, guaranteeing the returned values are never stale.
+ */
 export const modelConfig = {
-  primaryModel: runtimeProviderConfig.primaryModel,
-  fallbackModels: [...runtimeProviderConfig.fallbackModels],
-  getAllModels: () => [
-    runtimeProviderConfig.primaryModel,
-    ...runtimeProviderConfig.fallbackModels,
-  ],
+  get primaryModel(): string {
+    return resolveProviderRuntimeConfig().primaryModel;
+  },
+  get fallbackModels(): string[] {
+    return [...resolveProviderRuntimeConfig().fallbackModels];
+  },
+  getAllModels(): string[] {
+    const runtime = resolveProviderRuntimeConfig();
+    return [runtime.primaryModel, ...runtime.fallbackModels];
+  },
 };
 
+/**
+ * Runtime-resolving environment snapshot. Accessing these properties
+ * re-evaluates the current environment on every read.
+ */
 export const env = {
-  GROQ_API_KEY: runtimeProviderConfig.groqApiKey || "",
-  OPENAI_API_KEY: runtimeProviderConfig.openaiApiKey || "",
-  ANTHROPIC_API_KEY: runtimeProviderConfig.anthropicApiKey || "",
-  GEMINI_API_KEY: runtimeProviderConfig.geminiApiKey || "",
-  OPENROUTER_API_KEY: runtimeProviderConfig.openrouterApiKey || "",
-  HF_API_KEY: runtimeProviderConfig.hfApiKey || "",
-  MODEL_NAME: DESKLUMINA_MODEL || "",
-  FALLBACK_MODELS: DESKLUMINA_FALLBACKS,
+  get GROQ_API_KEY(): string {
+    return Bun.env.GROQ_API_KEY || "";
+  },
+  get OPENAI_API_KEY(): string {
+    return Bun.env.OPENAI_API_KEY || "";
+  },
+  get ANTHROPIC_API_KEY(): string {
+    return Bun.env.ANTHROPIC_API_KEY || "";
+  },
+  get GEMINI_API_KEY(): string {
+    return Bun.env.GEMINI_API_KEY || "";
+  },
+  get OPENROUTER_API_KEY(): string {
+    return Bun.env.OPENROUTER_API_KEY || "";
+  },
+  get HF_API_KEY(): string {
+    return Bun.env.HF_API_KEY || "";
+  },
+  get MODEL_NAME(): string {
+    return Bun.env.DESKLUMINA_MODEL || Bun.env.MODEL_NAME || "";
+  },
+  get FALLBACK_MODELS(): string | undefined {
+    return Bun.env.DESKLUMINA_FALLBACKS || Bun.env.FALLBACK_MODELS;
+  },
 };

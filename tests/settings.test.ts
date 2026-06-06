@@ -16,33 +16,30 @@ describe("SettingsManager", () => {
   });
 
   beforeEach(async () => {
-    // Ensure previous async saves are complete before running tests
-    await settingsManager.save().catch(() => {});
+    await settingsManager.flush().catch(() => {});
   });
 
-  test("save completes successfully", async () => {
-    // Simply verify that save() completes without error
-    await settingsManager.save();
-    // No throw means success
+  test("flush completes successfully", async () => {
+    await settingsManager.flush();
   });
 
-  test("save uses atomic write operations", async () => {
-    // Spy on renameSync before calling save
+  test("flush uses atomic write operations", async () => {
     renameSpy = spyOn(fs, "renameSync");
     writeSpy = spyOn(Bun, "write" as any).mockResolvedValue(0 as any);
-    
-    await settingsManager.save();
-    
-    // Verify that atomic rename was called (indicates atomic write pattern)
+
+    settingsManager.set({ persona: "test" });
+    await settingsManager.flush();
+
     expect(renameSpy).toHaveBeenCalled();
   });
 
-  test("toggleFeature triggers save", async () => {
-    const saveSpy = spyOn(settingsManager, "save");
-    
+  test("toggleFeature marks settings dirty", async () => {
+    const flushSpy = spyOn(settingsManager, "flush");
+
     settingsManager.toggleFeature("tts");
-    
-    expect(saveSpy).toHaveBeenCalled();
-    saveSpy.mockRestore();
+
+    await Bun.sleep(600);
+    expect(flushSpy).toHaveBeenCalled();
+    flushSpy.mockRestore();
   });
 });

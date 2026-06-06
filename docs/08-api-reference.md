@@ -119,9 +119,24 @@ interface ToolExecutionResult {
   status?: string;        // Machine-readable status code (e.g. "search_complete")
   expression?: string;    // Normalized input expression (math tool only)
   numericResult?: number; // Raw numeric result (math tool only)
-  files?: FileMatch[];    // Structured results for file-related tools
-  preview?: FilePreview;  // Preview data for file/directory tools
   actions?: string[];     // List of internal steps performed
+  resolvedBackend?: "mpc" | "playerctl"; // Active media backend (music tool only)
+  extra?: ToolExtraData;  // Structured data container for file, media, and search results
+}
+```
+
+### `ToolExtraData`
+
+Structured data container used by tools to return rich results:
+
+```typescript
+interface ToolExtraData {
+  tracks?: TrackInfo[];                          // Music track information
+  activePrimaryBackend?: "mpc" | "playerctl" | null; // Active media backend
+  files?: FileMatch[];                           // File search results
+  selectedFile?: string;                         // User-selected file (fzf)
+  preview?: FilePreview;                         // File/directory preview
+  summary?: ToolExecutionSummary;                // Search execution metadata
 }
 ```
 
@@ -162,13 +177,28 @@ Returns a translated string with parameter interpolation (e.g., `{varName}`).
 ## Daemon Socket Protocol
 
 **Transport**: HTTP over Unix Domain Socket  
-**Path**: `~/.config/desklumina/daemon.sock`
+**Path**: `$XDG_RUNTIME_DIR/desklumina.sock` (falls back to `~/.config/desklumina/desklumina.sock`)
 
-### GET Request
+### Public Endpoints (no auth required)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/health` or `/v1/healthz` | Health check. Returns `OK`, PID, and uptime. |
+| `GET` | `/v1/diag` | Cache diagnostics (JSON). |
+| `GET` | `/v1/theme/default` | Resolved Rofi theme path (requires Bearer token). |
+
+### Command Endpoints (auth required)
+
+All command requests require an `Authorization: Bearer <token>` header. The token is read from `~/.config/desklumina/.daemon-token`.
+
+**GET Request:**
 `GET /?cmd=<url_encoded_command> HTTP/1.1`
 
+**POST Request:**
+`POST /v1/command` with JSON body `{ "cmd": "your command" }`
+
 ### JSON Response
-The response includes the final text `response`, a list of `toolResults`, and any supplemental data like `files` or `preview`.
+The response includes the final text `response`, a list of `toolResults`, `callback` events, and any supplemental data like `files` or `summary`.
 
 ---
 
