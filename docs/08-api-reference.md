@@ -8,6 +8,7 @@ A detailed reference for DeskLumina's internal APIs, tool contracts, and executi
 
 - [Core API (Lumina)](#core-api-lumina)
 - [Agent API](#agent-api)
+- [LTM API](#ltm-api)
 - [Tool Contracts API](#tool-contracts-api)
 - [Tool Handler Signature](#tool-handler-signature)
 - [Chat State API](#chat-state-api)
@@ -58,6 +59,70 @@ export type TerminalSignal =
   | { type: "DONE" }
   | { type: "FAIL"; reason: string };
 ```
+
+---
+
+## LTM API
+
+**Files**: `src/ltm/index.ts`, `src/ltm/pipeline/*`, `src/ltm/storage/storage.ts`
+
+### `buildLtmContext(query: string): Promise<string>`
+Builds the inject-ready LTM narrative block. Retrieval includes facts and patterns plus semantic episodic matches (when enabled).
+
+### `triggerLtmExtraction(userMessage: string, assistantResponse: string): void`
+Fire-and-forget extraction pipeline. Non-fatal by design.
+
+### `extractMemories(userMessage: string, assistantResponse: string): Promise<void>`
+Executes extraction end-to-end:
+- provider/model resolution (chat via `ltm.model`, embedding via `ltm.embedModel` resolution chain),
+- extraction parse,
+- fact/pattern upsert,
+- episodic insert with optional embeddings,
+- cap-based episodic eviction.
+
+### `retrieveMemory(query: string, store?: LtmStore | null): Promise<LtmPromptPayload>`
+Retrieves memory payload for prompt injection.
+- Semantic mode: query embedding via resolved `embedModel` -> cosine scoring -> threshold filter -> top-K.
+- Graceful fallback: lexical episodic retrieval if query embedding is unavailable.
+
+### `LtmStore.insertEpisodic(value: string, embedding?: string | null): LtmEntry`
+Persists episodic memory. Embedding is stored as JSON text (`TEXT`) or `NULL`.
+
+### `LtmStore.getAllEpisodicWithEmbeddings(): EpisodicVectorEntry[]`
+Returns episodic rows with raw embedding payloads for vector scoring.
+
+---
+
+## Provider Configuration API
+
+**File**: `src/ai/types/provider.ts`
+
+### `ProviderConfig` Interface
+
+```typescript
+interface ProviderConfig {
+  readonly model: string;
+  readonly embedModel?: string; // bare id (uses `provider`) or `provider:model` ref
+}
+```
+
+Used wherever a chat+embedding pair is bound: `models.json` `primary`/`aliases` entries, and LTM `ModelBinding`. The `embedModel` field is optional and is resolved independently from `model` by `resolveEmbeddingProvider()` in `src/ltm/pipeline/extractor.ts:resolveEmbeddingProvider`.
+
+### `ProviderCapability` Interface
+
+```typescript
+interface ProviderCapability {
+  readonly maxContextTokens: number;
+  readonly streamingSupported: boolean;
+  readonly visionSupported: boolean;
+  readonly jsonModeSupported: boolean;
+  readonly functionCallingSupported: boolean;
+  readonly embeddingsSupported: boolean;
+  readonly tpmLimit?: number;
+}
+```
+
+When `embeddingsSupported: false`, calling `provider.embed()` throws an error that names the provider and the model, and the LTM embedding step degrades to a `null` vector. `BaseProvider` no longer exposes a stub `embed?()` method; capability must be declared explicitly per provider.
 
 ---
 

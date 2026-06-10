@@ -33,11 +33,13 @@ export function resolveProviderRuntimeConfig(): ProviderRuntimeConfig {
 
   const deskluminaModel = Bun.env.DESKLUMINA_MODEL || Bun.env.MODEL_NAME;
   const deskluminaFallbacks = Bun.env.DESKLUMINA_FALLBACKS || Bun.env.FALLBACK_MODELS;
+  const deskluminaEmbedModel = Bun.env.DESKLUMINA_EMBED_MODEL;
 
   let primaryModel = deskluminaModel || "";
   let fallbackModels: string[] = deskluminaFallbacks
     ? deskluminaFallbacks.split(",").map((m) => m.trim()).filter((m) => m.length > 0)
     : [];
+  let primaryEmbedModel: string | undefined = deskluminaEmbedModel?.trim() || undefined;
 
   // Always consult models.json so that fallbacks configured there are
   // respected even when the primary model comes from an env var.
@@ -48,6 +50,12 @@ export function resolveProviderRuntimeConfig(): ProviderRuntimeConfig {
     }
     if (fallbackModels.length === 0 && modelsConfig.fallbacks.length > 0) {
       fallbackModels = modelsConfig.fallbacks.map(f => `${f.provider}:${f.model}`);
+    }
+    if (!primaryEmbedModel && modelsConfig.primary.embedModel) {
+      const embedModelValue = modelsConfig.primary.embedModel;
+      primaryEmbedModel = embedModelValue.includes(":")
+        ? embedModelValue
+        : `${modelsConfig.primary.provider}:${embedModelValue}`;
     }
   }
 
@@ -60,6 +68,7 @@ export function resolveProviderRuntimeConfig(): ProviderRuntimeConfig {
     hfApiKey,
     primaryModel,
     fallbackModels,
+    primaryEmbedModel,
   };
 }
 
@@ -93,6 +102,9 @@ export const modelConfig = {
   },
   get fallbackModels(): string[] {
     return [...resolveProviderRuntimeConfig().fallbackModels];
+  },
+  get primaryEmbedModel(): string | undefined {
+    return resolveProviderRuntimeConfig().primaryEmbedModel;
   },
   getAllModels(): string[] {
     const runtime = resolveProviderRuntimeConfig();
@@ -128,5 +140,8 @@ export const env = {
   },
   get FALLBACK_MODELS(): string | undefined {
     return Bun.env.DESKLUMINA_FALLBACKS || Bun.env.FALLBACK_MODELS;
+  },
+  get EMBED_MODEL(): string | undefined {
+    return Bun.env.DESKLUMINA_EMBED_MODEL || undefined;
   },
 };

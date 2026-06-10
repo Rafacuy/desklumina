@@ -3,6 +3,7 @@ import { TOOL_CONTRACTS, ToolContract } from "../../tools/contracts";
 import { settingsManager } from "../../core/services/settings-manager";
 import { getPersona } from "./personas";
 import { getLang, getLangName } from "../../utils";
+import { buildLtmContext } from "../../ltm";
 
 async function runProbe(command: string): Promise<string | null> {
   try {
@@ -142,7 +143,6 @@ function generateFormatAnchors(): string {
 
 export async function buildSystemPrompt(query: string = ""): Promise<string> {
   const toolContracts = TOOL_CONTRACTS.map(formatToolContract).join("\n\n---\n\n");
-  const systemContext = await getSystemContext();
   const formatExamples = generateFormatAnchors();
 
   const lang = getLang();
@@ -165,19 +165,19 @@ export async function buildSystemPrompt(query: string = ""): Promise<string> {
     ? `${IDENTITY}\n\n${persona.prompt}`
     : IDENTITY;
 
-  return `${identityWithPersona}
+  const [ltmContext, systemContext] = await Promise.all([
+    buildLtmContext(query),
+    getSystemContext(),
+  ]);
 
-${languageDirective}
-
-${toolContracts}
-
-${RULES_AND_ESCALATION}
-
-${AGENT_PROTOCOL}
-
-${formatExamples}
-
-LIVE SYSTEM CONTEXT:
-${systemContext}`;
+  return [
+    identityWithPersona,
+    languageDirective,
+    ltmContext,
+    toolContracts,
+    RULES_AND_ESCALATION,
+    AGENT_PROTOCOL,
+    formatExamples,
+    `LIVE SYSTEM CONTEXT:\n${systemContext}`,
+  ].filter(Boolean).join("\n\n");
 }
-

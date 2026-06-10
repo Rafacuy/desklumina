@@ -9,6 +9,29 @@ export interface ResolvedModel {
   modelId: string;
 }
 
+/**
+ * Parses a `provider:model` reference. Throws when the format is invalid
+ * or the model identifier is empty.
+ */
+export function parseModelRef(ref: string): ResolvedModel {
+  const trimmed = ref.trim();
+  if (!trimmed) {
+    throw new Error("Model reference is empty");
+  }
+  const colonIdx = trimmed.indexOf(":");
+  if (colonIdx <= 0) {
+    throw new Error(`Model format must be provider:model (e.g. gemini:gemini-2.5-flash). Invalid model: ${ref}`);
+  }
+  const modelId = trimmed.slice(colonIdx + 1);
+  if (!modelId) {
+    throw new Error(`Model identifier is empty after provider prefix: ${ref}`);
+  }
+  return {
+    providerId: trimmed.slice(0, colonIdx).toLowerCase(),
+    modelId,
+  };
+}
+
 const DEFAULT_ALIASES: Record<string, string[]> = {
   fast: [
     "openai:gpt-5.4-mini",
@@ -62,28 +85,12 @@ export class ModelRegistry {
     const seen = new Set<string>();
 
     const addModel = (modelStr: string) => {
-      const trimmed = modelStr.trim();
-      if (!trimmed) return;
-
-      let providerId: string;
-      let modelId: string;
-      
-      const colonIdx = trimmed.indexOf(":");
-      if (colonIdx > 0) {
-        providerId = trimmed.slice(0, colonIdx).toLowerCase();
-        modelId = trimmed.slice(colonIdx + 1);
-      } else {
-        throw new Error(`Model format must be provider:model (e.g. gemini:gemini-2.5-flash). Invalid model: ${modelStr}`);
-      }
-
-      if (!modelId) {
-        throw new Error(`Model identifier is empty after provider prefix: ${modelStr}`);
-      }
-
-      const key = `${providerId}:${modelId}`;
+      if (!modelStr.trim()) return;
+      const ref = parseModelRef(modelStr);
+      const key = `${ref.providerId}:${ref.modelId}`;
       if (!seen.has(key)) {
         seen.add(key);
-        resolved.push({ providerId, modelId });
+        resolved.push(ref);
       }
     };
 

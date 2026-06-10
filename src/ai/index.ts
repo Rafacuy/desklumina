@@ -8,7 +8,10 @@ export { buildSystemPrompt } from "./runtime/prompts";
 export { textToSpeech } from "./tts";
 export type {
   AIProvider,
+  EmbeddingRequest,
+  EmbeddingResponse,
   ProviderCapability,
+  ProviderConfig,
   ProviderId,
   ProviderRequest,
   ProviderStreamChunk,
@@ -30,4 +33,4 @@ export {
   OpenRouterProvider,
   HuggingFaceProvider,
 } from "./providers";
-export { providerRegistry, modelRegistry } from "./registry";
+export { providerRegistry, modelRegistry, parseModelRef } from "./registry";

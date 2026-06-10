@@ -50,6 +50,7 @@ export class AnthropicProvider extends StreamingBaseProvider {
       visionSupported: true,
       jsonModeSupported: true,
       functionCallingSupported: true,
+      embeddingsSupported: false,
     };
   }
 

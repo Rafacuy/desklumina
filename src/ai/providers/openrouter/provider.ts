@@ -17,4 +17,8 @@ export class OpenRouterProvider extends OpenAICompatibleAdapter {
       },
     });
   }
+
+  protected override supportsEmbeddings(): boolean {
+    return false;
+  }
 }

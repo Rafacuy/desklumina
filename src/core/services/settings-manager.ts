@@ -42,6 +42,11 @@ export class SettingsManager {
           this.settings = { ...DEFAULT_SETTINGS, ...saved };
           this.settings.features = { ...DEFAULT_SETTINGS.features, ...(saved.features || {}) };
           this.settings.tts = { ...DEFAULT_SETTINGS.tts, ...(saved.tts || {}) };
+          this.settings.ltm = { ...DEFAULT_SETTINGS.ltm, ...(saved.ltm || {}) };
+          this.settings.ltm.semanticRetrieval = {
+            ...DEFAULT_SETTINGS.ltm.semanticRetrieval,
+            ...(saved.ltm?.semanticRetrieval || {}),
+          };
 
           if (this.settings.language) {
             setLang(this.settings.language);

@@ -9,6 +9,7 @@ import { CancellationError } from "../types";
 import { runAgent } from "../agent/agent";
 import { stripMarkersForDisplay } from "../agent/signals";
 import { ToolDisplay } from "../ui/tool-display";
+import { triggerLtmExtraction } from "../ltm";
 import type { AIMessage, ToolCallbackPayload } from "../types";
 import type { AgentEvent } from "../agent/types";
 
@@ -111,6 +112,8 @@ export class Lumina {
         this.context.add("user", userMessage);
         this.context.add("assistant", cleanResponse || userFacingResponse);
       }
+
+      triggerLtmExtraction(userMessage, cleanResponse || userFacingResponse);
 
       return userFacingResponse;
     } catch (error) {

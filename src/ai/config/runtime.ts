@@ -7,6 +7,7 @@ export interface ProviderRuntimeConfig {
   hfApiKey?: string;
   primaryModel: string;
   fallbackModels: readonly string[];
+  primaryEmbedModel?: string;
 }
 
 export function validateProviderRuntimeConfig(config: ProviderRuntimeConfig): void {

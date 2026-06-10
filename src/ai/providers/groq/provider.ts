@@ -13,4 +13,8 @@ export class GroqProvider extends OpenAICompatibleAdapter {
       fetchImpl,
     });
   }
+
+  protected override supportsEmbeddings(): boolean {
+    return false;
+  }
 }

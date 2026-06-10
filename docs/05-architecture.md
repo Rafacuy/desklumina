@@ -70,6 +70,7 @@ The project is organized into several key directories under `src/`:
 - **`config/`**: Environment variable loading and application aliases.
 - **`constants/`**: Shared constants such as command timeouts, model defaults, and tool retries.
 - **`core/`**: High-level orchestration, containing the Lumina coordinator, Chat/Settings managers (with provider preference storage), and the tool planner.
+- **`ltm/`**: Long-term memory subsystem (SQLite persistence, async extraction, embedding generation, semantic episodic retrieval, prompt formatting).
 - **`tools/`**: Desktop automation implementations (apps, files, music, etc.) and their formal contracts.
 - **`ui/`**: User interface components including Rofi logic, themes, and tool result rendering.
 - **`security/`**: Confirmation dialogs and dangerous command analysis.
@@ -139,6 +140,30 @@ DeskLumina injects real-time system state into every request:
 - **Probing**: Uses `pactl` and `xdotool` to gather volume and active window info.
 - **Caching**: Probes are cached for 30 seconds to minimize system overhead.
 - **Media Context**: Media state is queried on-demand via the `music` tool (using `{"current": true}`) rather than injected into every prompt.
+
+### Long-Term Memory (LTM)
+
+- **Storage**: LTM is persisted in SQLite (`bun:sqlite`) within `memories`.
+- **Episodic Embeddings**: Episodic rows include `embedding` as JSON text.
+- **Migration**: On startup, LTM applies a safe schema migration (`ALTER TABLE ... ADD COLUMN embedding TEXT`) when needed, preserving all existing rows.
+- **Embedding Model Selection**: Embedding generation uses `ltm.embedModel` (or its fallbacks), **not** `ltm.model`. The chat model and the embedding model are deliberately decoupled. Resolution order:
+  1. `settings.ltm.embedModel` (bare id → uses `ltm.provider`; `provider:model` → overrides it)
+  2. `DESKLUMINA_EMBED_MODEL` env var
+  3. `models.json` `primary.embedModel`
+  4. Legacy: reuse `ltm.model` if its provider supports embeddings
+  5. Walk main provider chain (`DESKLUMINA_MODEL` + `DESKLUMINA_FALLBACKS`) and pick first embedding-capable provider
+  6. `null` — pipeline degrades gracefully
+- **Provider Capability**: Each provider declares `embeddingsSupported` in its capability map. `openai`, `gemini`, and `huggingface` are `true`; `anthropic`, `groq`, and `openrouter` are `false`. Providers that don't support embeddings throw a clear error if `embed()` is called, rather than silently returning garbage.
+- **Extraction Path**: After assistant response delivery, extraction runs asynchronously using `ltm.model` (chat) for fact extraction and the resolved embedding provider (above) for vectorization.
+- **Failure Handling**: If embedding generation fails (network, capability, or missing key), episodic text is still stored with `embedding = NULL`, and retrieval falls back to lexical FTS search.
+- **Retrieval Path**:
+  1. Generate query embedding via the resolved embedding provider.
+  2. Load episodic rows and embeddings.
+  3. Parse/validate vectors.
+  4. Score with cosine similarity in TypeScript.
+  5. Filter by configurable threshold.
+  6. Sort and keep configurable top-K.
+- **Compatibility**: No FAISS/HNSW/native extensions; semantic scoring is in-memory and Bun-native.
 
 ---
 

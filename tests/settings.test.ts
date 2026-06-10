@@ -42,4 +42,16 @@ describe("SettingsManager", () => {
     expect(flushSpy).toHaveBeenCalled();
     flushSpy.mockRestore();
   });
+
+  test("includes LTM defaults", () => {
+    const settings = settingsManager.get();
+
+    expect(settings.features.ltm).toBeBoolean();
+    expect(settings.ltm.episodicCap).toBeGreaterThan(0);
+    expect(settings.ltm.tokenBudget).toBe(600);
+    expect(settings.ltm.dbPath).toContain("ltm.db");
+    expect(settings.ltm.semanticRetrieval.enabled).toBe(true);
+    expect(settings.ltm.semanticRetrieval.threshold).toBe(0.65);
+    expect(settings.ltm.semanticRetrieval.topK).toBe(5);
+  });
 });

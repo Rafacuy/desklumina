@@ -31,7 +31,7 @@ This file describes ideas that are not yet implemented. Do not treat any item be
 - [x] **Multi-Persona System**: Configurable assistant personalities with typed definitions, settings persistence, UI selection, runtime prompt injection, and safe fallback to default.
 - [ ] **Local LLM Integration**: Support for Ollama or Llama.cpp for privacy-conscious users.
 - [ ] **Enhanced TTS**: Add support for more natural voices and offline TTS engines.
-- [ ] **Long-Term Memory (LTM)**: Implement persistent memory using SQLite3 with robust storage and automatic cleaning.
+- [x] **Long-Term Memory (LTM)**: Implemented persistent memory using SQLite3 with three layers (fact, pattern, episodic), FTS5 full-text search with trigram tokenizer, LLM-based extraction from conversation turns, embedding support for vector search, and automatic eviction based on access-count + recency scoring triggered after each extraction when episodic cap is exceeded. Configurable via `settings.ltm` (episodicCap, provider, model, embedModel).
 
 ---
 

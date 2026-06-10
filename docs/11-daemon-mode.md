@@ -102,43 +102,19 @@ bun run send "what's the current volume?"
 
 Automate DeskLumina's startup with the provided service file: `systemd/desklumina-daemon@.service`.
 
-1.  **Verify Bun path**: The service file uses `/usr/bin/bun`. If your Bun lives elsewhere, update `ExecStart` accordingly.
+1.  **Verify Bun path**: The service file uses `/usr/bin/bun`. If your Bun lives elsewhere, update `ExecStart` accordingly. 
+    ```bash
+    which bun
+    ```
 2.  **Install the Service**:
     ```bash
-    # 1. Copy service file
-    cp systemd/desklumina-daemon@.service ~/.config/systemd/user/
-
-    # 2. Reload systemd
+    cp systemd/desklumina-daemon.service ~/.config/systemd/user/
     systemctl --user daemon-reload
-
-    # 3. Enable and start
-    systemctl --user enable --now desklumina-daemon@$(id -u).service
+    systemctl --user enable --now desklumina-daemon.service
     ```
 4.  **Manage Service**:
-    - `systemctl --user status desklumina-daemon@$(id -u).service`
-    - `systemctl --user restart desklumina-daemon@$(id -u).service`
-
----
-
-## Advanced Integration (sxhkd)
-
-For power users, daemon mode allows for instant hotkey-driven AI commands.
-
-Add these to your `~/.config/sxhkd/sxhkdrc`:
-
-```bash
-# Instant AI Command
-super + t
-    bun run send "what's on my schedule?"
-
-# Media Toggle
-super + space
-    bun run send "toggle music"
-
-# Quick Browser
-super + b
-    bun run send "open chrome"
-```
+    - `systemctl --user status desklumina-daemon.service`
+    - `systemctl --user restart desklumina-daemon.service`
 
 ---
 

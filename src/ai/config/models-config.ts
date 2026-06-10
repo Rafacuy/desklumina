@@ -1,10 +1,13 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
+import type { ProviderConfig } from "../types";
 
-export interface ModelBinding {
+export interface ModelBinding extends ProviderConfig {
   provider: string;
   model: string;
+  /** Optional dedicated embedding model. Falls back to `model` when ommited */
+  embedModel?: string;
 }
 
 export interface FallbackBinding extends ModelBinding {
@@ -19,6 +22,30 @@ export interface ModelsConfig {
 
 const PROVIDERS = ["openai", "anthropic", "gemini", "groq", "openrouter", "huggingface"] as const;
 
+function parseBinding(raw: unknown, context: string): ModelBinding {
+  if (!raw || typeof raw !== "object") {
+    throw new Error(`${context} must be an object with { provider, model, embedModel? }`);
+  }
+  const obj = raw as Record<string, unknown>;
+  if (!PROVIDERS.includes(obj.provider as any)) {
+    throw new Error(`Unknown provider '${String(obj.provider)}' in ${context}. Valid: ${PROVIDERS.join(", ")}`);
+  }
+  if (!obj.model || typeof obj.model !== "string") {
+    throw new Error(`${context}.model must be a non-empty string`);
+  }
+  if (obj.embedModel !== undefined && (typeof obj.embedModel !== "string" || obj.embedModel.trim().length === 0)) {
+    throw new Error(`${context}.embedModel must be a non-empty string when present`);
+  }
+  const binding: ModelBinding = {
+    provider: obj.provider as string,
+    model: obj.model as string,
+  };
+  if (typeof obj.embedModel === "string") {
+    binding.embedModel = obj.embedModel;
+  }
+  return binding;
+}
+
 /**
  * Parses and validates a raw object into a ModelsConfig.
  */
@@ -28,63 +55,36 @@ export function parseModelsConfig(raw: unknown): ModelsConfig {
   }
 
   const config = raw as Record<string, unknown>;
-
-  // Validate primary
   if (!config.primary || typeof config.primary !== "object") {
-    throw new Error("models.json must have a 'primary' field with { provider, model }");
+    throw new Error("models.json must have a 'primary' field with { provider, model, embedModel? }");
   }
-  const primary = config.primary as Record<string, string>;
-  if (!PROVIDERS.includes(primary.provider as any)) {
-    throw new Error(`Unknown provider '${primary.provider}'. Valid: ${PROVIDERS.join(", ")}`);
-  }
-  if (!primary.model || typeof primary.model !== "string") {
-    throw new Error("primary.model must be a non-empty string");
-  }
+  const primary = parseBinding(config.primary, "primary");
 
-  // Validate fallbacks
   const fallbacks: FallbackBinding[] = [];
   if (config.fallbacks) {
     if (!Array.isArray(config.fallbacks)) {
       throw new Error("fallbacks must be an array");
     }
     for (const fb of config.fallbacks) {
-      if (!PROVIDERS.includes(fb.provider as any)) {
-        throw new Error(`Unknown provider '${fb.provider}' in fallback`);
-      }
-      if (!fb.model || typeof fb.model !== "string") {
-        throw new Error("fallback.model must be a non-empty string");
-      }
-      fallbacks.push({
-        provider: fb.provider,
-        model: fb.model,
-        reason: (fb.reason as any) || "provider-down",
-      });
+      const binding = parseBinding(fb, "fallback");
+      const reasonRaw = (fb as Record<string, unknown>).reason;
+      const reason: FallbackBinding["reason"] =
+        reasonRaw === "rate-limit" || reasonRaw === "model-not-found" ? reasonRaw : "provider-down";
+      fallbacks.push({ ...binding, reason });
     }
   }
 
-  // Validate aliases
   const aliases: Record<string, ModelBinding> = {};
   if (config.aliases) {
     if (typeof config.aliases !== "object" || Array.isArray(config.aliases)) {
       throw new Error("aliases must be an object");
     }
     for (const [name, binding] of Object.entries(config.aliases)) {
-      const b = binding as Record<string, string>;
-      if (!PROVIDERS.includes(b.provider as any)) {
-        throw new Error(`Unknown provider '${b.provider}' in alias '${name}'`);
-      }
-      if (!b.model || typeof b.model !== "string") {
-        throw new Error(`model in alias '${name}' must be a non-empty string`);
-      }
-      aliases[name] = { provider: b.provider as string, model: b.model as string };
+      aliases[name] = parseBinding(binding, `aliases.${name}`);
     }
   }
 
-  return {
-    primary: { provider: primary.provider as string, model: primary.model as string },
-    fallbacks,
-    aliases,
-  };
+  return { primary, fallbacks, aliases };
 }
 
 /**

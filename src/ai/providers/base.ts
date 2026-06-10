@@ -1,4 +1,11 @@
-import type { AIProvider, ProviderCapability, ProviderId, ProviderRequest, ProviderStreamChunk, ProviderValidationResult } from "../types";
+import type {
+  AIProvider,
+  ProviderCapability,
+  ProviderId,
+  ProviderRequest,
+  ProviderStreamChunk,
+  ProviderValidationResult,
+} from "../types";
 
 export abstract class BaseProvider implements AIProvider {
   constructor(

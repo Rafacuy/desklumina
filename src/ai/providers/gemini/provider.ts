@@ -1,7 +1,14 @@
 import { GEMINI_API_BASE } from "../../../constants";
 import { StreamingBaseProvider } from "../streaming-base";
-import type { ProviderId, ProviderRequest, ProviderStreamChunk, ProviderValidationResult } from "../../types";
-import { ProviderAPIError } from "../../errors";
+import type {
+  EmbeddingRequest,
+  EmbeddingResponse,
+  ProviderRequest,
+  ProviderStreamChunk,
+  ProviderValidationResult,
+} from "../../types";
+import { ProviderAPIError, ProviderParseError } from "../../errors";
+import { normalizeProviderError } from "../../transport/http";
 import type { SSEEvent } from "../../stream/sse-parser";
 
 export const GEMINI_PROVIDER_ID = "gemini" as const;
@@ -38,6 +45,12 @@ interface GeminiStreamChunk {
   };
 }
 
+interface GeminiEmbeddingResponse {
+  embedding?: {
+    values?: number[];
+  };
+}
+
 export class GeminiProvider extends StreamingBaseProvider {
   readonly id = GEMINI_PROVIDER_ID;
   readonly name = "Google Gemini";
@@ -61,11 +74,16 @@ export class GeminiProvider extends StreamingBaseProvider {
       visionSupported: false,
       jsonModeSupported: false,
       functionCallingSupported: false,
+      embeddingsSupported: true,
     };
   }
 
   protected getEndpoint(request: ProviderRequest): string {
     return `${GEMINI_API_BASE}/models/${request.model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(this.apiKey)}`;
+  }
+
+  protected getEmbeddingEndpoint(model: string): string {
+    return `${GEMINI_API_BASE}/models/${model}:embedContent?key=${encodeURIComponent(this.apiKey)}`;
   }
 
   protected getHeaders(): Record<string, string> {
@@ -134,5 +152,54 @@ export class GeminiProvider extends StreamingBaseProvider {
 
   protected isRetryable(status: number, parsed: any): boolean {
     return parsed?.error?.status === "RESOURCE_EXHAUSTED" || status >= 500;
+  }
+
+  async embed(request: EmbeddingRequest): Promise<EmbeddingResponse> {
+    const validation = this.validateConfig();
+    if (!validation.ok) {
+      throw new Error(validation.errors.join("; "));
+    }
+
+    const response = await this.fetchImpl(this.getEmbeddingEndpoint(request.model), {
+      method: "POST",
+      headers: this.getHeaders(),
+      body: JSON.stringify({
+        model: `models/${request.model}`,
+        content: {
+          parts: [{ text: request.input }],
+        },
+      }),
+      signal: request.signal,
+    });
+
+    if (!response.ok) {
+      throw await normalizeProviderError({
+        provider: this.id,
+        response,
+      });
+    }
+
+    let parsed: GeminiEmbeddingResponse;
+    try {
+      parsed = await response.json() as GeminiEmbeddingResponse;
+    } catch (error) {
+      throw new ProviderParseError({
+        provider: this.id,
+        message: error instanceof Error ? error.message : "Failed to parse embedding response",
+        retryable: false,
+        cause: error,
+      });
+    }
+
+    const embedding = parsed.embedding?.values;
+    if (!Array.isArray(embedding)) {
+      throw new ProviderParseError({
+        provider: this.id,
+        message: "Embedding response missing vector values",
+        retryable: false,
+      });
+    }
+
+    return { embedding };
   }
 }

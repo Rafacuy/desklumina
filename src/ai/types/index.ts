@@ -1,6 +1,9 @@
 export type {
   AIProvider,
+  EmbeddingRequest,
+  EmbeddingResponse,
   ProviderCapability,
+  ProviderConfig,
   ProviderId,
   ProviderRequest,
   ProviderStreamChunk,

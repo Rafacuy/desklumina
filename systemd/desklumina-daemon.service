@@ -5,9 +5,8 @@ Wants=graphical-session.target
 
 [Service]
 Type=simple
-User=%i
 Environment=DISPLAY=:0
-Environment=XDG_RUNTIME_DIR=/run/user/%i
+Environment=XDG_RUNTIME_DIR=/run/user/%U
 WorkingDirectory=%h/.config/desklumina
 ExecStart=/usr/bin/bun run src/main.ts --daemon
 Restart=always
