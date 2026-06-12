@@ -12,7 +12,7 @@ import { getThemePathWithOverride } from "./theme-cache";
 const STREAM_BATCH_MS = 50;
 const MAX_LISTVIEW_LINES = 12;
 const WRAP_WIDTH = 50;
-const MUTED_COLOR = "#888888";
+const MUTED_COLOR = "#A79F96";
 
 //Pre-computed static theme fragments 
 // to avoid re-allocation on every spawn
@@ -43,16 +43,16 @@ export async function rofiChatInput(
 
     menuItems.push(`📂 ${t("ui.select_chat")}`);
     menuItems.push(`⚙️ ${t("ui.settings.title")}`);
-    menuItems.push(`✕ ${t("common.close")}`);
+    menuItems.push(`✖ ${t("common.close")}`);
   }
 
   const themeOverride = isExpanded 
     ? "" 
     : STATIC_LISTVIEW_DISABLED;
     
-    const hints = isExpanded
-    ? `󰌑 ${t("common.send")} │ 󱊷 [ESC] ${t("common.exit")} │ 󰌓 [TAB] ${t("common.hide")}`
-    : `󰌑 ${t("common.send")} │ 󱊷 [ESC] ${t("common.exit")} │ 󰌓 [TAB] ${t("common.expand")}`;
+const hints = isExpanded
+    ? `${t("common.send")} · Esc ${t("common.exit")} · Tab ${t("common.hide")}`
+    : `${t("common.send")} · Esc ${t("common.exit")} · Tab ${t("common.expand")}`;
 
   const result = await rofiMenu(
     menuItems.join("\n"), 
@@ -81,7 +81,7 @@ export async function rofiChatInput(
       return { action: "settings" };
     }
 
-    if (input === `✕ ${t("common.close")}`) {
+    if (input === `✖ ${t("common.close")}`) {
       return { action: "exit" };
     }
 
@@ -260,6 +260,7 @@ export async function rofiExpandedResponse(fullMessage: string): Promise<void> {
     }
     element {
       padding: 4px 12px;
+      border-radius: 10px;
       text-color: @text-primary;
       font: "JetBrainsMono Nerd Font 10";
     }
@@ -334,7 +335,7 @@ export async function rofiResponsePanel(
     window {
       width: ${windowWidth}px;
       height: 550px;
-      border-radius: 16px;
+      border-radius: 20px;
       border: 1px;
       border-color: @border-subtle;
       background-color: @bg;
@@ -360,14 +361,14 @@ export async function rofiResponsePanel(
     inputbar {
       border: 1px 0px 0px 0px;
       border-color: @border-subtle;
-      border-radius: 0px 0px 12px 12px;
+      border-radius: 0px 0px 20px 20px;
       margin: 0px;
-      padding: 12px 20px;
+      padding: 14px 24px;
       children: [prompt, entry];
     }
     prompt {
       text-color: @accent-color;
-      font: "JetBrainsMono Nerd Font Bold 10";
+      font: "JetBrainsMono Nerd Font Medium 10";
       vertical-align: 0.5;
     }
     entry {
@@ -375,6 +376,8 @@ export async function rofiResponsePanel(
       placeholder-color: @text-muted;
       font: "JetBrainsMono Nerd Font 10";
       vertical-align: 0.5;
+      cursor-color: @accent-bloom;
+      cursor-width: 1px;
     }
     listview {
       enabled: false;
@@ -428,7 +431,7 @@ export async function rofiDisplay(message: string): Promise<void> {
       window {
         width: 500px;
         height: 400px;
-        border-radius: 12px;
+        border-radius: 18px;
         border: 1px;
         border-color: @border-subtle;
         background-color: @bg;
@@ -520,7 +523,7 @@ export async function rofiChatLoop(
                     spacing: 0px;
                     margin: 0px;
                     border: 1px;
-                    border-radius: 14px;
+                    border-radius: 20px;
                     border-color: @border-subtle;
                     background-color: @bg;
                   }
@@ -538,7 +541,7 @@ export async function rofiChatLoop(
                   }
                   textbox {
                     text-color: @accent-color;
-                    font: "JetBrainsMono Nerd Font 10";
+                    font: "JetBrainsMono Nerd Font Medium 10";
                     horizontal-align: 0.5;
                     vertical-align: 0.5;
                     wrap: false;
@@ -550,7 +553,7 @@ export async function rofiChatLoop(
                     anchor: southeast;
                     width: 360px;
                     height: 52px;
-                    border-radius: 14px;
+                    border-radius: 20px;
                     border: 1px;
                     border-color: @border-subtle;
                     background-color: @bg;
@@ -574,7 +577,7 @@ export async function rofiChatLoop(
                   }
                   textbox {
                     text-color: @accent-color;
-                    font: "JetBrainsMono Nerd Font 10";
+                    font: "JetBrainsMono Nerd Font Medium 10";
                     horizontal-align: 0.5;
                     vertical-align: 0.5;
                     wrap: false;

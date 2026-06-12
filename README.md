@@ -1,4 +1,7 @@
-<h1 align="center"><font color="#2b5797">DeskLumina</font></h1>
+<p align="center">
+    <img src="docs/img/logo.png" width="85%" alt="DeskLumina LOGO">
+</p>
+<h1 align="center">DeskLumina</h1>
 
 <p align="center">
   <strong>Intelligent Desktop Automation for Linux</strong><br>
@@ -6,17 +9,13 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.17.3-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.17.5-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/Framework-Bun-black?style=for-the-badge&logo=bun" alt="Framework">
   <img src="https://img.shields.io/badge/Status-STABLE-green?style=for-the-badge" alt="Build Status">
 </p>
 
 ---
-
-<p align="center">
-  <img src="docs/img/ui-screenshot.png" width="80%" alt="DeskLumina UI Preview">
-</p>
 
 ## 📌 Overview
 

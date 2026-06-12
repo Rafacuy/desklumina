@@ -15,7 +15,6 @@
  * DO NOT rename without updating rofi.ts!!
  */
 
-
 /*  ▄▄ • ▄▄▌        ▄▄▄▄·  ▄▄▄· ▄▄▌   */
 /* ▐█ ▀ ▪██•  ▪     ▐█ ▀█▪▐█ ▀█ ██•   */
 /* ▄█ ▀█▄██▪   ▄█▀▄ ▐█▀▀█▄▄█▀▀█ ██▪   */
@@ -23,36 +22,38 @@
 /* ·▀▀▀▀ .▀▀▀  ▀█▄▀▪·▀▀▀▀  ▀  ▀ .▀▀▀  */
 * {
     /* Base surfaces */
-    white:            #f7f6f4;
-    surface:          #f0efec;
-    surface-alt:      #eceae6;
+    bg:               #FCFAF7;
+    surface:          #F6F3EE;
+    surface-alt:      #F1ECE6;
 
     /* Borders */
-    border-subtle:    #dedad6;
-    border-focus:     #c4bfba;
+    border-subtle:    #E5DDD3;
+    border-focus:     #DDD4C8;
 
-    /* Typography scale */
-    text-primary:     #1a1917;
-    text-secondary:   #6b6762;
-    text-muted:       #a09b96;
+    /* Typography */
+    text-primary:     #2E2A26;
+    text-secondary:   #7F776F;
+    text-muted:       #A79F96;
+    text-disabled:    #C2B9AE;
 
     /* Accent */
-    accent:           #4f46e5;
-    accent-muted:     #6d64ef;
-    accent-light:     #eceafa;   
-    accent-surface:   #f5f4fd;   
+    accent:           #7060CA;
+    accent-bloom:     #C9B7FF;
+    accent-muted:     #9A8AD9;
+    accent-light:     #F0EBFF;
+    accent-surface:   #F8F5FF;
 
-    /* Semantic */
-    error:            #dc2626;
-    success:          #16a34a;
+    /* Semantic feedback */
+    error:            #E4A7A1;
+    warning:          #E9D49A;
+    success:          #A9D6B0;
 
-    /* Aliases (required by rofi.ts) */
-    bg:               @white;
+    /* Aliases (required by rofi.ts)*/
     fg:               @text-primary;
     accent-color:     @accent;
 
-    /* Base typeface*/
-    font: "JetBrainsMono Nerd Font 10";
+    /* Base typeface */
+    font:             "JetBrainsMono Nerd Font 10";
 }
 
 
@@ -64,15 +65,15 @@
 window {
     anchor:           northeast;
     location:         northeast;
-    x-offset:         -7px;    /* gap from screen edge */
-    y-offset:          28px;   /* standard 28–30px top panel */
+    x-offset:         -7px;
+    y-offset:          28px;
 
     width:            540px;
-
+    
     /* Border */
     border:           1px;
     border-color:     @border-subtle;
-    border-radius:    12px;
+    border-radius:    24px;
 
     padding:          0px;
     background-color: @bg;
@@ -99,29 +100,30 @@ mainbox {
 /* ▐█▌██▐█▌▐█▪·•▐█▄█▌ ▐█▌·    ██▄▪▐█▐█ ▪▐▌▐█•█▌ */
 /* ▀▀▀▀▀ █▪.▀    ▀▀▀  ▀▀▀     ·▀▀▀▀  ▀  ▀ .▀  ▀ */
 inputbar {
-    padding:          13px 18px;
+    padding:          16px 22px;
     spacing:          10px;
     children:         [prompt, entry];
 
-    /* Bottom rule only */
     border:           0px 0px 1px 0px;
     border-color:     @border-subtle;
 }
 
 prompt {
     text-color:       @accent-color;
-    font:             "JetBrainsMono Nerd Font Bold 10";
+    font:             "JetBrainsMono Nerd Font Medium 10";
     vertical-align:   0.5;
-    padding:          0px 4px 0px 0px;
+    padding:          0px 6px 0px 0px;
 }
 
 entry {
     text-color:        @fg;
-    placeholder:       "Type your message…";
+    placeholder:       "Write a message…";
     placeholder-color: @text-muted;
     background-color:  transparent;
     vertical-align:    0.5;
     font:              "JetBrainsMono Nerd Font 10.5";
+    cursor-color:      @accent-bloom;
+    cursor-width:      1px;
 }
 
 
@@ -131,17 +133,16 @@ entry {
 /* ██▌▐▀    ▐█▌    ██▐█▌     ▐█▌· */
 /* ▀▀▀ ·    ▀▀▀    ▀▀ █▪     ▀▀▀  */
 message {
-    background-color: @surface;
-    padding:          8px 18px;
+    background-color: transparent;
+    padding:          6px 22px 10px 22px;
 
-    /* Top rule */
-    border:           1px 0px 0px 0px;
+    border:           0px;
     border-color:     @border-subtle;
 }
 
 textbox {
     background-color: transparent;
-    text-color:       @text-muted;    /* hints are tertiary*/
+    text-color:       @text-secondary;
     font:             "JetBrainsMono Nerd Font 9";
     vertical-align:   0.5;
 }
@@ -166,11 +167,9 @@ listview {
 
     scrollbar:        true;
     border:           0;
-
+    
     /* Uniform padding */
     padding:          6px;
-
-    /* Tighter gap*/
     spacing:          2px;
 
     background-color: @bg;
@@ -178,7 +177,7 @@ listview {
 
 scrollbar {
     background-color: transparent;
-    handle-color:     @border-focus;   
+    handle-color:     @border-focus;
     handle-width:     3px;
     border-radius:    2px;
     width:            5px;
@@ -194,61 +193,66 @@ scrollbar {
 /* Base element */
 element {
     padding:          8px 12px;
-    border-radius:    8px;
+    border-radius:    12px;
     spacing:          10px;
     background-color: transparent;
     text-color:       @text-primary;
     orientation:      horizontal;
 }
 
-/* normal state (odd rows) */
 element normal.normal {
     background-color: transparent;
     text-color:       @text-primary;
+    border:           0px;
 }
 
 element normal.urgent {
     background-color: transparent;
     text-color:       @error;
+    border:           0px;
 }
 
 element normal.active {
     background-color: @accent-surface;
     text-color:       @accent;
+    border:           0px;
 }
 
-/* Alternate rows */
 element alternate.normal {
-    /* 2% darker than bg,visible on calibrated displays,invisible on bad ones */
     background-color: @surface;
     text-color:       @text-primary;
-    border-radius:    8px;
+    border-radius:    12px;
+    border:           0px;
 }
 
 element alternate.urgent {
     background-color: @surface;
     text-color:       @error;
+    border:           0px;
 }
 
 element alternate.active {
     background-color: @accent-surface;
     text-color:       @accent;
+    border:           0px;
 }
 
-/* Selected state */
 element selected.normal {
     background-color: @accent-light;
     text-color:       @accent;
+    border:           0px;
 }
 
 element selected.urgent {
     background-color: @accent-light;
     text-color:       @error;
+    border:           0px;
 }
 
 element selected.active {
     background-color: @accent-light;
     text-color:       @accent;
+    border:           0px;
 }
 
 /* ▪  ▄▄▄▄▄▄▄▄ .• ▌ ▄ ·.      ▄▄·        ▐ ▄ ▄▄▄▄▄▄▄▄ . ▐ ▄ ▄▄▄▄▄ */
@@ -261,7 +265,7 @@ element-text {
     background-color: inherit;
     text-color:       inherit;
     vertical-align:   0.5;
-    highlight:        bold;    /* matched search characters are bolded */
+    highlight:        bold;
 }
 
 element-icon {

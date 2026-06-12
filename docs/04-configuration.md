@@ -62,7 +62,7 @@ The chat `model` and the embedding `embedModel` are two distinct concerns. `mode
 | Provider | Embedding endpoint | Recommended `embedModel` |
 |----------|--------------------|--------------------------|
 | `openai` | `/v1/embeddings` | `text-embedding-3-small`, `text-embedding-3-large` |
-| `gemini` | `/v1beta/models/{model}:embedContent` | `gemini-embedding-001`, `text-embedding-004` |
+| `gemini` | `/v1beta/models/{model}:embedContent` | `gemini-embedding-2`, `gemini-embedding-001` |
 | `huggingface` | OpenAI-compatible `/v1/embeddings` | Any feature-extraction model (e.g. `BAAI/bge-large-en-v1.5`) |
 | `anthropic` | _not supported_ — Anthropic does not offer first-party embeddings | — |
 | `groq` | _not supported_ — Groq does not expose `/embeddings` | — |

@@ -19,6 +19,7 @@ Understand the internal design, module organization, and prompt architecture of 
   - [Lumina (Orchestrator)](#lumina-orchestrator)
   - [Contract-Driven Prompts](#contract-driven-prompts)
   - [Live Context Injection](#live-context-injection)
+  - [Long-term Memory](#long-term-memory-ltm)
 - [Data Flow](#data-flow)
 - [Security Model](#security-model)
 - [UI Layer](#ui-layer)
