@@ -67,6 +67,10 @@ export class SettingsCache {
       features: { ...DEFAULT_SETTINGS.features, ...(saved.features || {}) },
       tts: { ...DEFAULT_SETTINGS.tts, ...(saved.tts || {}) },
     };
+    settings.tts.naturalVoices = {
+      ...DEFAULT_SETTINGS.tts.naturalVoices,
+      ...(saved.tts?.naturalVoices || {}),
+    };
 
     const stats = statSync(SETTINGS_PATH);
     this.state = { settings, mtime: stats.mtimeMs };

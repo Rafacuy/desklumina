@@ -54,4 +54,35 @@ describe("SettingsManager", () => {
     expect(settings.ltm.semanticRetrieval.threshold).toBe(0.65);
     expect(settings.ltm.semanticRetrieval.topK).toBe(5);
   });
+
+  test("setNaturalVoicesEnabled updates enabled state", () => {
+    const before = settingsManager.get().tts.naturalVoices.enabled;
+    settingsManager.setNaturalVoicesEnabled(!before);
+    expect(settingsManager.get().tts.naturalVoices.enabled).toBe(!before);
+    settingsManager.setNaturalVoicesEnabled(before);
+  });
+
+  test("setNaturalVoicesVolume clamps to 0-100", () => {
+    settingsManager.setNaturalVoicesVolume(150);
+    expect(settingsManager.get().tts.naturalVoices.volume).toBe(100);
+    settingsManager.setNaturalVoicesVolume(-10);
+    expect(settingsManager.get().tts.naturalVoices.volume).toBe(0);
+    settingsManager.setNaturalVoicesVolume(50);
+    expect(settingsManager.get().tts.naturalVoices.volume).toBe(50);
+  });
+
+  test("setNaturalVoicesLatencyMaskingEnabled updates state", () => {
+    const before = settingsManager.get().tts.naturalVoices.latencyMasking?.enabled;
+    settingsManager.setNaturalVoicesLatencyMaskingEnabled(!before);
+    expect(settingsManager.get().tts.naturalVoices.latencyMasking?.enabled).toBe(!before);
+    settingsManager.setNaturalVoicesLatencyMaskingEnabled(before);
+  });
+
+  test("setNaturalVoicesDisfluencyEnabled updates state", () => {
+    const before = settingsManager.get().tts.naturalVoices.disfluency?.enabled;
+    settingsManager.setNaturalVoicesDisfluencyEnabled(!before);
+    expect(settingsManager.get().tts.naturalVoices.disfluency?.enabled).toBe(!before);
+    settingsManager.setNaturalVoicesDisfluencyEnabled(before);
+  });
+
 });

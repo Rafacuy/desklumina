@@ -13,6 +13,7 @@ Complete documentation for all available tools in DeskLumina's contract-driven a
 - [Clipboard Tool (clipboard)](#clipboard-tool-clipboard)
 - [Terminal Tool (terminal)](#terminal-tool-terminal)
 - [Notification Tool (notify)](#notification-tool-notify)
+- [Math Tool (math)](#math-tool-math)
 
 ---
 

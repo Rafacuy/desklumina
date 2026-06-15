@@ -3,10 +3,8 @@ import { existsSync, writeFileSync, unlinkSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 
-// --- Mocks (hoisted before imports) ---
-
-const mockChat = mock(async (_: string, cb: (chunk: string, toolOutput?: any) => void) => {
-  cb("response text");
+const mockChat = mock(async (_: string, cb?: (chunk: string, toolOutput?: any) => void) => {
+  cb?.("response text");
 });
 
 const mockCurrentChat = {
@@ -45,6 +43,7 @@ mock.module("../src/core", () => ({
 
 mock.module("../src/logger", () => ({
   logger: {
+    debug: mock(() => {}),
     info: mock(() => {}),
     warn: mock(() => {}),
     error: mock(() => {}),
@@ -106,8 +105,6 @@ mock.module("../src/utils/async-mutex", () => ({
 
 import { DeskLuminaDaemon } from "../src/daemon/daemon";
 
-// ---------------------------------------------------------------------------
-
 describe("DeskLuminaDaemon", () => {
   const runtimeDir = process.env.XDG_RUNTIME_DIR || join(homedir(), ".config/desklumina");
   const socketPath = join(runtimeDir, "desklumina.sock");
@@ -122,7 +119,6 @@ describe("DeskLuminaDaemon", () => {
 
     serveSpy = spyOn(Bun, "serve").mockImplementation((opts: any) => {
       capturedFetch = opts.fetch;
-      // Simulate socket creation for tests
       if (opts.unix) {
         writeFileSync(opts.unix, "");
       }
@@ -138,13 +134,11 @@ describe("DeskLuminaDaemon", () => {
     serveSpy.mockRestore();
     exitSpy.mockRestore();
     mockChat.mockReset();
-    mockChat.mockImplementation(async (_: string, cb: (chunk: string, toolOutput?: any) => void) => {
-      cb("response text");
+    mockChat.mockImplementation(async (_: string, cb?: (chunk: string, toolOutput?: any) => void) => {
+      cb?.("response text");
     });
     if (existsSync(socketPath)) unlinkSync(socketPath);
   });
-
-  // --- Initial state ---
 
   test("isActive returns false before start", () => {
     expect(daemon.isActive()).toBe(false);
@@ -154,8 +148,6 @@ describe("DeskLuminaDaemon", () => {
     expect(daemon.getSocketPath()).toBe(socketPath);
     expect(daemon.getSocketPath()).toContain("desklumina.sock");
   });
-
-  // --- start() ---
 
   test("start sets isActive to true", async () => {
     await daemon.start();
@@ -180,7 +172,6 @@ describe("DeskLuminaDaemon", () => {
     writeFileSync(socketPath, "stale");
     expect(existsSync(socketPath)).toBe(true);
     await daemon.start();
-    // unlinkSync removes it before Bun.serve is called
     expect(serveSpy).toHaveBeenCalled();
   });
 
@@ -190,8 +181,6 @@ describe("DeskLuminaDaemon", () => {
     await daemon.start();
     expect(serveSpy).not.toHaveBeenCalled();
   });
-
-  // --- stop() ---
 
   test("stop does nothing if daemon is not running", async () => {
     await daemon.stop();
@@ -216,8 +205,6 @@ describe("DeskLuminaDaemon", () => {
     await daemon.stop();
     expect(existsSync(socketPath)).toBe(false);
   });
-
-  // --- HTTP fetch handler ---
 
   describe("fetch handler", () => {
     let token: string;

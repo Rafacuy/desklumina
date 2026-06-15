@@ -118,7 +118,7 @@ DeskLumina is customizable through three primary files:
 
 - **`.env`**: API keys and core model configuration.
 - **`settings.json`**: UI preferences, language, TTS settings, and security toggles.
-- **`apps.json`**: Custom application aliases and system commands.
+- **`src/config/apps.json`**: Custom application aliases and system commands.
 
 > [!TIP]
 > Access the **Settings** menu directly in the Rofi UI by pressing `Tab`.

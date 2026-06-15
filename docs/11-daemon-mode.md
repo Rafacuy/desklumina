@@ -100,7 +100,7 @@ bun run send "what's the current volume?"
 
 ## Systemd User Service
 
-Automate DeskLumina's startup with the provided service file: `systemd/desklumina-daemon@.service`.
+Automate DeskLumina's startup with the provided service file: `systemd/desklumina-daemon.service`.
 
 1.  **Verify Bun path**: The service file uses `/usr/bin/bun`. If your Bun lives elsewhere, update `ExecStart` accordingly. 
     ```bash

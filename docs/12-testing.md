@@ -25,7 +25,7 @@ DeskLumina uses **[Bun's built-in test runner](https://bun.sh/docs/test/runner)*
 Our test suite is divided into several categories:
 
 ### 1. Unit Tests
-Located in `tests/`, these test individual functions and classes in isolation, such as `path.test.ts`, `constants.test.ts`, and `personas.test.ts`.
+Located in `tests/`, these test individual functions and classes in isolation, such as `path.test.ts`, `env.test.ts`, and `personas.test.ts`.
 
 ### 2. Integration Tests
 Tests that verify the interaction between multiple modules, such as the `ChatManager` or the `Security` layer.

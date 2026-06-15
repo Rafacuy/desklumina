@@ -250,7 +250,7 @@ Returns a translated string with parameter interpolation (e.g., `{varName}`).
 |--------|------|-------------|
 | `GET` | `/health` or `/v1/healthz` | Health check. Returns `OK`, PID, and uptime. |
 | `GET` | `/v1/diag` | Cache diagnostics (JSON). |
-| `GET` | `/v1/theme/default` | Resolved Rofi theme path (requires Bearer token). |
+| `GET` | `/v1/theme/default` | Resolved Rofi theme path (JSON). |
 
 ### Command Endpoints (auth required)
 

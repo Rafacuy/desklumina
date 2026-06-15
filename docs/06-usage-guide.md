@@ -54,6 +54,7 @@ The settings menu allows you to customize DeskLumina's behavior without editing 
 - **Tool Display**: Show or hide real-time tool execution logs.
 - **Security Confirmation**: Toggle interactive checks for dangerous commands.
 - **TTS Voice & Speed**: Choose a voice and adjust playback speed.
+- **Natural Voices**: Toggle natural voice output with disfluency planning and latency masking.
 
 ---
 

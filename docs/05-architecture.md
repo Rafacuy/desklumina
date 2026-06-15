@@ -68,11 +68,15 @@ The project is organized into several key directories under `src/`:
 
 - **`agent/`**: The core of the agentic workflow. Implements the bounded ReAct reasoning loop, terminal signal parsing, turn-based context accumulation, and history trimming.
 - **`ai/`**: Handles AI interactions through a multi-provider architecture. Includes provider adapters (Groq, OpenAI, Anthropic, Gemini, OpenRouter, Hugging Face), a shared streaming base, SSE parsing, model resolution with fallback chains, circuit-breaker health tracking, and the contract-driven prompt builder.
+- **`bin/`**: Binary utilities and helper scripts.
 - **`config/`**: Environment variable loading and application aliases.
 - **`constants/`**: Shared constants such as command timeouts, model defaults, and tool retries.
 - **`core/`**: High-level orchestration, containing the Lumina coordinator, Chat/Settings managers (with provider preference storage), and the tool planner.
+- **`daemon/`**: Background service implementation. Manages the Unix domain socket, token-based authentication, cache warming, and file watching for instant command response.
+- **`launcher/`**: Entry point routing. Dispatches CLI flags (`--chat`, `--exec`, `--send`, `--daemon-status`, `--version`, `provider`) to the appropriate mode (Rofi, terminal, daemon client, or exec).
 - **`ltm/`**: Long-term memory subsystem (SQLite persistence, async extraction, embedding generation, semantic episodic retrieval, prompt formatting).
 - **`tools/`**: Desktop automation implementations (apps, files, music, etc.) and their formal contracts.
+- **`tts/`**: Text-to-speech pipeline. Includes the adaptive chunker, natural voice disfluency planner, and latency masking.
 - **`ui/`**: User interface components including Rofi logic, themes, and tool result rendering.
 - **`security/`**: Confirmation dialogs and dangerous command analysis.
 - **`logger/`**: File and console logging infrastructure.
@@ -153,7 +157,7 @@ DeskLumina injects real-time system state into every request:
   3. `models.json` `primary.embedModel`
   4. Legacy: reuse `ltm.model` if its provider supports embeddings
   5. Walk main provider chain (`DESKLUMINA_MODEL` + `DESKLUMINA_FALLBACKS`) and pick first embedding-capable provider
-  6. `null` — pipeline degrades gracefully
+   6. `null` (pipeline degrades gracefully)
 - **Provider Capability**: Each provider declares `embeddingsSupported` in its capability map. `openai`, `gemini`, and `huggingface` are `true`; `anthropic`, `groq`, and `openrouter` are `false`. Providers that don't support embeddings throw a clear error if `embed()` is called, rather than silently returning garbage.
 - **Extraction Path**: After assistant response delivery, extraction runs asynchronously using `ltm.model` (chat) for fact extraction and the resolved embedding provider (above) for vectorization.
 - **Failure Handling**: If embedding generation fails (network, capability, or missing key), episodic text is still stored with `embedding = NULL`, and retrieval falls back to lexical FTS search.

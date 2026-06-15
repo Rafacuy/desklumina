@@ -28,6 +28,43 @@ export interface LtmSettings {
   semanticRetrieval: SemanticRetrievalSettings;
 }
 
+export interface DisfluencySettings {
+  enabled: boolean;
+  densityCurve?: { [chunkCount: string]: [min: number, max: number] };
+  categoryBias?: {
+    first?: Partial<FillerWeights>;
+    middle?: Partial<FillerWeights>;
+    last?: Partial<FillerWeights>;
+  };
+  /**
+   * Minimum number of chunk-gaps between consecutive fillers.
+   * Prevents back-to-back filler injection. Default: 2.
+   */
+  minFillerSpacing?: number;
+}
+
+export interface LatencyMaskingSettings {
+  enabled: boolean;
+  deadlineMs: number;
+}
+
+export interface FillerWeights {
+  breath: number;
+  think: number;
+  pause: number;
+  throat: number;
+}
+
+export interface NaturalVoiceSettings {
+  enabled: boolean;
+  thresholdMs: number;
+  maxOverhangMs: number;
+  volume: number;
+  assetsDir: string;
+  disfluency?: DisfluencySettings;
+  latencyMasking?: LatencyMaskingSettings;
+}
+
 export interface Settings {
   language: "id" | "en" | "ja";
   persona: string;
@@ -35,6 +72,7 @@ export interface Settings {
   tts: {
     voiceId: string;
     speed: number;
+    naturalVoices: NaturalVoiceSettings;
   };
   ltm: LtmSettings;
 }
@@ -52,6 +90,20 @@ export const DEFAULT_SETTINGS: Settings = {
   tts: {
     voiceId: "en-US-AvaNeural",
     speed: 1.0,
+    naturalVoices: {
+      enabled: true,
+      thresholdMs: 350,
+      maxOverhangMs: 500,
+      volume: 100,
+      assetsDir: "",
+      disfluency: {
+        enabled: false,
+      },
+      latencyMasking: {
+        enabled: true,
+        deadlineMs: 400,
+      },
+    },
   },
   ltm: {
     provider: "",

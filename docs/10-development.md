@@ -95,11 +95,9 @@ Add your tool to the central registry in `src/tools/registry/registry.ts`:
 
 ```typescript
 import { myTool } from "../frameworks/my-tool";
+import { registerTool } from "./registry";
 
-export const tools: ToolRegistry = {
-  // ...
-  my_tool: myTool,
-};
+registerTool("my_tool", myTool);
 ```
 
 ---

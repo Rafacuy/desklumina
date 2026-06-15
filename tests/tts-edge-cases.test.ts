@@ -1,4 +1,20 @@
-import { describe, test, expect, beforeEach } from "bun:test";
+import { describe, test, expect, beforeEach, spyOn, afterEach, mock } from "bun:test";
+
+mock.module("edge-tts-universal", () => {
+  return {
+    Communicate: class {
+      constructor(public text: string, public options: any) {}
+      async *stream() {
+        yield { type: "audio", data: Buffer.from("mock audio") };
+      }
+    }
+  };
+});
+
+import { textToSpeech, resetCommandAvailabilityCache } from "../src/ai/tts";
+import { resetFillerAvailabilityCache } from "../src/tts/natural-voices";
+import { settingsManager } from "../src/core/services/settings-manager";
+import { logger } from "../src/logger";
 
 describe("TTS Edge Cases - Text Variations", () => {
   test("handles empty string", () => {
@@ -305,5 +321,97 @@ describe("TTS Edge Cases - Boundary Conditions", () => {
   test("handles zero-width characters", () => {
     const text = "Text\u200Bwith\u200Bzero\u200Bwidth\u200Bspaces";
     expect(text.length).toBeGreaterThan(20);
+  });
+});
+
+describe("TTS Playback Concurrency", () => {
+  let spawnSpy: any;
+  let settingsSpy: any;
+  let activePlayProcesses: Array<{ args: string[]; killed: boolean; pid: number }> = [];
+  let nextPid = 1000;
+
+  beforeEach(() => {
+    resetCommandAvailabilityCache();
+    resetFillerAvailabilityCache();
+  });
+
+  afterEach(() => {
+    resetCommandAvailabilityCache();
+    resetFillerAvailabilityCache();
+    spawnSpy?.mockRestore();
+    settingsSpy?.mockRestore();
+    activePlayProcesses = [];
+  });
+
+  test("rapid bursts of multiple requests within milliseconds do not create race conditions or overlaps", async () => {
+    settingsSpy = spyOn(settingsManager, "get").mockReturnValue({
+      language: "en",
+      tts: {
+        voiceId: "en-US-AvaNeural",
+        speed: 1.0,
+        naturalVoices: {
+          enabled: false,
+        },
+      },
+    } as any);
+
+    const infoSpy = spyOn(logger, "info").mockImplementation(() => {});
+    const errorSpy = spyOn(logger, "error").mockImplementation(() => {});
+    const warnSpy = spyOn(logger, "warn").mockImplementation(() => {});
+
+    activePlayProcesses = [];
+
+    spawnSpy = spyOn(Bun, "spawn").mockImplementation((args: any) => {
+      const cmdArgs = args as string[];
+      if (cmdArgs[0] === "bash") {
+        return {
+          exited: Promise.resolve(0),
+          pid: ++nextPid,
+        } as any;
+      }
+
+      const pid = ++nextPid;
+      let resolveExit: any;
+      const exited = new Promise<number>((resolve) => {
+        resolveExit = resolve;
+      });
+
+      const procRecord = { args: cmdArgs, killed: false, pid };
+      activePlayProcesses.push(procRecord);
+
+      let timeoutId = setTimeout(() => {
+        if (!procRecord.killed) {
+          resolveExit(0);
+        }
+      }, 300);
+
+      return {
+        exited,
+        pid,
+        kill: () => {
+          procRecord.killed = true;
+          clearTimeout(timeoutId);
+          resolveExit(143);
+        },
+      } as any;
+    });
+
+    const promises = [
+      textToSpeech("Message 1"),
+      textToSpeech("Message 2"),
+      textToSpeech("Message 3"),
+      textToSpeech("Message 4"),
+      textToSpeech("Message 5"),
+    ];
+
+    await Promise.all(promises);
+
+    const playbackJobs = activePlayProcesses.filter(p => p.args.includes("mpv") || p.args.includes("play"));
+    const activeRunningPlaybacks = playbackJobs.filter(p => !p.killed);
+    expect(activeRunningPlaybacks.length).toBeLessThanOrEqual(1);
+
+    infoSpy.mockRestore();
+    errorSpy.mockRestore();
+    warnSpy.mockRestore();
   });
 });

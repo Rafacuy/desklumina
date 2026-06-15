@@ -64,9 +64,9 @@ The chat `model` and the embedding `embedModel` are two distinct concerns. `mode
 | `openai` | `/v1/embeddings` | `text-embedding-3-small`, `text-embedding-3-large` |
 | `gemini` | `/v1beta/models/{model}:embedContent` | `gemini-embedding-2`, `gemini-embedding-001` |
 | `huggingface` | OpenAI-compatible `/v1/embeddings` | Any feature-extraction model (e.g. `BAAI/bge-large-en-v1.5`) |
-| `anthropic` | _not supported_ — Anthropic does not offer first-party embeddings | — |
-| `groq` | _not supported_ — Groq does not expose `/embeddings` | — |
-| `openrouter` | _not supported_ via the chat-completions path used here | — |
+| `anthropic` | _not supported_ (Anthropic does not offer first-party embeddings) | N/A |
+| `groq` | _not supported_ (Groq does not expose `/embeddings`) | N/A |
+| `openrouter` | _not supported_ via the chat-completions path used here | N/A |
 
 Configure the embedding model in one of three places (highest priority wins):
 
@@ -151,7 +151,21 @@ DeskLumina stores user preferences in `~/.config/desklumina/settings.json`.
   },
   "tts": {
     "voiceId": "en-US-AvaNeural",
-    "speed": 1
+    "speed": 1,
+    "naturalVoices": {
+      "enabled": true,
+      "thresholdMs": 350,
+      "maxOverhangMs": 500,
+      "volume": 85,
+      "assetsDir": "",
+      "disfluency": {
+        "enabled": false
+      },
+      "latencyMasking": {
+        "enabled": true,
+        "deadlineMs": 400
+      }
+    }
   },
   "ltm": {
     "provider": "",
@@ -175,10 +189,17 @@ DeskLumina stores user preferences in `~/.config/desklumina/settings.json`.
 - **`persona`**: Assistant conversational personality. One of `"default"`, `"tsundere"`, `"catgirl"`, `"deredere"`, `"kuudere"`, or `"dandere"`. **Default**: `"default"`. Personas only affect conversational tone, not assistant capabilities.
 - **`features.tts`**: Enable or disable text-to-speech output.
 - **`features.toolDisplay`**: Show or hide tool execution details in the UI.
+- **`features.chatHistory`**: Enable or disable chat history persistence and preview.
 - **`features.dangerousCommandConfirmation`**: Require confirmation for critical commands.
 - **`features.ltm`**: Master switch for long-term memory extraction/retrieval.
 - **`tts.voiceId`**: The Edge TTS voice ID to use.
 - **`tts.speed`**: Voice playback speed from 0.5 to 2.0.
+- **`tts.naturalVoices.enabled`**: Enable natural voice output with disfluency planning and latency masking.
+- **`tts.naturalVoices.volume`**: Natural voice playback volume (0 to 100).
+- **`tts.naturalVoices.assetsDir`**: Directory containing natural voice audio assets. Empty uses the built-in default.
+- **`tts.naturalVoices.disfluency.enabled`**: Insert natural filler sounds (breath, throat clears, etc.) into TTS output.
+- **`tts.naturalVoices.latencyMasking.enabled`**: Mask TTS generation latency by playing filler audio before the real response.
+- **`tts.naturalVoices.latencyMasking.deadlineMs`**: Maximum filler duration in milliseconds before the real audio must start.
 - **`ltm.provider` / `ltm.model`**: Optional dedicated provider/model for the **chat-side** of LTM (extraction). Empty values fall back to the main provider chain.
 - **`ltm.embedModel`**: Optional dedicated **embedding** model. Accepts a bare model id (combined with `ltm.provider`) or a full `provider:model` reference (overrides `ltm.provider` for embeddings only). When empty, falls back to `DESKLUMINA_EMBED_MODEL`, then `models.json` `primary.embedModel`, then the legacy "use `ltm.model` if its provider supports embeddings" path. See [Embedding Model](#embedding-model).
 - **`ltm.episodicCap`**: Max episodic entries retained before score-based eviction.

@@ -8,7 +8,6 @@ export async function rofiSettings(): Promise<boolean> {
   const settings = settingsManager.get();
   const currentLang = getLang();
 
-  // language display mapping
   const langNames: Record<string, string> = {
     id: "Bahasa Indonesia",
     en: "English",
@@ -32,6 +31,10 @@ export async function rofiSettings(): Promise<boolean> {
     ...(settings.features.tts ? [
       `  󰔊 ${t("ui.settings.change_tts_voice")} ›`,
       `  󰁾 ${t("ui.settings.tts_speed_settings")} ›`,
+      `  󰔡 ${t("ui.settings.natural_voices")} │ ${settings.tts.naturalVoices.enabled ? "󰄬 " + t("common.on") : "󱃓 " + t("common.off")}`,
+      ...(settings.tts.naturalVoices.enabled ? [
+        `    󰒓 ${t("ui.settings.natural_voices_settings")} ›`,
+      ] : []),
     ] : []),
     getToggleLabel("toolDisplay", "󰘚", t("ui.settings.tool_display")),
     section(t("ui.settings.section.history")),
@@ -94,7 +97,6 @@ export async function rofiSettings(): Promise<boolean> {
     return rofiSettings();
   }
 
-  // Persona submenu
   if (is("󰙨", t("ui.settings.persona"))) {
     const personas = ["default", "tsundere", "catgirl", "deredere", "kuudere", "dandere"];
     const personaOptions = personas.map((p) => {
@@ -119,7 +121,6 @@ export async function rofiSettings(): Promise<boolean> {
     return rofiSettings();
   }
 
-  // Language submenu
   if (is("󰖟", t("ui.settings.language"))) {
     const langs = [
       `${currentLang === "id" ? "󰄬 " : "   "}Bahasa Indonesia (id)`,
@@ -143,7 +144,6 @@ export async function rofiSettings(): Promise<boolean> {
     return rofiSettings();
   }
 
-  // Voice submenu 
   if (is("󰔊", t("ui.settings.change_tts_voice"))) {
     const currentVoice = settings.tts?.voiceId || "";
     const markActive = (v: string) => {
@@ -191,7 +191,64 @@ export async function rofiSettings(): Promise<boolean> {
     return rofiSettings();
   }
 
-  // Speed submenu 
+  if (is("󰔡", t("ui.settings.natural_voices"))) {
+    settingsManager.setNaturalVoicesEnabled(!settings.tts.naturalVoices.enabled);
+    return rofiSettings();
+  }
+
+  if (is("󰒓", t("ui.settings.natural_voices_settings"))) {
+    const nv = settings.tts.naturalVoices;
+    const nvItems = [
+      `󰔊 ${t("ui.settings.latency_masking")} │ ${nv.latencyMasking?.enabled ? "󰄬 " + t("common.on") : "󱃓 " + t("common.off")}`,
+      `󰙨 ${t("ui.settings.disfluency")} │ ${nv.disfluency?.enabled ? "󰄬 " + t("common.on") : "󱃓 " + t("common.off")}`,
+      `󰁾 ${t("ui.settings.volume")} │ ${nv.volume}% ›`,
+      `󰜺 ${t("common.back")}`,
+    ];
+
+    const nvRes = await rofiMenu(
+      nvItems.join("\n"),
+      t("ui.settings.natural_voices_settings"),
+      "",
+      t("ui.settings.type_to_search"),
+      `󰌑 ${t("common.select")} │ 󱊷 ${t("common.back")}`
+    );
+    const nvSelection = nvRes.output;
+    if (nvRes.code === 0 && nvSelection && !nvSelection.startsWith("󰜺")) {
+      if (nvSelection.trimStart().startsWith(`󰔊 ${t("ui.settings.latency_masking")}`)) {
+        settingsManager.setNaturalVoicesLatencyMaskingEnabled(!nv.latencyMasking?.enabled);
+      } else if (nvSelection.trimStart().startsWith(`󰙨 ${t("ui.settings.disfluency")}`)) {
+        settingsManager.setNaturalVoicesDisfluencyEnabled(!nv.disfluency?.enabled);
+      } else if (nvSelection.trimStart().startsWith(`󰁾 ${t("ui.settings.volume")}`)) {
+        const currentVolume = nv.volume;
+        const VOLUME_MAP: [string, number][] = [
+          ["25%", 25],
+          ["50%", 50],
+          ["75%", 75],
+          [`100% (${t("common.default")})`, 100],
+        ];
+        const volItems = VOLUME_MAP.map(([label, value]) =>
+          `${Math.abs(value - currentVolume) < 1 ? "󰄬 " : "   "}${label}`
+        );
+        volItems.push(`󰜺 ${t("common.back")}`);
+
+        const volRes = await rofiMenu(
+          volItems.join("\n"),
+          t("ui.settings.volume"),
+          "",
+          t("ui.settings.type_to_search"),
+          `󰌑 ${t("common.select")} │ 󱊷 ${t("common.back")}`
+        );
+        const vol = volRes.output;
+        if (volRes.code === 0 && vol && !vol.startsWith("󰜺")) {
+          const cleanLabel = vol.trimStart().replace(/^󰄬\s+/, "");
+          const entry = VOLUME_MAP.find(([label]) => label === cleanLabel);
+          if (entry) settingsManager.setNaturalVoicesVolume(entry[1]);
+        }
+      }
+    }
+    return rofiSettings();
+  }
+
   if (is("󰁾", t("ui.settings.tts_speed_settings"))) {
     const currentSpeed = settings.tts?.speed || 1.0;
     const SPEED_MAP: [string, number][] = [

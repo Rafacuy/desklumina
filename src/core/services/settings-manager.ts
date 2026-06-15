@@ -42,6 +42,22 @@ export class SettingsManager {
           this.settings = { ...DEFAULT_SETTINGS, ...saved };
           this.settings.features = { ...DEFAULT_SETTINGS.features, ...(saved.features || {}) };
           this.settings.tts = { ...DEFAULT_SETTINGS.tts, ...(saved.tts || {}) };
+          this.settings.tts.naturalVoices = {
+            ...DEFAULT_SETTINGS.tts.naturalVoices,
+            ...(saved.tts?.naturalVoices || {}),
+          };
+          if (saved.tts?.naturalVoices?.disfluency) {
+            this.settings.tts.naturalVoices.disfluency = {
+              ...DEFAULT_SETTINGS.tts.naturalVoices.disfluency,
+              ...(saved.tts.naturalVoices.disfluency || {}),
+            };
+          }
+          if (saved.tts?.naturalVoices?.latencyMasking) {
+            this.settings.tts.naturalVoices.latencyMasking = {
+              ...DEFAULT_SETTINGS.tts.naturalVoices.latencyMasking,
+              ...(saved.tts.naturalVoices.latencyMasking || {}),
+            };
+          }
           this.settings.ltm = { ...DEFAULT_SETTINGS.ltm, ...(saved.ltm || {}) };
           this.settings.ltm.semanticRetrieval = {
             ...DEFAULT_SETTINGS.ltm.semanticRetrieval,
@@ -51,6 +67,14 @@ export class SettingsManager {
           if (this.settings.language) {
             setLang(this.settings.language);
           }
+
+          if (saved.tts?.naturalVoices?.thresholdMs !== undefined) {
+            logger.warn("settings", "naturalVoices.thresholdMs is deprecated; use naturalVoices.latencyMasking.deadlineMs");
+          }
+          if (saved.tts?.naturalVoices?.maxOverhangMs !== undefined) {
+            logger.warn("settings", "naturalVoices.maxOverhangMs is deprecated and will be removed in a future release");
+          }
+
           return;
         }
       }
@@ -158,6 +182,33 @@ export class SettingsManager {
 
   setPersona(persona: string) {
     this.settings.persona = persona;
+    this.scheduleFlush();
+  }
+
+  setNaturalVoicesEnabled(enabled: boolean) {
+    this.settings.tts.naturalVoices.enabled = enabled;
+    this.scheduleFlush();
+  }
+
+  setNaturalVoicesVolume(volume: number) {
+    this.settings.tts.naturalVoices.volume = Math.max(0, Math.min(100, volume));
+    this.scheduleFlush();
+  }
+
+  setNaturalVoicesLatencyMaskingEnabled(enabled: boolean) {
+    this.settings.tts.naturalVoices.latencyMasking = {
+      ...this.settings.tts.naturalVoices.latencyMasking,
+      enabled,
+      deadlineMs: this.settings.tts.naturalVoices.latencyMasking?.deadlineMs ?? DEFAULT_SETTINGS.tts.naturalVoices.latencyMasking!.deadlineMs,
+    };
+    this.scheduleFlush();
+  }
+
+  setNaturalVoicesDisfluencyEnabled(enabled: boolean) {
+    this.settings.tts.naturalVoices.disfluency = {
+      ...this.settings.tts.naturalVoices.disfluency,
+      enabled,
+    };
     this.scheduleFlush();
   }
 }
