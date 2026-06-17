@@ -26,7 +26,7 @@ export const OPENROUTER_API_ENDPOINT = "https://openrouter.ai/api/v1/chat/comple
 /**
  * Hugging Face Inference API endpoint (OpenAI-compatible chat completions)
  */
-export const HF_API_ENDPOINT = "https://api-inference.huggingface.co/v1/chat/completions" as const;
+export const HF_API_ENDPOINT = "https://router.huggingface.co/v1/chat/completions" as const;
 
 /**
  * Model temperature for AI responses
