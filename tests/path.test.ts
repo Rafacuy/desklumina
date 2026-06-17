@@ -13,6 +13,20 @@ describe("Path Utilities", () => {
     expect(result).toBe("/absolute/path");
   });
 
+  test("expandTilde throws when HOME is unset", () => {
+    const originalHome = process.env.HOME;
+    const originalUserProfile = process.env.USERPROFILE;
+    delete process.env.HOME;
+    delete process.env.USERPROFILE;
+
+    try {
+      expect(() => expandTilde("~/Documents")).toThrow("HOME environment variable is not set");
+    } finally {
+      if (originalHome !== undefined) process.env.HOME = originalHome;
+      if (originalUserProfile !== undefined) process.env.USERPROFILE = originalUserProfile;
+    }
+  });
+
   test("normalizePath converts backslashes to forward slashes", () => {
     const result = normalizePath("path\\to\\file");
     expect(result).toBe("path/to/file");

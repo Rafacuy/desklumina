@@ -59,24 +59,32 @@ Filesystem operations and indexed search.
   - Absolute and relative paths supported.
   - Tilde (`~`) expansion supported.
   - Normalization: Standard path normalization applied.
+- **Read Limit**: The `read` operation loads at most 512 KiB into memory. Larger files are rejected with exit code `413`.
+- **Path Safety**: Operations targeting a system-critical path (`/`, `/bin`, `/boot`, `/dev`, `/etc`, `/lib`, `/proc`, `/root`, `/run`, `/sbin`, `/sys`, `/usr`, `/var`) trigger a Rofi confirmation before execution. The `delete` operation also refuses `/` and the user's `$HOME`.
 
 ### Operations:
 
 | Operation | Arguments | Description |
 |-----------|-----------|-------------|
-| `read` | `<path>` | Read file content. |
-| `write` | `<path> "<content>"` | Write text to file. |
+| `read` | `<path>` | Read file content (max 512 KiB). |
+| `write` | `<path> [content]` | Write text to file. Creates an empty file when no content is provided. |
 | `list` | `[path]` | List directory contents. |
 | `create_dir`| `<path>` | Create directory (recursive). |
-| `move` | `<src> <dest>` | Move/rename file or directory. |
+| `move` | `<src> <dest>` | Move file or directory. |
 | `copy` | `<src> <dest>` | Copy file or directory. |
-| `delete` | `<path>` | Delete file or directory. |
-| `preview` | `<path>` | Smart preview (text snippet or folder list). |
-| `search_name`| `"<query>" [filters]` | Indexed search by filename. |
-| `search_path`| `"<query>" [filters]` | Indexed search by full path. |
-| `search_pattern`| `"<regex>" [filters]` | Indexed search using regex. |
-| `history` | `[limit]` | Show recent search history. |
-| `repeat_last`| none | Repeat the last successful search. |
+| `delete` | `<path>` | Recursively delete file or directory. |
+| `rename` | `<src> <new_name>` | Rename a file inside its current directory. The new name must not contain path separators. |
+| `touch` | `<path>` | Create an empty file or update the mtime of an existing one. |
+| `stat` | `<path>` | Return structured metadata (type, size, permissions, owner, timestamps) as JSON. |
+| `chmod` | `<path> <mode>` | Change permissions. `mode` is either an octal value (`600`) or a symbolic expression (`u+x`). |
+| `chown` | `<path> <owner>[:<group>]` | Change ownership. `owner` may be a user name or `user:group` pair. |
+| `preview` | `<path>` | Smart preview: returns the first 8 KiB of a text file, the first 20 entries of a directory, or a binary/missing indicator. |
+| `search_name`| `"<query>" [filters]` | Indexed search by filename substring. |
+| `search_path`| `"<query>" [filters]` | Indexed search by full path substring. |
+| `search_pattern`| `"<regex>" [filters]` | Indexed search using a POSIX extended regex. |
+| `find` | `<base> <query>` | Legacy alias for `search_name` with an explicit base path. |
+| `history` | `[limit]` | Show recent search history (default 10 entries). |
+| `repeat_last`| none | Replay the most recent search from history. |
 
 ### Search Filters:
 
@@ -89,12 +97,24 @@ Filters use `key=value` syntax after the query.
 | `ext` | `md,txt` | Comma-separated extension list. |
 | `hidden` | `true\|false` | Include or exclude hidden files. |
 | `limit` | `1-200` | Max results to return. |
-| `select` | `true\|false` | Trigger interactive `fzf` selection (CLI mode). |
-| `preview` | `true\|false` | Automatically include a preview of the best match. |
+| `select` | `true\|false` | Trigger interactive `fzf` selection. Requires a TTY. |
+| `preview` | `true\|false` | Automatically include a preview of the top match (or the user-selected file when combined with `select=true`). |
+
+### Search Backend
+
+`search_name`, `search_path`, and `search_pattern` prefer the system `locate` command (case-insensitive, indexed). If `locate` is not installed, the tool transparently falls back to `find`:
+
+- `search_name` → `find <base> -maxdepth 5 -iname "*<query>*"`
+- `search_path` → `find <base> -maxdepth 5 -iname "*<query>*"`
+- `search_pattern` → `find <base> -maxdepth 5 -regextype posix-extended -regex <query>`
+
+Search history (up to 25 entries) is persisted to `$XDG_STATE_HOME/desklumina/file-search-history.json` (default `~/.local/state/desklumina/file-search-history.json`) and replayed by `repeat_last`.
 
 ### Examples:
 - `{"tool": "file", "args": "read ~/todo.md"}`
 - `{"tool": "file", "args": "write \"/tmp/test.txt\" \"Line 1\\nLine 2\""}`
+- `{"tool": "file", "args": "rename ~/notes/old.txt new.txt"}`
+- `{"tool": "file", "args": "stat ~/project"}`
 - `{"tool": "file", "args": "search_name \"config\" base=~/.config limit=5 select=true"}`
 
 ---

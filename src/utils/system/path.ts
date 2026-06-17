@@ -1,11 +1,11 @@
 import { join } from "path";
 
-/**
- * Expand tilde (~) to home directory
- */
 export function expandTilde(path: string): string {
   if (path.startsWith("~")) {
-    const home = process.env.HOME || process.env.USERPROFILE || "~";
+    const home = process.env.HOME || process.env.USERPROFILE;
+    if (!home) {
+      throw new Error("HOME environment variable is not set");
+    }
     return join(home, path.slice(1));
   }
   return path;

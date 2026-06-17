@@ -89,12 +89,12 @@ flowchart LR
 
 The **File** tool implements its own internal restrictions to prevent accidental modification of system-critical files.
 
-**Logic**: `src/tools/frameworks/files.ts` (using `isDangerousPath`)
+**Logic**: `src/tools/frameworks/file-shared.ts` (`DANGEROUS_PATHS`, used by `isDangerousPath`)
 
 ### Protected Directories:
-- `/bin`, `/boot`, `/dev`, `/etc`, `/lib`, `/root`, `/sys`, `/usr`, `/var`
+- `/`, `/bin`, `/boot`, `/dev`, `/etc`, `/lib`, `/proc`, `/root`, `/run`, `/sbin`, `/sys`, `/usr`, `/var`
 
-Any operation targeting these paths will trigger a **Critical** severity confirmation, even if the command itself is not inherently flagged by the terminal analyzer.
+Any operation targeting these paths (or anything underneath them) will trigger a Rofi confirmation before execution, even if the command itself is not inherently flagged by the terminal analyzer. The `delete` operation additionally refuses to remove `/` or the user's `$HOME` outright, returning an "Invalid file request" error.
 
 ---
 

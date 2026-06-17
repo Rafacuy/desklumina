@@ -12,8 +12,7 @@ export class OpenRouterProvider extends OpenAICompatibleAdapter {
       apiKey,
       fetchImpl,
       extraHeaders: {
-        "HTTP-Referer": "https://desklumina.local",
-        "X-Title": "DeskLumina",
+        "X-OpenRouter-Title": "DeskLumina",
       },
     });
   }

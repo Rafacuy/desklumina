@@ -29,6 +29,8 @@ Get DeskLumina up and running on your system. This guide covers all requirements
 - **[dunst](https://github.com/dunst-project/dunst)**: Required for the `notify` tool (`dunstify`).
 - **[clipcat](https://github.com/p0nce/clipcat)**: Required for the `clipboard` tool (`clipcatctl`).
 - **[mpd](https://www.musicpd.org/)** + **[mpc](https://www.musicpd.org/clients/mpc/)**: Required for the `music` tool's MPC backend.
+- **[mlocate](https://pagure.io/mlocate)** (or any `locate` implementation): Used by the `file` tool for indexed search. When missing, the tool falls back to `find`, which is slower.
+- **[fzf](https://github.com/junegunn/fzf)**: Required for interactive result selection when the `file` tool's `select=true` filter is used. Requires a TTY.
 
 ---
 
