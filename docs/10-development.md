@@ -25,17 +25,6 @@ A guide for developers looking to extend DeskLumina or contribute to the core pr
 
 ---
 
-## Project Architecture
-
-DeskLumina's core is the **`Lumina` orchestrator** at `src/core/lumina.ts`. It follows a deterministic lifecycle:
-- **Build System Prompt**: Generates prompt from **Tool Contracts** and **Live Context**.
-- **Stream Response**: Managed via `src/ai/runtime/orchestrator.ts` through the multi-provider layer.
-- **Parse & Dispatch**: `src/core/planner.ts` parses tool calls, which are then dispatched via `src/tools/registry/registry.ts`.
-- **AI Orchestration**: `src/ai/runtime/orchestrator.ts` resolves the primary model and fallback chain through `ModelRegistry`, routes requests through `ProviderRegistry`, and handles circuit-breaker-based failover.
-- **Retry Logic**: Lumina automatically handles retries for retriable tool failures (up to 2 times).
-
----
-
 ## Creating a New Tool
 
 Follow these steps to add a new desktop capability:
@@ -102,9 +91,80 @@ registerTool("my_tool", myTool);
 
 ---
 
-## Adding a New Provider
+## Configuring Dispatch Modes
 
-To add a new AI provider:
+Tools can be configured to run in blocking or non-blocking mode via `src/tools/registry/modes.ts`.
+
+### Default Modes
+
+Most tools are blocking by default. Tools that are inherently fire-and-forget (like `app` and `notify`) should be declared as non-blocking:
+
+```typescript
+const TOOL_MODES: Record<string, ToolDispatchConfig> = {
+  terminal:  { mode: "blocking" },     // hybrid; classified per-command
+  file:      { mode: "blocking" },
+  math:      { mode: "blocking" },
+  clipboard: { mode: "blocking" },
+  music:     { mode: "blocking" },
+  media:     { mode: "blocking" },
+  app:       { mode: "non-blocking" },
+  notify:    { mode: "non-blocking" },
+};
+```
+
+### Hybrid Tools (Terminal)
+
+The `terminal` tool is declared as `blocking` in `TOOL_MODES` but uses runtime classification via `classifyCommand()` (`src/tools/frameworks/terminal-classify.ts`). The `getDispatchMode()` function checks the command argument and returns `non-blocking` for:
+- Known GUI applications (defined in `GUI_APPS` set)
+- Commands ending with `&`
+
+### Adding a Tool with Non-Blocking Mode
+
+1. Add the tool to `TOOL_MODES` in `src/tools/registry/modes.ts`:
+   ```typescript
+   my_tool: { mode: "non-blocking" },
+   ```
+2. The executor will automatically fire-and-forget, register the operation in the result store, and return a synthetic result.
+3. The real result will be injected into context on the next agent turn.
+
+---
+
+## Terminal Command Classifier
+
+**Path**: `src/tools/frameworks/terminal-classify.ts`
+
+The terminal classifier determines how each command is executed. It returns one of three modes:
+
+| Mode | Description |
+|------|-------------|
+| `blocking` | Command runs with stdout/stderr capture and timeout |
+| `non-blocking` | Command is spawned detached (GUI apps, `&`-suffixed) |
+| `rejected` | Command is refused (empty, interactive ssh) |
+
+### Extending GUI Apps
+
+To add a new GUI application to the non-blocking list, add it to the `GUI_APPS` set:
+
+```typescript
+const GUI_APPS: ReadonlySet<string> = new Set([
+  // ... existing apps ...
+  "my-gui-app",
+]);
+```
+
+### Interactive Installer Rewrites
+
+The classifier automatically rewrites package manager install commands to be non-interactive. To add support for a new package manager, extend `rewriteInteractiveInstaller()`:
+
+```typescript
+if (/\bmy-pm\s+install\b/.test(command) && !/(^|\s)-y\b/.test(command)) {
+  return command.replace(/\b(my-pm)(\s+)(install)\b/, "$1$2$3 -y");
+}
+```
+
+---
+
+## Adding a New Provider
 
 ### 1. Create the Provider Implementation
 
@@ -184,7 +244,7 @@ The function reads the current persona ID from `settingsManager.get().persona`, 
 
 DeskLumina uses a centralized i18n system located in `src/utils/localization/i18n.ts`.
 
-1. Add your new string key to `src/locales/en.json` and `src/locales/id.json`.
+1. Add your new string key to `src/locales/en.json`, `src/locales/id.json`, and `src/locales/ja.json`.
    ```json
    {
      "error": {

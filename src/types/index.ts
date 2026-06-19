@@ -1,7 +1,3 @@
-/**
- * Type definitions for DeskLumina
- */
-
 export * from "./chat";
 export * from "./ai";
 export * from "./settings";
@@ -19,6 +15,9 @@ export type {
   ToolRegistry,
   ToolResult,
   TrackInfo,
+  PendingOperation,
+  CompletedOperation,
+  DispatchedResult,
 } from "./tool";
 
 /**

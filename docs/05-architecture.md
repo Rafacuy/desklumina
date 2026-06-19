@@ -66,7 +66,7 @@ flowchart TD
 
 The project is organized into several key directories under `src/`:
 
-- **`agent/`**: The core of the agentic workflow. Implements the bounded ReAct reasoning loop, terminal signal parsing, turn-based context accumulation, and history trimming.
+- **`agent/`**: The core of the agentic workflow. Implements the bounded ReAct reasoning loop, terminal signal parsing, turn-based context accumulation, history trimming, and background operation context injection.
 - **`ai/`**: Handles AI interactions through a multi-provider architecture. Includes provider adapters (Groq, OpenAI, Anthropic, Gemini, OpenRouter, Hugging Face), a shared streaming base, SSE parsing, model resolution with fallback chains, circuit-breaker health tracking, and the contract-driven prompt builder.
 - **`bin/`**: Binary utilities and helper scripts.
 - **`config/`**: Environment variable loading and application aliases.
@@ -75,7 +75,7 @@ The project is organized into several key directories under `src/`:
 - **`daemon/`**: Background service implementation. Manages the Unix domain socket, token-based authentication, cache warming, and file watching for instant command response.
 - **`launcher/`**: Entry point routing. Dispatches CLI flags (`--chat`, `--exec`, `--send`, `--daemon-status`, `--version`, `provider`) to the appropriate mode (Rofi, terminal, daemon client, or exec).
 - **`ltm/`**: Long-term memory subsystem (SQLite persistence, async extraction, embedding generation, semantic episodic retrieval, prompt formatting).
-- **`tools/`**: Desktop automation implementations (apps, files, music, etc.) and their formal contracts.
+- **`tools/`**: Desktop automation implementations (apps, files, music, etc.) and their formal contracts. Includes the result store for background operation tracking, dispatch mode configuration, and the terminal command classifier.
 - **`tts/`**: Text-to-speech pipeline. Includes the adaptive chunker, natural voice disfluency planner, and latency masking.
 - **`ui/`**: User interface components including Rofi logic, themes, and tool result rendering.
 - **`security/`**: Confirmation dialogs and dangerous command analysis.
@@ -119,6 +119,30 @@ DeskLumina uses a turn-based reasoning loop to solve complex tasks:
 4.  **Signal Detection**: The system scans for terminal markers (`[[DONE]]`, `[[FAIL]]`).
 5.  **History Trimming**: If history exceeds the token limit, early reasoning turns are discarded to preserve recent context.
 6.  **Synthesis Fallback**: If the turn budget is exhausted, the system forces a final answer without further tool use.
+
+### Non-Blocking Tool Dispatch
+
+DeskLumina supports fire-and-forget execution for tools whose results are not needed immediately (e.g., launching GUI apps, sending notifications, or running background commands).
+
+**Path**: `src/tools/registry/modes.ts`, `src/tools/result-store.ts`
+
+1.  **Dispatch Modes**: Each tool declares a default mode (`blocking` or `non-blocking`) in `TOOL_MODES`. The `terminal` tool is hybrid; each command is classified at runtime.
+2.  **Result Store**: A singleton (`resultStore`) tracks `PendingOperation` and `CompletedOperation` records in memory. Background operations register as pending, then move to completed on resolution.
+3.  **Context Injection**: At the start of each agent turn, `runAgent()` drains completed operations from the result store and injects them as system messages. Pending operations are also injected so the model knows what is still running.
+
+### Terminal Command Classification
+
+**Path**: `src/tools/frameworks/terminal-classify.ts`
+
+The terminal tool classifies each command before execution:
+
+| Mode | Trigger | Behavior |
+|------|---------|----------|
+| `non-blocking` | Known GUI app (e.g., `firefox`, `code`) or `&`-suffixed command | Spawns detached, returns immediately |
+| `blocking` | Default for CLI commands | Captures stdout/stderr/exitCode with timeout |
+| `rejected` | Empty command or interactive `ssh` without remote command | Returns error, does not execute |
+
+The classifier also rewrites interactive installer commands (`apt install`, `pacman -S`, etc.) to include non-interactive flags (`-y`, `--noconfirm`).
 
 ---
 
@@ -181,12 +205,15 @@ sequenceDiagram
     participant UI as User Interface
     participant Core as Lumina Orchestrator
     participant Agent as Agent Loop
+    participant RS as Result Store
     participant AI as AI Provider
     participant OS as System Tools
 
     User->>UI: Enter command
     UI->>Core: Forward request
     Core->>Agent: runAgent(history)
+    Agent->>RS: Drain completed ops
+    RS-->>Agent: Inject completed results as system msg
     
     loop Turn <= MAX_TURNS
         Agent->>AI: streamAI(history)
@@ -195,8 +222,15 @@ sequenceDiagram
         alt Signal Detected ([[DONE]] / [[FAIL]])
             Agent-->>Core: Final Result
         else Tool Calls Present
-            Agent->>OS: Execute tools
-            OS-->>Agent: Tool Results
+            Agent->>Agent: Check dispatch mode per tool
+            alt Non-blocking tool
+                Agent->>RS: Register pending operation
+                Agent->>OS: Fire-and-forget dispatch
+                OS-->>Agent: Synthetic "dispatched" result
+            else Blocking tool
+                Agent->>OS: Execute tools (await)
+                OS-->>Agent: Tool Results
+            end
             Agent->>Agent: Append results to history
         end
     end
@@ -208,6 +242,9 @@ sequenceDiagram
 
     Agent-->>Core: Final Result
     Core->>UI: Show clean result + TTS
+    
+    Note over RS,OS: Background operations continue
+    OS->>RS: Complete operation (success/failure)
 ```
 
 ---

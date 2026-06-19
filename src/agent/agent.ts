@@ -3,9 +3,10 @@ import { streamAI } from "../ai";
 import { parseToolCalls } from "../core/planner";
 import { SAFE_TOKEN_LIMIT } from "../constants";
 import { detectTerminalSignal, stripMarkers } from "./signals";
-import { formatToolResults, trimHistory, estimateHistoryTokens } from "./context";
+import { formatToolResults, trimHistory, estimateHistoryTokens, formatBackgroundResults, formatPendingOperations } from "./context";
 import { executeToolCalls } from "./executor";
 import { synthesizeWithHistory, SYNTHESIS_PROMPT } from "./synthesis";
+import { resultStore } from "../tools/result-store";
 import type { AgentContext, AgentRunOptions, AgentResult } from "./types";
 import type { AIMessage } from "../types";
 
@@ -58,6 +59,31 @@ export async function runAgent(
   };
 
   const allToolResults: import("../types").ToolResult[] = [];
+
+  let insertIdx = 0;
+  while (insertIdx < history.length && history[insertIdx]?.role === "system") {
+    insertIdx++;
+  }
+
+  const completedOps = resultStore.drainCompleted();
+  if (completedOps.length > 0) {
+    const injection = formatBackgroundResults(completedOps);
+    history.splice(insertIdx, 0, {
+      role: "system",
+      content: injection,
+    });
+    insertIdx++;
+    allToolResults.push(...completedOps.map(op => op.result));
+  }
+
+  const pendingOps = resultStore.getPending();
+  if (pendingOps.length > 0) {
+    const injection = formatPendingOperations(pendingOps);
+    history.splice(insertIdx, 0, {
+      role: "system",
+      content: injection,
+    });
+  }
 
   if (estimateHistoryTokens(ctx.history) > SAFE_TOKEN_LIMIT) {
     ctx.history = trimHistory(ctx.history);

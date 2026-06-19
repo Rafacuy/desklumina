@@ -13,9 +13,11 @@ import type { ToolExecutionResult, ToolHandler, ToolRegistry } from "../../types
 const tools: ToolRegistry = {
   terminal: async (cmd) => {
     const result = await execute(cmd);
-    const message = result.exitCode === 0
-      ? (result.stdout || result.stderr || t("tool.result.done"))
-      : t("tool.result.command_failed");
+    const message = result.dispatched
+      ? t("tool.result.dispatched")
+      : result.exitCode === 0
+        ? (result.stdout || result.stderr || t("tool.result.done"))
+        : t("tool.result.command_failed");
     return {
       tool: "terminal",
       result: message,
@@ -25,6 +27,7 @@ const tools: ToolRegistry = {
       stdout: result.stdout,
       stderr: result.stderr,
       exitCode: result.exitCode,
+      status: result.dispatched ? "dispatched" : undefined,
     };
   },
   app: (alias) => launch(alias),
@@ -36,9 +39,6 @@ const tools: ToolRegistry = {
   math: (expr) => mathTool(expr),
 };
 
-/**
- * Dispatch a tool call to the appropriate handler
- */
 export async function dispatch(toolName: string, arg: string): Promise<ToolExecutionResult> {
   const handler = tools[toolName];
   if (!handler) {
@@ -76,16 +76,10 @@ export async function dispatch(toolName: string, arg: string): Promise<ToolExecu
   }
 }
 
-/**
- * Get list of registered tool names
- */
 export function getRegisteredTools(): string[] {
   return Object.keys(tools);
 }
 
-/**
- * Register a new tool handler
- */
 export function registerTool(name: string, handler: ToolHandler): void {
   if (tools[name]) {
     logger.warn("tools", `Tool ${name} already registered, overwriting...`);

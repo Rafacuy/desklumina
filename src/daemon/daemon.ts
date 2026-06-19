@@ -9,6 +9,7 @@ import { CacheManager } from "./cache/cache-manager";
 import { startFileWatcher, stopFileWatcher } from "./cache/file-watcher";
 import { AsyncMutex } from "../utils/async-mutex";
 import { initializeLtm, closeLtmStore } from "../ltm";
+import { resultStore } from "../tools/result-store";
 import type { ToolCallbackPayload } from "../types";
 
 type DaemonState = "idle" | "binding" | "warming" | "ready" | "draining" | "flushing" | "closing";
@@ -113,6 +114,7 @@ export class DeskLuminaDaemon {
       this.state = "flushing";
       stopFileWatcher();
       closeLtmStore();
+      await resultStore.shutdown();
 
       this.state = "closing";
       if (this.server) {

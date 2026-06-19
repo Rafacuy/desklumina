@@ -260,16 +260,33 @@ DeskLumina uses **Rofi** for its graphical interface. You can customize the appe
 
 ## Application Aliases (apps.json)
 
-The `src/config/apps.json` file contains a mapping of natural names to system commands.
+The `src/config/apps.json` file contains a mapping of natural names to system commands. It includes **400+ aliases** covering terminals, browsers, file managers, editors, media players, communication apps, development tools, system utilities, and more.
 
 ```json
 {
   "browser": "xdg-open https://",
   "telegram": "telegram-desktop",
   "term": "alacritty",
-  "neovim": "alacritty -e nvim"
+  "neovim": "alacritty -e nvim",
+  "firefox": "firefox",
+  "code": "code",
+  "mpv": "mpv",
+  "btop": "alacritty -e btop"
 }
 ```
+
+### Categories
+
+The alias file is organized into logical categories:
+- **Terminals**: `alacritty`, `kitty`, `wezterm`, `ghostty`, `tmux`, `zellij`, etc.
+- **Browsers**: `firefox`, `chrome`, `chromium`, `brave`, `librewolf`, `zen`, etc.
+- **File Managers**: `thunar`, `nautilus`, `dolphin`, `yazi`, `ranger`, `lf`, etc.
+- **Editors**: `neovim`, `vim`, `emacs`, `vscode`, `helix`, `zed`, `sublime`, etc.
+- **Media**: `mpv`, `vlc`, `ncmpcpp`, `cmus`, `spotify`, etc.
+- **Graphics**: `gimp`, `inkscape`, `krita`, `blender`, `kdenlive`, etc.
+- **Communication**: `telegram`, `discord`, `signal`, `slack`, `thunderbird`, etc.
+- **System**: `btop`, `htop`, `gnome-system-monitor`, `gparted`, `pacman`, etc.
+- **And many more...**
 
 ### Adding a Custom Alias
 1. Open `src/config/apps.json`.

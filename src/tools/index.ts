@@ -1,9 +1,7 @@
-/**
- * Tools module exports
- */
-
 export { dispatch } from "./registry";
 export { execute } from "./frameworks/terminal";
+export { classifyCommand } from "./frameworks/terminal-classify";
+export type { TerminalMode, TerminalClassification } from "./frameworks/terminal-classify";
 export { launch, lookup } from "./frameworks/apps";
 export { fileOp } from "./frameworks/files";
 export { handleFileManagement, parseFileManagementCommand, parseQuotedArgs } from "./frameworks/file-management";

@@ -8,6 +8,9 @@ A detailed reference for DeskLumina's internal APIs, tool contracts, and executi
 
 - [Core API (Lumina)](#core-api-lumina)
 - [Agent API](#agent-api)
+- [Result Store API](#result-store-api)
+- [Dispatch Mode API](#dispatch-mode-api)
+- [Terminal Classifier API](#terminal-classifier-api)
 - [LTM API](#ltm-api)
 - [Tool Contracts API](#tool-contracts-api)
 - [Tool Handler Signature](#tool-handler-signature)
@@ -59,6 +62,126 @@ export type TerminalSignal =
   | { type: "DONE" }
   | { type: "FAIL"; reason: string };
 ```
+
+---
+
+## Result Store API
+
+**File**: `src/tools/result-store.ts`
+
+The result store tracks background (non-blocking) operations across agent turns.
+
+### `resultStore.registerPending(op: PendingOperation): void`
+Registers a new background operation as pending.
+
+### `resultStore.complete(operationId: string, result: ToolResult): void`
+Marks a pending operation as completed. Moves the record from the pending map to the completed map.
+
+### `resultStore.drainCompleted(): CompletedOperation[]`
+Returns all completed operations and clears the completed map. Called once per agent turn to inject results into context.
+
+### `resultStore.getPending(): PendingOperation[]`
+Returns all currently pending operations.
+
+### `resultStore.shutdown(): Promise<void>`
+Cleans up all state on daemon shutdown. Logs warnings for any abandoned pending operations.
+
+### `PendingOperation` Interface
+```typescript
+interface PendingOperation {
+  id: string;
+  tool: string;
+  arg: string;
+  startedAt: number;
+  status: "pending";
+}
+```
+
+### `CompletedOperation` Interface
+```typescript
+interface CompletedOperation {
+  id: string;
+  tool: string;
+  arg: string;
+  startedAt: number;
+  completedAt: number;
+  status: "success" | "failure";
+  result: ToolResult;
+}
+```
+
+---
+
+## Dispatch Mode API
+
+**File**: `src/tools/registry/modes.ts`
+
+Controls whether tools execute in blocking or non-blocking mode.
+
+### `getDispatchMode(toolName: string, arg?: string): DispatchMode`
+Returns the dispatch mode for a given tool. For the `terminal` tool, the mode is determined dynamically by the command classifier.
+
+### `getDispatchConfig(toolName: string): ToolDispatchConfig`
+Returns the full dispatch configuration including optional `timeoutMs`.
+
+### `DispatchMode` Type
+```typescript
+type DispatchMode = "blocking" | "non-blocking";
+```
+
+### `ToolDispatchConfig` Interface
+```typescript
+interface ToolDispatchConfig {
+  mode: DispatchMode;
+  timeoutMs?: number;
+}
+```
+
+### Default Tool Modes
+
+| Tool | Mode |
+|------|------|
+| `terminal` | blocking* (hybrid, classified per-command) |
+| `file` | blocking |
+| `math` | blocking |
+| `clipboard` | blocking |
+| `music` | blocking |
+| `media` | blocking |
+| `app` | non-blocking |
+| `notify` | non-blocking |
+
+---
+
+## Terminal Classifier API
+
+**File**: `src/tools/frameworks/terminal-classify.ts`
+
+Classifies terminal commands into execution modes before dispatch.
+
+### `classifyCommand(command: string): TerminalClassification`
+Analyzes a command string and returns its classification.
+
+### `TerminalMode` Type
+```typescript
+type TerminalMode = "blocking" | "non-blocking" | "rejected";
+```
+
+### `TerminalClassification` Interface
+```typescript
+interface TerminalClassification {
+  mode: TerminalMode;
+  command: string;
+  reason: string;
+}
+```
+
+### Classification Rules
+
+- **Non-blocking**: Known GUI applications (e.g., `firefox`, `code`, `mpv`, `thunar`) or commands ending with `&`.
+- **Rejected**: Empty commands or interactive `ssh` sessions without a remote command.
+- **Blocking**: All other commands (default).
+
+The classifier also rewrites interactive installer commands to include non-interactive flags (`-y` for apt/dnf/yum, `--noconfirm` for pacman).
 
 ---
 
@@ -181,12 +304,53 @@ interface ToolExecutionResult {
   stdout?: string;        // Raw output
   stderr?: string;        // Error output
   exitCode?: number;      // Process exit code
-  status?: string;        // Machine-readable status code (e.g. "search_complete")
+  status?: string;        // Machine-readable status code (e.g. "search_complete", "dispatched")
   expression?: string;    // Normalized input expression (math tool only)
   numericResult?: number; // Raw numeric result (math tool only)
   actions?: string[];     // List of internal steps performed
   resolvedBackend?: "mpc" | "playerctl"; // Active media backend (music tool only)
   extra?: ToolExtraData;  // Structured data container for file, media, and search results
+}
+```
+
+### `ToolResult` Interface
+
+Used across the agent loop and UI layer. Extends `ToolExecutionResult` fields with retry tracking and non-blocking dispatch metadata:
+
+```typescript
+interface ToolResult {
+  tool: string;
+  result: string;
+  success?: boolean;
+  normalizedArg?: string;
+  command?: string;
+  stdout?: string;
+  stderr?: string;
+  exitCode?: number;
+  attempt?: number;        // Retry attempt number (0-based)
+  status?: string;
+  expression?: string;
+  numericResult?: number;
+  actions?: string[];
+  resolvedBackend?: "mpc" | "playerctl";
+  extra?: ToolExtraData;
+  dispatched?: boolean;    // True when this is a synthetic acknowledgement of a non-blocking dispatch
+  operationId?: string;    // Links the synthetic result to its background task in the result store
+}
+```
+
+### `DispatchedResult` Interface
+
+Returned to the agent loop when a tool is dispatched non-blocking:
+
+```typescript
+interface DispatchedResult {
+  tool: string;
+  result: string;
+  success: true;
+  normalizedArg: string;
+  dispatched: true;
+  operationId: string;
 }
 ```
 

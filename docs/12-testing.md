@@ -27,13 +27,16 @@ Our test suite is divided into several categories:
 ### 1. Unit Tests
 Located in `tests/`, these test individual functions and classes in isolation, such as `path.test.ts`, `env.test.ts`, and `personas.test.ts`.
 
-### 2. Integration Tests
+### 2. Non-Blocking Dispatch Tests
+Tests for the fire-and-forget execution system: `terminal-classify.test.ts` (command classification), `dispatch-modes.test.ts` (mode resolution), `result-store.test.ts` (background operation tracking), `executor-nonblocking.test.ts` (non-blocking execution path), and `context-injection.test.ts` (result injection into agent context).
+
+### 3. Integration Tests
 Tests that verify the interaction between multiple modules, such as the `ChatManager` or the `Security` layer.
 
-### 3. Edge-Case Tests
+### 4. Edge-Case Tests
 Specifically designed to test TTS chunking and error handling, such as `tts-edge-cases.test.ts`.
 
-### 4. Architecture & Prompt Tests
+### 5. Architecture & Prompt Tests
 **Path**: `tests/architecture/`
 
 These critical tests ensure the behavior of the AI by verifying the generated system prompt:

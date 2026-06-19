@@ -45,6 +45,35 @@ function getToolIcon(tool: string): string {
   return TOOL_CONFIG[tool]?.icon || "🔧";
 }
 
+/**
+ * Result status mark:
+ * - ↗  dispatched: fire-and-forget, still running in background
+ * - ✓  success:    completed with a real result
+ * - ✗  failure:    completed with an error
+ *
+ * Mirrors the `↗` used in `tool.result.dispatched` so the same glyph
+ * consistently signals "dispatched to background" across the UI.
+ */
+const DISPATCHED_MARK = "↗";
+const SUCCESS_MARK = "✓";
+const FAILURE_MARK = "✗";
+
+/**
+ * Per-result status mark, honoring dispatched before success/failure.
+ */
+function getResultMark(result: ToolResult): string {
+  if (result.dispatched) return DISPATCHED_MARK;
+  return result.success === false ? FAILURE_MARK : SUCCESS_MARK;
+}
+
+/**
+ * Hint shown under a dispatched tool: the result is still pending in the
+ * background and will arrive on the next response.
+ */
+function getDispatchedHint(): string {
+  return t("tool.result.dispatched_hint");
+}
+
 function formatFileResult(result: ToolResult): string[] {
   const lines: string[] = [];
   const files = result.extra?.files || [];
@@ -192,15 +221,22 @@ export class ToolDisplay {
 
   /**
    * Format tool results for inline display (after execution)
+   *
+   * A result can be in one of three states, each with its own mark:
+   *   ↗  dispatched  — non-blocking tool still running in background
+   *   ✓  success     — completed with a real result
+   *   ✗  failure     — completed with an error
    */
   static formatResultsInline(results: ToolResult[]): string {
     if (results.length === 0) return "";
 
     return results.flatMap((result) => {
-      const mark = result.success === false ? "✗" : "✓";
-      const retry = result.attempt && result.attempt > 1 ? ` ↺${result.attempt}` : "";
+      const mark = getResultMark(result);
+      const retry = !result.dispatched && result.attempt && result.attempt > 1
+        ? ` ↺${result.attempt}`
+        : "";
       const label = padLabel(getToolLabel(result.tool));
-      const detail = summarizeResult(result);
+      const detail = result.dispatched ? [getDispatchedHint()] : summarizeResult(result);
 
       const mainRow = `${GUTTER} ${getToolIcon(result.tool)} ${label} ${mark}${retry}`;
       const detailRows = detail.map((d) => `${GUTTER}   ${d.trim()}`);
@@ -228,13 +264,28 @@ export class ToolDisplay {
 
   /**
    * Format tool results for history panel (compact)
+   *
+   * Splits dispatched (background) results from completed ones so the
+   * panel doesn't claim a fire-and-forget tool "completed" when it is
+   * still running.
    */
   static formatHistoryResults(results: ToolResult[]): string {
     if (results.length === 0) return "";
 
-    const count = results.length;
-    const completedWord = t("common.completed_count");
-    return `✓ ${count} ${completedWord}`;
+    const dispatched = results.filter((r) => r.dispatched);
+    const completed = results.filter((r) => !r.dispatched);
+
+    const parts: string[] = [];
+    if (completed.length > 0) {
+      const completedWord = t("common.completed_count");
+      parts.push(`✓ ${completed.length} ${completedWord}`);
+    }
+    if (dispatched.length > 0) {
+      const dispatchedWord = t("common.dispatched_count");
+      parts.push(`${DISPATCHED_MARK} ${dispatched.length} ${dispatchedWord}`);
+    }
+
+    return parts.join(" • ");
   }
 
   /**

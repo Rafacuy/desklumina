@@ -91,6 +91,78 @@ describe("ToolDisplay", () => {
     });
   });
 
+  describe("Dispatched (non-blocking) status", () => {
+    // A non-blocking tool returns this synthetic ack immediately. It must
+    // carry `dispatched: true` so the display doesn't render a misleading ✓
+    // — the tool is still running in the background.
+    const dispatchedResult = (): ToolResult => ({
+      tool: "app",
+      result: "Operation dispatched. Running in background.",
+      success: true,
+      normalizedArg: "firefox",
+      exitCode: 0,
+      dispatched: true,
+      operationId: "op-123",
+    });
+
+    test("dispatched result renders the ↗ mark, not ✓ or ✗", () => {
+      const output = ToolDisplay.formatResultsInline([dispatchedResult()]);
+      expect(output).toContain("↗");
+      expect(output).not.toContain("✓");
+      expect(output).not.toContain("✗");
+    });
+
+    test("dispatched result shows the background hint as its detail line", () => {
+      const output = ToolDisplay.formatResultsInline([dispatchedResult()]);
+      // Under the i18n mock, the hint key is returned verbatim.
+      expect(output).toContain("tool.result.dispatched_hint");
+    });
+
+    test("dispatched suppresses the retry marker even with a stale attempt", () => {
+      const output = ToolDisplay.formatResultsInline([
+        { ...dispatchedResult(), attempt: 3 },
+      ]);
+      expect(output).toContain("↗");
+      expect(output).not.toContain("↺");
+    });
+
+    test("mixed dispatched + success renders both marks distinctly", () => {
+      const success: ToolResult = {
+        tool: "terminal", result: "ok", success: true, arg: "", normalizedArg: "",
+      };
+      const output = ToolDisplay.formatResultsInline([dispatchedResult(), success]);
+      expect(output).toContain("↗");
+      expect(output).toContain("✓");
+      const rows = output.split("\n").filter((l) => l.includes("┃"));
+      expect(rows.length).toBeGreaterThanOrEqual(2);
+    });
+
+    test("formatHistoryResults does not count dispatched as completed", () => {
+      const success: ToolResult = {
+        tool: "terminal", result: "ok", success: true, arg: "", normalizedArg: "",
+      };
+      const output = ToolDisplay.formatHistoryResults([dispatchedResult(), success]);
+      // Only the genuinely finished tool counts as completed.
+      expect(output).toContain("✓ 1 common.completed_count");
+      expect(output).toContain("↗ 1 common.dispatched_count");
+    });
+
+    test("formatHistoryResults with only dispatched omits the completed count", () => {
+      const output = ToolDisplay.formatHistoryResults([dispatchedResult(), dispatchedResult()]);
+      expect(output).toContain("↗");
+      expect(output).not.toContain("✓");
+    });
+
+    test("formatHistoryContext splits completed and dispatched counts", () => {
+      const success: ToolResult = {
+        tool: "terminal", result: "ok", success: true, arg: "", normalizedArg: "",
+      };
+      const output = ToolDisplay.formatHistoryContext([], [dispatchedResult(), success]);
+      expect(output).toContain("↗");
+      expect(output).toContain("✓");
+    });
+  });
+
   describe("History Formatters", () => {
     test("formatHistoryCalls returns compact action count", () => {
       const calls: ParsedToolCall[] = [{ tool: "terminal", args: {}, raw: "" }];

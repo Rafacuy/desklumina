@@ -33,7 +33,7 @@ Tool calls are parsed from markdown code blocks. Arguments are passed as a singl
 
 ## Application Tool (`app`)
 
-Launch GUI application by alias.
+Launch GUI application by alias. This tool runs **non-blocking**. The agent receives immediate confirmation and the app launches in the background. The actual launch result is available on the next turn.
 
 - **Schema**: `app <alias>`
 - **Quoting**: Strictly forbidden. The parser fails if quotes are detected.
@@ -158,21 +158,40 @@ Manage clipboard history via `clipcat`.
 
 ## Terminal Tool (`terminal`)
 
-Execute a bash command.
+Execute a bash command. The terminal tool uses a **command classifier** to determine execution mode per-call:
 
 - **Schema**: `terminal <command>`
 - **Quoting**: Do not quote the whole command. Internal quotes must be escaped for bash.
 - **Escaping**: Standard bash escaping for internal characters. Tool arg itself is raw.
 
+### Execution Modes
+
+| Mode | Trigger | Behavior |
+|------|---------|----------|
+| **Non-blocking** | Known GUI app (e.g., `firefox`, `code`, `mpv`) or command ending with `&` | Process is spawned detached; the agent receives immediate confirmation and continues. Result is available on the next turn. |
+| **Blocking** | Default for CLI commands | stdout/stderr/exitCode are captured with a hard timeout. The agent waits for completion. |
+| **Rejected** | Empty command or interactive `ssh` without a remote command | Returns an error without executing. |
+
+### Automatic Rewrites
+
+The classifier automatically appends non-interactive flags to package manager install commands:
+- `apt install` / `apt-get install` → `-y`
+- `dnf install` → `-y`
+- `yum install` → `-y`
+- `pacman -S` → `--noconfirm`
+
 ### Examples:
-- `{"tool": "terminal", "args": "ls -la"}`
-- `{"tool": "terminal", "args": "pactl get-sink-volume @DEFAULT_SINK@"}`
+- `{"tool": "terminal", "args": "ls -la"}`: **blocking**, captures output
+- `{"tool": "terminal", "args": "firefox"}`: **non-blocking**, fire-and-forget
+- `{"tool": "terminal", "args": "sleep 60 &"}`: **non-blocking**, trailing `&`
+- `{"tool": "terminal", "args": "ssh user@host"}`: **rejected**, interactive ssh
+- `{"tool": "terminal", "args": "sudo apt install vim"}`: **blocking**, rewritten to `sudo apt install -y vim`
 
 ---
 
 ## Notification Tool (`notify`)
 
-Send desktop notifications.
+Send desktop notifications. This tool runs **non-blocking**, using fire-and-forget execution.
 
 - **Schema**: `notify <title>|<body>|<urgency>`
 - **Quoting**: Forbidden. Quotes in title/body are treated as literal characters.

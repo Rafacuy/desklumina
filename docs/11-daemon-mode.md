@@ -27,6 +27,7 @@ Daemon mode runs DeskLumina as a persistent background process. The daemon stays
 - **Zero Overhead**: Avoids starting a new Bun process for every command.
 - **Stable Endpoint**: Provides a persistent socket for hotkeys and scripts.
 - **Structured Data**: The daemon returns full execution metadata, including tool results and file matches.
+- **Background Operations**: Non-blocking tools (app launches, GUI commands) continue running after the daemon responds. Results are tracked by the result store and injected into context on the next request.
 
 ---
 
@@ -123,6 +124,7 @@ Automate DeskLumina's startup with the provided service file: `systemd/desklumin
 - **Socket Already in Use**: If the daemon crashes, the socket file might remain. The system performs an automated health check. If the socket is stale, it is automatically removed and refreshed.
 - **Connection Refused**: Ensure the daemon is running with `bun run daemon:status`.
 - **Logs**: Check `~/.config/desklumina/logs/general.log` and `~/.config/desklumina/logs/error.log`.
+- **Abandoned Background Operations**: On daemon shutdown, any pending background operations are logged as warnings and cleared. These operations will not complete; if you need a long-running command to survive daemon restarts, run it directly in a terminal.
 
 ---
 

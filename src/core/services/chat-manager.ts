@@ -105,7 +105,9 @@ const EXTRA_FORMATTERS: Record<string, ExtraFormatter> = {
 };
 
 function formatToolContext(result: ToolResult): string {
-  const status = result.success === false ? "FAILED" : "OK";
+  const status = result.dispatched
+    ? "DISPATCHED"
+    : result.success === false ? "FAILED" : "OK";
   const segments = [
     `[TOOL RESULT] ${result.tool} ${status}`,
     result.normalizedArg ? `args=${result.normalizedArg}` : "",
@@ -132,7 +134,9 @@ function summarizeMessage(message: InternalMessage): string {
     const toolResults = message.toolResults || [];
     return toolResults
       .map((result) => {
-        const status = result.success === false ? "failed" : "ok";
+        const status = result.dispatched
+          ? "dispatched"
+          : result.success === false ? "failed" : "ok";
         const tracks = result.extra?.tracks;
         if (tracks && tracks.length > 0) {
           const trackSummaries = tracks
@@ -280,6 +284,8 @@ export class ChatManager {
       normalizedArg: r.normalizedArg,
       attempt: r.attempt,
       extra: r.extra,
+      dispatched: r.dispatched,
+      operationId: r.operationId,
     })) as ToolResult[];
 
     const toolMessage: InternalMessage = {
@@ -420,7 +426,14 @@ export class ChatManager {
     for (const msg of recentMessages) {
       if (msg.role === "tool") {
         const toolLine = (msg.toolResults || [])
-          .map((result) => `    • ${getToolLabel(result.tool)} ${result.success === false ? "✕" : "✓"}`)
+          .map((result) => {
+            // Dispatched (background) results are still in flight — show ↗
+            // rather than the misleading ✓/✕ completion mark.
+            const mark = result.dispatched
+              ? "↗"
+              : result.success === false ? "✕" : "✓";
+            return `    • ${getToolLabel(result.tool)} ${mark}`;
+          })
           .join("\n");
         if (toolLine && totalChars + toolLine.length <= maxChars) {
           preview.unshift(toolLine);

@@ -1,6 +1,6 @@
 import { logger } from "../logger";
 import { providerTokenCounter } from "../ai/middleware";
-import type { AIMessage, ToolResult } from "../types";
+import type { AIMessage, ToolResult, CompletedOperation, PendingOperation } from "../types";
 import { SAFE_TOKEN_LIMIT } from "../constants";
 import { cleanTrackTitle } from "../utils/formatting/format";
 
@@ -51,18 +51,14 @@ export function formatToolResults(results: ToolResult[]): string {
 }
 
 export function trimHistory(history: AIMessage[]): AIMessage[] {
-  // ensure we keep the system message and the original user query
   const system = history[0]?.role === "system" ? history[0] : null;
   const original = history[1]?.role === "user" ? history[1] : null;
-
-  // Keep the last two full turns (assistant + user messages) as recent context
   const recent = history.slice(-4);
 
   let trimmed: AIMessage[];
   if (system && original) {
     trimmed = [system, original, ...recent];
   } else {
-    //Fallback: retain the first message and the recent window.
     logger.warn(
       "context",
       "trimHistory: unexpected history structure, falling back to first message + last 4"
@@ -70,18 +66,13 @@ export function trimHistory(history: AIMessage[]): AIMessage[] {
     trimmed = [history[0]!, ...recent];
   }
 
-  // Guard against token overflow even after trimming.
-  // If the trimmed history is still over the SAFE_TOKEN_LIMIT, aggressively truncate
-  // the newest user message content (which is most likely the large payload).
-  // it ensures we never pass an over‑limit payload to the model.
+  // If still over limit, halve the newest user message (usually the large payload)
   const safeTrim = (msgs: AIMessage[]): AIMessage[] => {
     while (estimateHistoryTokens(msgs) > SAFE_TOKEN_LIMIT && msgs.length > 2) {
-      // Find the last user‑role message (should be the most recent user turn)
       const idx = msgs.findLastIndex((m) => m.role === "user");
       if (idx < 0) break;
       const msg = msgs[idx];
       if (!msg) break;
-      //Truncate its content to half its current length
       const truncated = msg.content.slice(0, Math.floor(msg.content.length / 2));
       msgs[idx] = { role: msg.role || "user", content: truncated };
     }
@@ -94,4 +85,41 @@ export function trimHistory(history: AIMessage[]): AIMessage[] {
 export function estimateHistoryTokens(history: AIMessage[]): number {
   const fullText = history.map((m) => m.content).join("\n");
   return providerTokenCounter.estimateText(fullText);
+}
+
+export function formatBackgroundResults(ops: CompletedOperation[]): string {
+  const lines: string[] = [
+    "[BACKGROUND OPERATIONS COMPLETED]",
+    "",
+    "The following operations completed since your last response:",
+    "",
+  ];
+
+  for (const op of ops) {
+    if (op.status === "failure") {
+      const stderr = op.result.stderr ? `, stderr: ${op.result.stderr.slice(0, 200)}` : "";
+      const exitCode = op.result.exitCode !== undefined ? `exit code ${op.result.exitCode}` : "unknown error";
+      lines.push(`- ${op.tool} "${op.arg}": FAILED — ${exitCode}${stderr}`);
+    } else {
+      const resultText = op.result.result ? op.result.result.slice(0, 200) : "OK";
+      lines.push(`- ${op.tool} "${op.arg}": OK — ${resultText}`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
+export function formatPendingOperations(ops: PendingOperation[]): string {
+  const lines: string[] = [
+    "[BACKGROUND OPERATIONS]",
+    "",
+    "Pending (still running):",
+  ];
+
+  for (const op of ops) {
+    const elapsed = Math.round((Date.now() - op.startedAt) / 1000);
+    lines.push(`- ${op.tool}: "${op.arg}" (started ${elapsed}s ago)`);
+  }
+
+  return lines.join("\n");
 }

@@ -32,6 +32,7 @@ This file describes ideas that are not yet implemented. Do not treat any item be
 - [ ] **Local LLM Integration**: Support for Ollama or Llama.cpp for privacy-conscious users.
 - [x] **Enhanced TTS**: Natural voice pipeline with disfluency planning, latency masking, and configurable filler sounds. Offline TTS engines are not yet supported.
 - [x] **Long-Term Memory (LTM)**: Implemented persistent memory using SQLite3 with three layers (fact, pattern, episodic), FTS5 full-text search with trigram tokenizer, LLM-based extraction from conversation turns, embedding support for vector search, and automatic eviction based on access-count + recency scoring triggered after each extraction when episodic cap is exceeded. Configurable via `settings.ltm` (episodicCap, provider, model, embedModel).
+- [x] **Non-Blocking Tool Dispatch**: Fire-and-forget execution for tools whose results are not needed immediately (app launches, notifications, GUI commands). Uses a result store to track background operations, with context injection on subsequent turns. Terminal commands are classified per-call: GUI apps and `&`-suffixed commands run non-blocking; interactive SSH is rejected; package manager install commands are auto-rewritten with non-interactive flags.
 
 ---
 

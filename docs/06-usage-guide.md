@@ -43,6 +43,16 @@ DeskLumina now uses a ReAct-based agent loop. This means it can:
 - **Refine**: Use tool results to decide if more steps are required.
 - **Self-Correct**: Automatically retry tool calls if transient errors occur.
 
+### Background Execution
+
+Some tools run **non-blocking** (fire-and-forget):
+- **App launches** (`app firefox`): the agent responds immediately while the app opens in the background.
+- **Notifications** (`notify`): sent without waiting.
+- **GUI commands via terminal** (`terminal firefox`, `terminal code`): detected automatically and dispatched.
+- **Background commands** (`terminal sleep 60 &`): trailing `&` triggers non-blocking mode.
+
+Results from background operations are injected into the agent's context on your next message, so the model can reason about completion or failure.
+
 ### Settings Menu
 
 **Access**: Press `Tab` to expand, then select **Settings**.

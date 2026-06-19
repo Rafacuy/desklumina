@@ -1,6 +1,8 @@
 import { dispatch } from "../tools";
 import { logger } from "../logger";
 import { t } from "../utils";
+import { resultStore } from "../tools/result-store";
+import { getDispatchMode } from "../tools/registry/modes";
 import type { ParsedToolCall, ToolResult } from "../types";
 import { CancellationError } from "../types";
 
@@ -28,41 +30,84 @@ export async function executeToolCalls(
   const results: ToolResult[] = [];
 
   for (const call of calls) {
-    let result: ToolResult = createErrorResult(call, "Tool execution did not complete", -1);
-    let attempts = 0;
+    const mode = getDispatchMode(call.tool, call.arg);
 
-    while (attempts <= MAX_TOOL_RETRIES) {
-      try {
-        logger.info("executor", `Tool attempt ${attempts}: ${call.tool} ${call.arg}`);
-        const output = await dispatch(call.tool, call.arg);
-        logger.info("executor", `Tool attempt ${attempts} result: ${call.tool} success=${output.success}`);
+    if (mode === "non-blocking") {
+      const operationId = crypto.randomUUID();
 
-        result = { ...output, attempt: attempts };
-        break;
-      } catch (error) {
-        if (error instanceof CancellationError) {
-          throw error;
-        }
+      resultStore.registerPending({
+        id: operationId,
+        tool: call.tool,
+        arg: call.arg,
+        startedAt: Date.now(),
+        status: "pending",
+      });
 
-        attempts++;
-        const retriable = isRetriableToolError(error);
-        const errMsg = logger.catchError(`tool:${call.tool}`, error);
+      dispatch(call.tool, call.arg)
+        .then((output) => {
+          resultStore.complete(operationId, {
+            ...output,
+            attempt: 0,
+          });
+        })
+        .catch((error) => {
+          resultStore.complete(operationId, {
+            tool: call.tool,
+            result: `Error: ${error instanceof Error ? error.message : String(error)}`,
+            success: false,
+            normalizedArg: call.arg.trim(),
+            stderr: error instanceof Error ? error.message : String(error),
+            exitCode: 1,
+            attempt: 0,
+          });
+        });
 
-        result = createErrorResult(call, errMsg, attempts - 1);
+      results.push({
+        tool: call.tool,
+        result: "Operation dispatched. Running in background. Result will be available on your next response.",
+        success: true,
+        normalizedArg: call.arg.trim(),
+        exitCode: 0,
+        dispatched: true,
+        operationId,
+      });
+    } else {
+      let result: ToolResult = createErrorResult(call, "Tool execution did not complete", -1);
+      let attempts = 0;
 
-        if (!retriable || attempts > MAX_TOOL_RETRIES) {
+      while (attempts <= MAX_TOOL_RETRIES) {
+        try {
+          logger.info("executor", `Tool attempt ${attempts}: ${call.tool} ${call.arg}`);
+          const output = await dispatch(call.tool, call.arg);
+          logger.info("executor", `Tool attempt ${attempts} result: ${call.tool} success=${output.success}`);
+
+          result = { ...output, attempt: attempts };
           break;
-        }
+        } catch (error) {
+          if (error instanceof CancellationError) {
+            throw error;
+          }
 
-        if (onRetry) {
-          onRetry(result, attempts);
-        }
+          attempts++;
+          const retriable = isRetriableToolError(error);
+          const errMsg = logger.catchError(`tool:${call.tool}`, error);
 
-        await sleep(RETRY_DELAY_MS * attempts);
+          result = createErrorResult(call, errMsg, attempts - 1);
+
+          if (!retriable || attempts > MAX_TOOL_RETRIES) {
+            break;
+          }
+
+          if (onRetry) {
+            onRetry(result, attempts);
+          }
+
+          await sleep(RETRY_DELAY_MS * attempts);
+        }
       }
-    }
 
-    results.push(result);
+      results.push(result);
+    }
   }
 
   return results;

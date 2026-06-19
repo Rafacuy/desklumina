@@ -102,9 +102,46 @@ export interface ToolResult {
   actions?: string[];
   resolvedBackend?: "mpc" | "playerctl";
   extra?: ToolExtraData;
+  /**
+   * True when this result is the synthetic acknowledgement of a
+   * non-blocking (fire-and-forget) dispatch — the tool is still running
+   * in the background. The real outcome arrives via the result store and
+   * is injected as context on the next turn. Distinct from `success`,
+   * which only reflects whether the *dispatch* was accepted.
+   */
+  dispatched?: boolean;
+  /** Operation id linking the synthetic result to its background task. */
+  operationId?: string;
 }
 
 export interface ParsedToolCall {
   tool: string;
   arg: string;
+}
+
+export interface PendingOperation {
+  id: string;
+  tool: string;
+  arg: string;
+  startedAt: number;
+  status: "pending";
+}
+
+export interface CompletedOperation {
+  id: string;
+  tool: string;
+  arg: string;
+  startedAt: number;
+  completedAt: number;
+  status: "success" | "failure";
+  result: ToolResult;
+}
+
+export interface DispatchedResult {
+  tool: string;
+  result: string;
+  success: true;
+  normalizedArg: string;
+  dispatched: true;
+  operationId: string;
 }
