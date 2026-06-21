@@ -5,7 +5,7 @@
 export { streamAI, getAvailableModels, getModelInfo } from "./runtime/orchestrator";
 export { initializeAI } from "./runtime/init";
 export { buildSystemPrompt } from "./runtime/prompts";
-export { textToSpeech } from "./tts";
+export { textToSpeech, isTTSPlaying, cancelTTS } from "./tts";
 export type {
   AIProvider,
   EmbeddingRequest,

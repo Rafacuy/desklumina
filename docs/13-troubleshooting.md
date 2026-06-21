@@ -44,6 +44,19 @@ Quick fixes for common issues encountered while using or installing DeskLumina.
 - **Symptom**: Colors are missing or the layout is shifted.
 - **Fix**: The included `.rasi` theme expects a modern version of Rofi. If you are on an older distribution, you may need to simplify the theme or use the default one.
 
+### Error Panel Shows Instead of Response
+- **Symptom**: An error panel appears with a warning icon and suggestion text.
+- **Fix**: The error panel classifies the failure into one of seven categories:
+  - **Could not connect** (network): Check your internet connection.
+  - **Provider unavailable** (provider): Try switching to a different provider.
+  - **Model not available** (model): The selected model may have been removed.
+  - **Authentication failed** (auth): Check your API key in the config.
+  - **Rate limit reached** (ratelimit): Wait a moment before retrying.
+  - **Request timed out** (timeout): The provider took too long to respond.
+  - **Something went wrong** (unknown): Copy the error and check the logs.
+  
+  Use `Alt+R` to retry the request or `Alt+C` to copy the full error string for debugging.
+
 ---
 
 ## Tool Execution Issues
@@ -90,6 +103,10 @@ Quick fixes for common issues encountered while using or installing DeskLumina.
 ### Distorted or Laggy Audio
 - **Symptom**: Voice sounds robotic or cut-off.
 - **Fix**: Lower the `TTS Speed` in Settings. High speeds can cause artifacts with certain voices.
+
+### Response Panel Does Not Dismiss After TTS
+- **Symptom**: The response panel remains visible after TTS finishes playing.
+- **Fix**: The panel should auto-dismiss when playback completes. If it does not, check that the TTS session finished without errors. You can also check the daemon logs for TTS-related warnings. Use `isTTSPlaying()` internally to track whether audio is still active.
 
 ---
 

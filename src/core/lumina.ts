@@ -24,7 +24,8 @@ export class Lumina {
 
   async chat(
     userMessage: string,
-    onChunk?: (chunk: string, callback?: ToolCallbackPayload) => void
+    onChunk?: (chunk: string, callback?: ToolCallbackPayload) => void,
+    onError?: (error: unknown) => void
   ): Promise<string> {
     logger.info("lumina", `User: ${userMessage}`);
 
@@ -122,6 +123,11 @@ export class Lumina {
       }
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error("lumina", `Chat error: ${err.message}`, err);
+      // If the caller gave an onError hook, it wants to handle routing itself.
+      if (onError) {
+        onError(error);
+        throw error;
+      }
       const errorMsg = `${t("common.error")}.`;
 
       if (!this.chatManager) {

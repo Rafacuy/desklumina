@@ -61,7 +61,39 @@
   "error": {
     "fatal_groq": "❌ FATAL: GROQ_API_KEY not found in .env",
     "fatal_model": "❌ FATAL: MODEL_NAME not found in .env",
-    "with_message": "Error: {message}"
+    "with_message": "Error: {message}",
+    "network": {
+      "title": "Could not connect",
+      "suggestion": "Check your internet connection"
+    },
+    "provider": {
+      "title": "Provider unavailable",
+      "suggestion": "Try switching to a different provider"
+    },
+    "model": {
+      "title": "Model not available",
+      "suggestion": "The selected model may have been removed"
+    },
+    "auth": {
+      "title": "Authentication failed",
+      "suggestion": "Check your API key in the config"
+    },
+    "ratelimit": {
+      "title": "Rate limit reached",
+      "suggestion": "Wait a moment before retrying"
+    },
+    "timeout": {
+      "title": "Request timed out",
+      "suggestion": "The provider took too long to respond"
+    },
+    "unknown": {
+      "title": "Something went wrong",
+      "suggestion": "Copy the error and check the logs"
+    },
+    "keyhint": {
+      "retry": "Retry",
+      "copy": "Copy error"
+    }
   },
   "format": {
     "days_ago": "{count} days ago",
@@ -207,7 +239,9 @@
     "new_chat": "New Chat",
     "no_chats_start": "No chats yet.\\nStart a new conversation!",
     "panel": {
-      "truncated": "(… truncated · [TAB] Expand)"
+      "truncated": "(… truncated · [TAB] Expand)",
+      "stop_tts": "Click to stop voice",
+      "tts_reading": "Reading aloud…"
     },
     "recent_messages": "Recent Messages",
     "reply_placeholder": "Reply...",

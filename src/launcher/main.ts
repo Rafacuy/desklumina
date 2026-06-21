@@ -3,6 +3,7 @@ import { logger } from "../logger";
 import { isDaemonAvailable } from "./client";
 import { probeDaemonPid, fireFastPathSignal } from "./signal";
 import type { ToolCallbackPayload } from "../types";
+import { CancellationError, ChatRequestError } from "../types";
 
 const FALLBACK_DELAY_MS = Number(Bun.env.DESKLUMINA_FALLBACK_DELAY_MS) || 250;
 
@@ -192,28 +193,37 @@ async function rofiMode(): Promise<void> {
     let toolDisplay = "";
     let sawToolCallback = false;
 
-    await lumina.chat(message, (chunk, toolOutput) => {
-      if (toolOutput) {
-        sawToolCallback = true;
-        toolDisplay = appendCallbackText(toolDisplay, toolOutput);
-      } else {
-        if (sawToolCallback) {
-          callbackResponse += chunk;
+    try {
+      await lumina.chat(message, (chunk, toolOutput) => {
+        if (toolOutput) {
+          sawToolCallback = true;
+          toolDisplay = appendCallbackText(toolDisplay, toolOutput);
         } else {
-          initialResponse += chunk;
+          if (sawToolCallback) {
+            callbackResponse += chunk;
+          } else {
+            initialResponse += chunk;
+          }
         }
-      }
-    });
+      // onError + re-throw lets us wrap the original error in ChatRequestError
+      // so the chat loop can route it to the error panel.
+      }, () => {});
 
-    const cleanInitialResponse = cleanAssistantResponse(initialResponse);
-    const cleanCallbackResponse = cleanAssistantResponse(callbackResponse);
-    const cleanToolDisplay = cleanAssistantResponse(toolDisplay);
+      const cleanInitialResponse = cleanAssistantResponse(initialResponse);
+      const cleanCallbackResponse = cleanAssistantResponse(callbackResponse);
+      const cleanToolDisplay = cleanAssistantResponse(toolDisplay);
 
-    const finalOutput = [cleanInitialResponse, cleanToolDisplay, cleanCallbackResponse]
-      .filter(Boolean)
-      .join("\n\n") || "Done.";
+      const finalOutput = [cleanInitialResponse, cleanToolDisplay, cleanCallbackResponse]
+        .filter(Boolean)
+        .join("\n\n") || "Done.";
 
-    return finalOutput;
+      return finalOutput;
+    } catch (error) {
+      // User cancellation is handled upstream; don't wrap it.
+      if (error instanceof CancellationError) throw error;
+      // Preserve the original error so the panel can classify and copy it.
+      throw new ChatRequestError(error);
+    }
   });
 }
 

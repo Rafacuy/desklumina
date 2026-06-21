@@ -67,20 +67,35 @@ flowchart TD
 The project is organized into several key directories under `src/`:
 
 - **`agent/`**: The core of the agentic workflow. Implements the bounded ReAct reasoning loop, terminal signal parsing, turn-based context accumulation, history trimming, and background operation context injection.
+
 - **`ai/`**: Handles AI interactions through a multi-provider architecture. Includes provider adapters (Groq, OpenAI, Anthropic, Gemini, OpenRouter, Hugging Face), a shared streaming base, SSE parsing, model resolution with fallback chains, circuit-breaker health tracking, and the contract-driven prompt builder.
+
 - **`bin/`**: Binary utilities and helper scripts.
+
 - **`config/`**: Environment variable loading and application aliases.
+
 - **`constants/`**: Shared constants such as command timeouts, model defaults, and tool retries.
+
 - **`core/`**: High-level orchestration, containing the Lumina coordinator, Chat/Settings managers (with provider preference storage), and the tool planner.
+
 - **`daemon/`**: Background service implementation. Manages the Unix domain socket, token-based authentication, cache warming, and file watching for instant command response.
+
 - **`launcher/`**: Entry point routing. Dispatches CLI flags (`--chat`, `--exec`, `--send`, `--daemon-status`, `--version`, `provider`) to the appropriate mode (Rofi, terminal, daemon client, or exec).
+
 - **`ltm/`**: Long-term memory subsystem (SQLite persistence, async extraction, embedding generation, semantic episodic retrieval, prompt formatting).
+
 - **`tools/`**: Desktop automation implementations (apps, files, music, etc.) and their formal contracts. Includes the result store for background operation tracking, dispatch mode configuration, and the terminal command classifier.
+
 - **`tts/`**: Text-to-speech pipeline. Includes the adaptive chunker, natural voice disfluency planner, and latency masking.
-- **`ui/`**: User interface components including Rofi logic, themes, and tool result rendering.
+
+- **`ui/`**: User interface components including Rofi logic, themes, tool result rendering, and error classification. 
+
 - **`security/`**: Confirmation dialogs and dangerous command analysis.
+
 - **`logger/`**: File and console logging infrastructure.
+
 - **`types/`**: TypeScript type definitions for tools, results, and AI messages.
+
 - **`utils/`**: Shared helpers such as formatters, i18n, and path utilities.
 
 ---

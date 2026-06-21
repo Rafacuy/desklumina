@@ -29,3 +29,20 @@ export class CancellationError extends Error {
     this.name = "CancellationError";
   }
 }
+
+/**
+ * Wrapper for provider/system errors so the UI can classify and copy
+ * the original without losing it.
+ */
+export class ChatRequestError extends Error {
+  readonly originalError: unknown;
+
+  constructor(originalError: unknown) {
+    const msg = originalError instanceof Error
+      ? originalError.message
+      : String(originalError);
+    super(msg);
+    this.name = "ChatRequestError";
+    this.originalError = originalError;
+  }
+}

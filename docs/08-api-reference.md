@@ -16,6 +16,9 @@ A detailed reference for DeskLumina's internal APIs, tool contracts, and executi
 - [Tool Handler Signature](#tool-handler-signature)
 - [Chat State API](#chat-state-api)
 - [Internationalization API (i18n)](#internationalization-api-i18n)
+- [Error Classification API](#error-classification-api)
+- [Clipboard Utility API](#clipboard-utility-api)
+- [TTS API](#tts-api)
 - [Daemon Socket Protocol](#daemon-socket-protocol)
 
 ---
@@ -400,6 +403,81 @@ Returns the translated string for the given key based on the current system lang
 
 ### `tf(key: string, vars: Record<string, string | number>): string`
 Returns a translated string with parameter interpolation (e.g., `{varName}`).
+
+---
+
+## Error Classification API
+
+**File**: `src/ui/error-classify.ts`
+
+Classifies arbitrary errors into one of seven categories for the Rofi error UI.
+
+### `classifyError(error: unknown): ErrorCategory`
+
+Maps a thrown value to a category. The check order prioritizes specific signal classes (auth, ratelimit) before coarser heuristics (network, timeout, provider).
+
+### `ErrorCategory` Type
+
+```typescript
+type ErrorCategory =
+  | "network"
+  | "provider"
+  | "model"
+  | "auth"
+  | "ratelimit"
+  | "timeout"
+  | "unknown";
+```
+
+### `buildRawErrorString(error: unknown): string`
+
+Constructs the full, unmodified error string used by the Copy action. Includes `rawPayload`, message, HTTP status code, and attempted models list when available.
+
+### `truncateRawPreview(raw: string): string`
+
+Truncates a raw error string to a 60-character preview with a Unicode-safe ellipsis (`···`). Counts code points, not UTF-16 units.
+
+### `CATEGORY_I18N_KEYS`
+
+Mapping of each `ErrorCategory` to its localized title and suggestion i18n keys (e.g., `error.network.title`, `error.network.suggestion`).
+
+---
+
+## Clipboard Utility API
+
+**File**: `src/utils/system/clipboard-raw.ts`
+
+Provides clipboard operations for error copying and other raw text operations.
+
+### `resolveClipboardBinary(): "clipcatctl" | "wl-copy" | "xclip" | null`
+
+Resolves the best available clipboard utility based on session type and system availability. Resolution order:
+
+1. `clipcatctl` (if available)
+2. `wl-copy` (if Wayland session)
+3. `xclip` (always available as fallback)
+
+### `copyRawErrorToClipboard(text: string): Promise<boolean>`
+
+Copies the given text to the system clipboard using the resolved binary. Returns `true` on success, `false` if no clipboard utility is found or the operation fails. Uses `Bun.spawn` for all operations.
+
+---
+
+## TTS API
+
+**File**: `src/ai/tts.ts`
+
+### `isTTSPlaying(): boolean`
+
+Returns `true` if a TTS playback session is currently active and not cancelled. Used internally to track audio state and trigger response panel auto-dismiss when playback completes.
+
+### `cancelTTS(): Promise<void>`
+
+Cancels the active TTS session, kills all associated audio processes, and clears the session reference. Thread-safe via `AsyncMutex`.
+
+### `textToSpeech(text: string): Promise<void>`
+
+Generates and plays audio for the given text. Uses adaptive chunking, optional natural voice disfluency planning, and latency masking. The response panel is auto-dismissed via `dismissResponsePanel()` when playback completes successfully.
 
 ---
 

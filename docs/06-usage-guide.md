@@ -27,7 +27,20 @@ DeskLumina's primary interface is built on **Rofi**.
 
 - **Type to Chat**: Type your natural language command and press `Enter`.
 - **Tool Display**: If enabled, real-time tool execution updates appear under the assistant response.
-- **TTS Feedback**: If enabled, the assistant will speak its final response.
+- **TTS Feedback**: If enabled, the assistant will speak its final response. The response panel auto-dismisses when TTS playback completes.
+
+### Error Panel
+
+When a request fails, DeskLumina displays an inline error panel with a categorized message and suggestion. Errors are classified into seven categories: network, provider, model, auth, ratelimit, timeout, and unknown.
+
+**Keyboard Shortcuts** (available when an error panel is shown):
+
+| Shortcut | Action |
+|----------|--------|
+| `Alt+R` | Retry the last request |
+| `Alt+C` | Copy the full error string to the clipboard |
+
+The error panel uses the clipboard utilities `clipcatctl`, `wl-copy`, or `xclip` (resolved in that order based on availability and session type). No visual "Copied!" feedback is shown to avoid re-launching Rofi.
 
 ### Chat History Preview
 

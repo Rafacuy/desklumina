@@ -2,6 +2,7 @@ import { describe, expect, test, mock, spyOn, beforeEach, afterEach } from "bun:
 import {
   cleanText,
   cancelTTS,
+  isTTSPlaying,
 } from "../src/ai/tts";
 import { playFiller, FillerPool, resetFillerAvailabilityCache } from "../src/tts/natural-voices";
 import { DisfluencyPlanner } from "../src/tts/disfluency-planner";
@@ -223,5 +224,11 @@ describe("textToSpeech voice map", () => {
 describe("cancelTTS export", () => {
   test("is exported and callable", async () => {
     await expect(cancelTTS()).resolves.toBeUndefined();
+  });
+});
+
+describe("isTTSPlaying", () => {
+  test("returns false when no TTS session is active", () => {
+    expect(isTTSPlaying()).toBe(false);
   });
 });

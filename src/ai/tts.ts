@@ -10,6 +10,7 @@ import { FillerPool, playFiller, type FillerPlayHandle } from "../tts/natural-vo
 import { DisfluencyPlanner, type PlaybackPlan, type ChunkJob } from "../tts/disfluency-planner";
 import { AsyncMutex } from "../utils/async-mutex";
 import type { NaturalVoiceSettings } from "../types/settings";
+import { dismissResponsePanel } from "../ui/rofi";
 export type { ChunkJob } from "../tts/disfluency-planner";
 
 interface ChunkMetrics {
@@ -322,6 +323,10 @@ export async function cancelTTS(): Promise<void> {
   });
 }
 
+export function isTTSPlaying(): boolean {
+  return activeSession !== null && !activeSession.isCancelled();
+}
+
 export async function textToSpeech(text: string): Promise<void> {
   const settings = settingsManager.get();
   const lang = settings.language;
@@ -611,6 +616,7 @@ export async function textToSpeech(text: string): Promise<void> {
     await playbackPromise;
     if (session.isCancelled()) return;
     logger.info("tts", "Playback complete");
+    dismissResponsePanel();
 
     if (generationErrors.length > 0) {
       throw generationErrors[0];
@@ -621,6 +627,9 @@ export async function textToSpeech(text: string): Promise<void> {
     throw error;
   } finally {
     session.finish();
+    if (activeSession === session) {
+      activeSession = null;
+    }
     for (const job of jobs) {
       try {
         if (existsSync(job.audioFile)) {

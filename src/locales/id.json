@@ -61,7 +61,39 @@
   "error": {
     "fatal_groq": "❌ FATAL: GROQ_API_KEY tidak ditemukan di .env",
     "fatal_model": "❌ FATAL: MODEL_NAME tidak ditemukan di .env",
-    "with_message": "Kesalahan: {message}"
+    "with_message": "Kesalahan: {message}",
+    "network": {
+      "title": "Tidak dapat terhubung",
+      "suggestion": "Periksa koneksi internet Anda"
+    },
+    "provider": {
+      "title": "Penyedia tidak tersedia",
+      "suggestion": "Coba ganti ke penyedia lain"
+    },
+    "model": {
+      "title": "Model tidak tersedia",
+      "suggestion": "Model yang dipilih mungkin telah dihapus"
+    },
+    "auth": {
+      "title": "Otentikasi gagal",
+      "suggestion": "Periksa API key di konfigurasi"
+    },
+    "ratelimit": {
+      "title": "Rate limit tercapai",
+      "suggestion": "Tunggu sebentar sebelum mencoba lagi"
+    },
+    "timeout": {
+      "title": "Permintaan kehabisan waktu",
+      "suggestion": "Penyedia terlalu lama merespons"
+    },
+    "unknown": {
+      "title": "Terjadi kesalahan",
+      "suggestion": "Salin kesalahan dan periksa log"
+    },
+    "keyhint": {
+      "retry": "Coba lagi",
+      "copy": "Salin kesalahan"
+    }
   },
   "format": {
     "days_ago": "{count} hari yang lalu",
@@ -207,7 +239,9 @@
     "new_chat": "Chat Baru",
     "no_chats_start": "Belum ada chat.\\nMulai percakapan baru!",
     "panel": {
-      "truncated": "(… terpotong · [TAB] Perluas)"
+      "truncated": "(… terpotong · [TAB] Perluas)",
+      "stop_tts": "Klik untuk menghentikan suara",
+      "tts_reading": "Membacakan…"
     },
     "recent_messages": "Pesan Terakhir",
     "reply_placeholder": "Balas...",

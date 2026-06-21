@@ -1,18 +1,31 @@
 import { spawn } from "bun";
 import type { ChatManager, Chat } from "../core/services/chat-manager";
 import { t } from "../utils/localization/i18n";
-import { CancellationError } from "../types";
+import { CancellationError, ChatRequestError } from "../types";
 import { logger } from "../logger";
 import { escapeHtml } from "../utils/formatting/format";
+import {
+  classifyError,
+  buildRawErrorString,
+  truncateRawPreview,
+  CATEGORY_I18N_KEYS,
+} from "./error-classify";
+import { copyRawErrorToClipboard } from "../utils/system/clipboard-raw";
 import { markdownToPango, wrapPangoText } from "../utils/formatting/pango";
 import { formatRofiResponse } from "../utils/formatting/table-formatter";
 import { randomLoader, randomLoaderImage } from "./loader";
 import { getThemePathWithOverride } from "./theme-cache";
+import { isTTSPlaying, cancelTTS } from "../ai";
 
 const STREAM_BATCH_MS = 50;
 const MAX_LISTVIEW_LINES = 12;
 const WRAP_WIDTH = 50;
 const MUTED_COLOR = "#A79F96";
+const TTS_CANCEL_COLOR = "#e05252";
+const TTS_BUTTON_GLYPH = "■";
+
+let activeMenuProc: ReturnType<typeof spawn> | null = null;
+let responsePanelAutoDismissed = false;
 
 //Pre-computed static theme fragments 
 // to avoid re-allocation on every spawn
@@ -154,29 +167,41 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
 }
 
 /**
- * Generic Rofi menu helper
+ * Generic Rofi menu helper.
+ * `kbCustom1` defaults to `"Tab"`; pass a value to override.
+ * `kbCustom2` is only passed through when explicitly set.
  */
+export interface RofiMenuOptions {
+  kbCustom1?: string;
+  kbCustom2?: string;
+}
+
 export async function rofiMenu(
-  items: string, 
-  prompt: string = "Lumina", 
+  items: string,
+  prompt: string = "Lumina",
   themeOverride: string = "",
   placeholder: string = "",
   hints: string = "",
   message: string = "",
   isMessagePango: boolean = false,
-  isMarkupRows: boolean = false
+  isMarkupRows: boolean = false,
+  options?: RofiMenuOptions
 ): Promise<{ output: string | null; code: number }> {
   const args = [
-    "rofi", 
-    "-dmenu", 
-    "-i", 
+    "rofi",
+    "-dmenu",
+    "-i",
     "-p", prompt,
     "-theme", getThemePathWithOverride(),
     "-kb-mode-next", "",
     "-kb-row-tab", "",
     "-kb-element-next", "",
-    "-kb-custom-1", "Tab"
+    "-kb-custom-1", options?.kbCustom1 ?? "Tab"
   ];
+
+  if (options?.kbCustom2 !== undefined) {
+    args.push("-kb-custom-2", options.kbCustom2);
+  }
   
   if (isMessagePango) {
     args.push("-markup");
@@ -207,6 +232,11 @@ export async function rofiMenu(
     stdout: "pipe",
   });
 
+  activeMenuProc = proc;
+  proc.exited.finally(() => {
+    if (activeMenuProc === proc) activeMenuProc = null;
+  });
+
   proc.stdin.write(items || "");
   proc.stdin.end();
 
@@ -217,6 +247,13 @@ export async function rofiMenu(
     output: output.trim() || null, 
     code 
   };
+}
+
+export function dismissResponsePanel(): void {
+  if (activeMenuProc) {
+    responsePanelAutoDismissed = true;
+    try { activeMenuProc.kill(); } catch {}
+  }
 }
 
 export async function rofiExpandedResponse(fullMessage: string): Promise<void> {
@@ -296,7 +333,8 @@ export async function rofiExpandedResponse(fullMessage: string): Promise<void> {
 export async function rofiResponsePanel(
   initialMessage: string,
   onToolUpdate?: (id: string, status: string, detail?: string[]) => void
-): Promise<{ action: "reply" | "expand" | "exit"; input?: string }> {
+): Promise<{ action: "reply" | "expand" | "cancel_tts" | "tts_complete" | "exit"; input?: string }> {
+  responsePanelAutoDismissed = false;
   if (onToolUpdate) {
     onToolUpdate("", "", []);
   }
@@ -329,7 +367,27 @@ export async function rofiResponsePanel(
     hintText = `<span foreground="${MUTED_COLOR}">  ${escapeHtml(t("ui.panel.truncated"))} </span>`;
   }
 
-  const formattedMessage = `<b>󱜙 ${escapeHtml(t("common.lumina"))}</b>\n\n${displayLines.join('\n')}${hintText ? '\n' + hintText : ''}`;
+  const ttsActive = isTTSPlaying();
+  const ttsButtonTheme = ttsActive
+    ? `configuration { kb-custom-2: ""; }
+       inputbar {
+         children: [prompt, entry, button];
+       }
+       button {
+         action: "kb-custom-2";
+          content: "${TTS_BUTTON_GLYPH}";
+         cursor: pointer;
+         text-color: ${TTS_CANCEL_COLOR};
+         font: "JetBrainsMono Nerd Font Medium 10";
+         padding: 0px 8px;
+         expand: false;
+         background-color: transparent;
+         border-radius: 4px;
+       }`
+    : "";
+
+  const ttsHint = ttsActive ? ` <span foreground="${MUTED_COLOR}" size="small">󰕾 ${escapeHtml(t("ui.panel.tts_reading"))}</span>` : "";
+  const formattedMessage = `<b>󱜙 ${escapeHtml(t("common.lumina"))}</b>${ttsHint}\n\n${displayLines.join('\n')}${hintText ? '\n' + hintText : ''}`;
 
   const themeOverride = `
     window {
@@ -382,6 +440,7 @@ export async function rofiResponsePanel(
     listview {
       enabled: false;
     }
+    ${ttsButtonTheme}
   `;
 
   const result = await rofiMenu(
@@ -393,6 +452,16 @@ export async function rofiResponsePanel(
     formattedMessage,
     true
   );
+
+  if (result.code === 11) {
+    await cancelTTS();
+    return { action: "cancel_tts" };
+  }
+
+  if (responsePanelAutoDismissed) {
+    responsePanelAutoDismissed = false;
+    return { action: "tts_complete" };
+  }
 
   if (result.code === 10 && needsTruncation) {
     return { action: "expand" };
@@ -460,6 +529,241 @@ export async function rofiDisplay(message: string): Promise<void> {
   await proc.exited;
 }   
 
+function spawnLoaderOverlay(): ReturnType<typeof spawn> {
+  const loaderImage = randomLoaderImage();
+  const loaderTheme = loaderImage
+    ? `
+      window {
+        location: southeast;
+        anchor: southeast;
+        width: 360px;
+        border-radius: 0px;
+        border: 0px;
+        background-color: transparent;
+        x-offset: -24px;
+        y-offset: -12px;
+      }
+      mainbox {
+        orientation: vertical;
+        children: [icon-loader, loader-frame];
+        padding: 0px;
+        spacing: 0px;
+        background-color: transparent;
+      }
+      icon-loader {
+        filename: "${escapeRasiString(loaderImage)}";
+        width: 200px;
+        size: 200px;
+        expand: false;
+        horizontal-align: 0.5;
+        vertical-align: 1.0;
+        margin: 0px;
+        padding: 0px;
+        border: 0px;
+        background-color: transparent;
+      }
+      loader-frame {
+        orientation: vertical;
+        children: [message];
+        padding: 0px;
+        spacing: 0px;
+        margin: 0px;
+        border: 1px;
+        border-radius: 20px;
+        border-color: @border-subtle;
+        background-color: @bg;
+      }
+      inputbar {
+        enabled: false;
+      }
+      listview {
+        enabled: false;
+      }
+      message {
+        padding: 14px 20px;
+        border: 0px;
+        border-radius: 0px;
+        background-color: transparent;
+      }
+      textbox {
+        text-color: @accent-color;
+        font: "JetBrainsMono Nerd Font Medium 10";
+        horizontal-align: 0.5;
+        vertical-align: 0.5;
+        wrap: false;
+      }
+    `
+    : `
+      window {
+        location: southeast;
+        anchor: southeast;
+        width: 360px;
+        height: 52px;
+        border-radius: 20px;
+        border: 1px;
+        border-color: @border-subtle;
+        background-color: @bg;
+        x-offset: -24px;
+        y-offset: -12px;
+      }
+      mainbox {
+        children: [message];
+        padding: 0px;
+        spacing: 0px;
+      }
+      inputbar {
+        enabled: false;
+      }
+      listview {
+        enabled: false;
+      }
+      message {
+        padding: 14px 20px;
+        background-color: transparent;
+      }
+      textbox {
+        text-color: @accent-color;
+        font: "JetBrainsMono Nerd Font Medium 10";
+        horizontal-align: 0.5;
+        vertical-align: 0.5;
+        wrap: false;
+      }
+    `;
+
+  const proc = spawn([
+    "rofi", "-dmenu",
+    "-theme", getThemePathWithOverride(),
+    "-theme-str", loaderTheme,
+    "-mesg", escapeHtml(randomLoader()),
+  ], { stdin: "pipe", stdout: "pipe" });
+  proc.stdin.end();
+  return proc;
+}
+
+// configured color for error UI
+const ERROR_TITLE_COLOR = "#962626";
+const ERROR_SUGGESTION_COLOR = "#000000";
+const ERROR_RAW_COLOR = "#2E2A2658";
+const ERROR_KEYHINT_COLOR = "#50697a";
+
+interface ErrorPanelResult {
+  action: "retry" | "copy" | "reply" | "exit";
+  input?: string;
+}
+
+/**
+ * Show a Rofi error panel for a failed chat request.
+ *
+ * Alt+R (kb-custom-1, exit 10) retries.
+ * Alt+C (kb-custom-2, exit 11) copies the raw error to the clipboard
+ * and re-renders the same panel so the user can retry or copy again.
+ */
+export async function rofiErrorPanel(originalError: unknown): Promise<ErrorPanelResult> {
+  // Category is stable across copy re-renders.
+  const category = classifyError(originalError);
+  const rawError = buildRawErrorString(originalError);
+  const keys = CATEGORY_I18N_KEYS[category]!;
+  const title = t(keys.title);
+  const suggestion = t(keys.suggestion);
+  const preview = truncateRawPreview(rawError);
+  const retryLabel = t("error.keyhint.retry");
+  const copyLabel = t("error.keyhint.copy");
+
+  const formattedMessage = [
+    `<span foreground="${ERROR_TITLE_COLOR}" weight="bold">⚠  ${escapeHtml(title)}</span>`,
+    `<span foreground="${ERROR_SUGGESTION_COLOR}">   ${escapeHtml(suggestion)}</span>`,
+    ``,
+    `<span font_family="JetBrainsMono Nerd Font" foreground="${ERROR_RAW_COLOR}" size="small">   ${escapeHtml(preview)}</span>`,
+    ``,
+    `<span foreground="${ERROR_KEYHINT_COLOR}">  ALT+R  ${escapeHtml(retryLabel)}      ALT+C  ${escapeHtml(copyLabel)}</span>`,
+  ].join("\n");
+
+  const themeOverride = `
+    window {
+      width: 540px;
+      height: 280px;
+      border-radius: 20px;
+      border: 1px;
+      border-color: @border-subtle;
+      background-color: @bg;
+    }
+    mainbox {
+      children: [message, inputbar];
+      padding: 0px;
+      spacing: 0px;
+      background-color: transparent;
+    }
+    message {
+      padding: 24px 24px 16px 24px;
+      border: 0;
+      background-color: transparent;
+      expand: true;
+    }
+    textbox {
+      text-color: @text-primary;
+      font: "JetBrainsMono Nerd Font 10";
+      expand: true;
+      wrap: true;
+    }
+    inputbar {
+      border: 1px 0px 0px 0px;
+      border-color: @border-subtle;
+      border-radius: 0px 0px 20px 20px;
+      margin: 0px;
+      padding: 14px 24px;
+      children: [prompt, entry];
+    }
+    prompt {
+      text-color: @accent-color;
+      font: "JetBrainsMono Nerd Font Medium 10";
+      vertical-align: 0.5;
+    }
+    entry {
+      placeholder: "${escapeRasiString(t("ui.type_reply"))}";
+      placeholder-color: @text-muted;
+      font: "JetBrainsMono Nerd Font 10";
+      vertical-align: 0.5;
+      cursor-color: @accent-bloom;
+      cursor-width: 1px;
+    }
+    listview {
+      enabled: false;
+    }
+  `;
+
+  while (true) {
+    const result = await rofiMenu(
+      "",
+      t("common.lumina"),
+      themeOverride,
+      t("ui.type_reply"),
+      "",
+      formattedMessage,
+      true,
+      false,
+      { kbCustom1: "Alt+r", kbCustom2: "Alt+c" }
+    );
+
+    if (result.code === 10) {
+      return { action: "retry" };
+    }
+
+    if (result.code === 11) {
+      const ok = await copyRawErrorToClipboard(rawError);
+      if (ok) {
+        logger.info("ui", "Error copied to clipboard (Alt+C)");
+      }
+      continue;
+    }
+
+    if (result.code === 0 && result.output) {
+      return { action: "reply", input: result.output };
+    }
+
+    return { action: "exit" };
+  }
+}
+
 export async function rofiChatLoop(
   chatManager: ChatManager,
   onMessage: (message: string) => Promise<string>
@@ -483,115 +787,9 @@ export async function rofiChatLoop(
           
           while (currentInput) {
             const userMessageIndex = chatManager.getCurrentChat()?.messages.length || 0;
+            let loadingProc: ReturnType<typeof spawn> | null = null;
             try {
-              const loaderImage = randomLoaderImage();
-              const loaderTheme = loaderImage
-                ? `
-                  window {
-                    location: southeast;
-                    anchor: southeast;
-                    width: 360px;
-                    border-radius: 0px;
-                    border: 0px;
-                    background-color: transparent;
-                    x-offset: -24px;
-                    y-offset: -12px;
-                  }
-                  mainbox {
-                    orientation: vertical;
-                    children: [icon-loader, loader-frame];
-                    padding: 0px;
-                    spacing: 0px;
-                    background-color: transparent;
-                  }
-                  icon-loader {
-                    filename: "${escapeRasiString(loaderImage)}";
-                    width: 200px;
-                    size: 200px;
-                    expand: false;
-                    horizontal-align: 0.5;
-                    vertical-align: 1.0;
-                    margin: 0px;
-                    padding: 0px;
-                    border: 0px;
-                    background-color: transparent;
-                  }
-                  loader-frame {
-                    orientation: vertical;
-                    children: [message];
-                    padding: 0px;
-                    spacing: 0px;
-                    margin: 0px;
-                    border: 1px;
-                    border-radius: 20px;
-                    border-color: @border-subtle;
-                    background-color: @bg;
-                  }
-                  inputbar {
-                    enabled: false;
-                  }
-                  listview {
-                    enabled: false;
-                  }
-                  message {
-                    padding: 14px 20px;
-                    border: 0px;
-                    border-radius: 0px;
-                    background-color: transparent;
-                  }
-                  textbox {
-                    text-color: @accent-color;
-                    font: "JetBrainsMono Nerd Font Medium 10";
-                    horizontal-align: 0.5;
-                    vertical-align: 0.5;
-                    wrap: false;
-                  }
-                `
-                : `
-                  window {
-                    location: southeast;
-                    anchor: southeast;
-                    width: 360px;
-                    height: 52px;
-                    border-radius: 20px;
-                    border: 1px;
-                    border-color: @border-subtle;
-                    background-color: @bg;
-                    x-offset: -24px;
-                    y-offset: -12px;
-                  }
-                  mainbox {
-                    children: [message];
-                    padding: 0px;
-                    spacing: 0px;
-                  }
-                  inputbar {
-                    enabled: false;
-                  }
-                  listview {
-                    enabled: false;
-                  }
-                  message {
-                    padding: 14px 20px;
-                    background-color: transparent;
-                  }
-                  textbox {
-                    text-color: @accent-color;
-                    font: "JetBrainsMono Nerd Font Medium 10";
-                    horizontal-align: 0.5;
-                    vertical-align: 0.5;
-                    wrap: false;
-                  }
-                `;
-
-              const loadingProc = spawn([
-                "rofi", "-dmenu",
-                "-theme", getThemePathWithOverride(),
-                "-theme-str", loaderTheme,
-                "-mesg", escapeHtml(randomLoader()),
-              ], { stdin: "pipe", stdout: "pipe" });
-
-              loadingProc.stdin.end();
+              loadingProc = spawnLoaderOverlay();
 
               const response = await onMessage(currentInput);
 
@@ -607,6 +805,8 @@ export async function rofiChatLoop(
                   
                   if (panelResult.action === "expand") {
                     await rofiExpandedResponse(fullResponse);
+                  } else if (panelResult.action === "cancel_tts" || panelResult.action === "tts_complete") {
+                    showResponse = true;
                   } else if (panelResult.action === "reply" && panelResult.input) {
                     currentInput = panelResult.input;
                     showResponse = false;
@@ -619,6 +819,95 @@ export async function rofiChatLoop(
                 currentInput = null;
               }
             } catch (error) {
+              if (loadingProc) {
+                loadingProc.kill();
+                await loadingProc.exited.catch(() => {});
+              }
+
+              if (error instanceof ChatRequestError) {
+                let activeError: unknown = error.originalError;
+
+                // lumina.chat() appends the user message internally; undo it.
+                const rollbackMessages = () => {
+                  const currentChat = chatManager.getCurrentChat();
+                  if (currentChat) {
+                    const messagesToRemove = currentChat.messages.length - userMessageIndex;
+                    for (let i = 0; i < messagesToRemove; i++) {
+                      chatManager.removeLastMessage();
+                    }
+                  }
+                };
+                rollbackMessages();
+
+                let continueErrorLoop = true;
+                while (continueErrorLoop) {
+                  const panelResult = await rofiErrorPanel(activeError);
+                  if (panelResult.action === "retry") {
+                    if (!currentInput) {
+                      continueErrorLoop = false;
+                      break;
+                    }
+                    const retryInput = currentInput;
+                    try {
+                      loadingProc = spawnLoaderOverlay();
+
+                      const retryResponse = await onMessage(retryInput);
+
+                      if (loadingProc) {
+                        loadingProc.kill();
+                        await loadingProc.exited.catch(() => {});
+                      }
+
+                      if (retryResponse && retryResponse !== "Done.") {
+                        let showResponse = true;
+                        let fullResponse = retryResponse;
+                        while (showResponse) {
+                          const rp = await rofiResponsePanel(fullResponse);
+                          if (rp.action === "expand") {
+                            await rofiExpandedResponse(fullResponse);
+                          } else if (rp.action === "cancel_tts" || rp.action === "tts_complete") {
+                            showResponse = true;
+                          } else if (rp.action === "reply" && rp.input) {
+                            currentInput = rp.input;
+                            showResponse = false;
+                          } else {
+                            currentInput = null;
+                            showResponse = false;
+                          }
+                        }
+                      } else {
+                        currentInput = null;
+                      }
+                      continueErrorLoop = false;
+                    } catch (retryError) {
+                      if (loadingProc) {
+                        loadingProc.kill();
+                        await loadingProc.exited.catch(() => {});
+                      }
+                      if (retryError instanceof ChatRequestError) {
+                        rollbackMessages();
+                        activeError = retryError.originalError;
+                        continue;
+                      }
+                      if (retryError instanceof CancellationError) {
+                        currentInput = null;
+                        continueErrorLoop = false;
+                        break;
+                      }
+                      logger.error("ui", `Retry error: ${retryError instanceof Error ? retryError.message : String(retryError)}`);
+                      throw retryError;
+                    }
+                  } else if (panelResult.action === "reply" && panelResult.input) {
+                    currentInput = panelResult.input;
+                    continueErrorLoop = false;
+                  } else {
+                    currentInput = null;
+                    continueErrorLoop = false;
+                  }
+                }
+                continue;
+              }
+
               const isCancellation = 
                 error instanceof CancellationError || 
                 (error && typeof error === 'object' && 'name' in error && error.name === "CancellationError");

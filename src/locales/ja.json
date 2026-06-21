@@ -61,7 +61,39 @@
   "error": {
     "fatal_groq": "❌ 致命的: .env に GROQ_API_KEY が見つかりません",
     "fatal_model": "❌ 致命的: .env に MODEL_NAME が見つかりません",
-    "with_message": "エラー: {message}"
+    "with_message": "エラー: {message}",
+    "network": {
+      "title": "接続できません",
+      "suggestion": "インターネット接続を確認してください"
+    },
+    "provider": {
+      "title": "プロバイダーが利用できません",
+      "suggestion": "別のプロバイダーに切り替えてみてください"
+    },
+    "model": {
+      "title": "モデルが利用できません",
+      "suggestion": "選択したモデルが削除された可能性があります"
+    },
+    "auth": {
+      "title": "認証に失敗しました",
+      "suggestion": "設定の API キーを確認してください"
+    },
+    "ratelimit": {
+      "title": "レート制限に達しました",
+      "suggestion": "少し待ってから再試行してください"
+    },
+    "timeout": {
+      "title": "リクエストがタイムアウトしました",
+      "suggestion": "プロバイダーの応答に時間がかかりすぎました"
+    },
+    "unknown": {
+      "title": "問題が発生しました",
+      "suggestion": "エラーをコピーしてログを確認してください"
+    },
+    "keyhint": {
+      "retry": "再試行",
+      "copy": "エラーをコピー"
+    }
   },
   "format": {
     "days_ago": "{count} 日前",
@@ -207,7 +239,9 @@
     "new_chat": "新規チャット",
     "no_chats_start": "チャット履歴がありません。\\n新しい会話を始めましょう！",
     "panel": {
-      "truncated": "(… 省略 · [TAB] 展開)"
+      "truncated": "(… 省略 · [TAB] 展開)",
+      "stop_tts": "クリックして音声を停止",
+      "tts_reading": "読み上げ中…"
     },
     "recent_messages": "最近のメッセージ",
     "reply_placeholder": "返信...",
