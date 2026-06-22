@@ -240,6 +240,60 @@ The function reads the current persona ID from `settingsManager.get().persona`, 
 
 ---
 
+## Settings UI Architecture
+
+Understanding this structure is necessary when adding new settings or panels.
+
+### Module Structure
+
+| Module | Purpose |
+|--------|---------|
+| `src/ui/settings.ts` | Main orchestration, panel loop, row building |
+| `src/ui/settings/rows.ts` | Row type definitions (`SettingsRow`, `NavRow`, `ToggleRow`, `SectionRow`) and render functions |
+| `src/ui/settings/tokens.ts` | Color token resolution (light/dark via `gsettings`) |
+| `src/ui/settings/footer.ts` | Contextual footer hint builder (`buildFooterHint`) |
+| `src/ui/settings/section.ts` | Section header renderer (`sectionHeader`) |
+| `src/constants/settings-keys.ts` | Typed `SettingKey` union for toggle row keys |
+
+### Row Types
+
+Three row types compose the settings panel:
+
+1. **SectionRow** (`type: "section"`): Non-selectable divider with label.
+2. **NavRow** (`type: "nav"`): Navigates to a sub-panel or value picker. Includes `icon`, `label`, optional `value`, `panel` identifier, optional `key` (SettingKey), and `depth` (0, 1, or 2).
+3. **ToggleRow** (`type: "toggle"`): Boolean toggle with pill badge. Includes `icon`, `label`, `key` (SettingKey), `value` (boolean), and `depth`.
+
+Maximum nesting depth is 2 (L0 parent, L1 child, L2 grandchild). Sub-rows are conditionally rendered based on parent toggle state.
+
+### Adding a New Toggle Setting
+
+1. Add the key to `SettingKey` in `src/constants/settings-keys.ts`.
+2. Add the toggle row to `buildSettingsRows()` in `src/ui/settings.ts` with the correct `key`.
+3. Add a case to `applyToggle()` to call the appropriate `settingsManager` method.
+4. Add the `settingsManager` method in `src/core/services/settings-manager.ts` if it doesn't exist.
+5. Add i18n strings for the label in all locale files.
+
+### Adding a New Sub-Panel
+
+1. Add a new `panel` identifier string to the parent `NavRow`.
+2. Add a case in `handleNavPanel()` to call your new panel function.
+3. Implement the panel function (e.g., `promptMyNewPanel()`) following the pattern of `promptPersonaPanel()` or `promptTTSVoicePanel()`.
+4. For simple value pickers, use `rofiMenu` with `format: "i"` and a list of options.
+5. For nested settings panels with toggles, reuse `buildSettingsRows` pattern with `renderRow` and `promptSettings` recursion.
+
+### Color Tokens and Theming
+
+The panel resolves the GTK color scheme at runtime via `resolveColorScheme()` (checks `org.gnome.desktop.interface color-scheme`, falls back to theme name). Tokens are defined in `LIGHT_TOKENS` and `DARK_TOKENS` in `tokens.ts`. The selected-row accent border is defined in `src/ui/themes/settings.rasi`.
+
+### Footer Hints
+
+Contextual hints use i18n keys:
+- `settings.hint.open`: for navigation rows
+- `settings.hint.toggle`: for toggle rows
+- `settings.hint.close`: for all rows
+
+---
+
 ## Adding New i18n Strings
 
 DeskLumina uses a centralized i18n system located in `src/utils/localization/i18n.ts`.

@@ -132,6 +132,13 @@
     "install_rofi_hint": "Silakan pasang rofi untuk menggunakan konfirmasi keamanan",
     "rofi_not_installed": "rofi tidak terpasang"
   },
+  "settings": {
+    "hint": {
+      "open": "↵ Buka",
+      "toggle": "↵ Alihkan",
+      "close": "esc Tutup"
+    }
+  },
   "tool": {
     "action_complete": "Tindakan selesai",
     "actions_completed": "Tindakan selesai",

@@ -274,14 +274,6 @@ DeskLumina implements a **Human-in-the-Loop** security model.
 
 ---
 
-## UI Layer
-
-- **Rofi Integration**: Uses Rofi's `dmenu` mode for a lightweight, floating chat interface.
-- **Theming**: Powered by `.rasi` files, allowing for deep customization.
-- **Tool Display**: `src/ui/tool-display.ts` renders tool results into human-readable tables and lists within the chat. Terminal signals are hidden from the user-facing UI to maintain a clean experience.
-
----
-
 ## Next Steps
 
 - 🔧 **[Tools Reference](07-tools-reference.md)**: Learn about the available tools and their contracts.

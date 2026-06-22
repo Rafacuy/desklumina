@@ -132,6 +132,13 @@
     "install_rofi_hint": "Please install it to use security confirmations",
     "rofi_not_installed": "rofi is not installed"
   },
+  "settings": {
+    "hint": {
+      "open": "↵ Open",
+      "toggle": "↵ Toggle",
+      "close": "esc Close"
+    }
+  },
   "tool": {
     "action_complete": "Action complete",
     "actions_completed": "Actions completed",

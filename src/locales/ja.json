@@ -132,6 +132,13 @@
     "install_rofi_hint": "セキュリティ確認を使用するには、rofi をインストールしてください",
     "rofi_not_installed": "rofi がインストールされていません"
   },
+  "settings": {
+    "hint": {
+      "open": "↵ 開く",
+      "toggle": "↵ 切り替え",
+      "close": "esc 閉じる"
+    }
+  },
   "tool": {
     "action_complete": "アクション完了",
     "actions_completed": "アクションが完了しました",

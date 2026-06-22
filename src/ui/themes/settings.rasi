@@ -1,0 +1,20 @@
+/* Settings panel theme
+ * 
+ * Overrides lumina.rasi for Settings UI.
+ */
+@import "lumina.rasi"
+
+* {
+    bg-alt: @surface-alt;
+}
+
+element selected.normal {
+    background-color: @bg-alt;
+}
+
+element selected.normal element-text {
+    border:       0 0 0 2px;
+    border-color: #7F77DD;
+    padding:      2px 0 2px 8px;
+    border-radius: 0;
+}

@@ -1,288 +1,486 @@
+import { homedir } from "os";
+import { join } from "path";
 import { getLang, t } from "../utils/localization/i18n";
 import { settingsManager } from "../core/services/settings-manager";
-import type { Settings } from "../types";
-import { spawn } from "bun";
 import { rofiMenu } from "./rofi";
+import { resolveColorScheme, getColorTokens, type ColorTokens } from "./settings/tokens";
+import { buildFooterHint } from "./settings/footer";
+import { renderRow, type SettingsRow, type NavRow } from "./settings/rows";
+import type { SettingKey } from "../constants/settings-keys";
 
-export async function rofiSettings(): Promise<boolean> {
+const SETTINGS_THEME_PATH = join(homedir(), ".config/desklumina/src/ui/themes/settings.rasi");
+
+const LANG_NAMES: Record<string, string> = {
+  id: "Bahasa Indonesia",
+  en: "English",
+  ja: "日本語",
+};
+
+const PERSONAS = ["default", "tsundere", "catgirl", "deredere", "kuudere", "dandere"];
+
+function buildSettingsRows(lang: string): SettingsRow[] {
   const settings = settingsManager.get();
-  const currentLang = getLang();
+  const langDisplay = LANG_NAMES[lang] ?? lang;
 
-  const langNames: Record<string, string> = {
-    id: "Bahasa Indonesia",
-    en: "English",
-    ja: "日本語"
-  };
-  const langDisplay = langNames[currentLang] || currentLang;
+  const rows: SettingsRow[] = [];
 
-  const getToggleLabel = (feature: keyof Settings["features"], icon: string, label: string) => {
-    const isEnabled = settings.features[feature];
-    const stateIcon = isEnabled ? "󰄬" : "󱃓";
-    const stateText = isEnabled ? t("common.on") : t("common.off");
-    return `${icon} ${label} │ ${stateIcon} ${stateText}`;
-  };
-  const SECTION_PREFIX = "── ";
-  const section = (label: string) => `${SECTION_PREFIX}${label.toUpperCase()}`;
+  rows.push({ type: "section", label: t("ui.settings.section.ai") });
+  rows.push({
+    type: "nav",
+    icon: "󰙨",
+    label: t("ui.settings.persona"),
+    value: settings.persona,
+    panel: "persona",
+  });
+  rows.push({
+    type: "toggle",
+    icon: "󰔡",
+    label: t("ui.settings.tts"),
+    key: "tts.enabled",
+    value: settings.features.tts,
+  });
 
-  const menuItems: string[] = [
-    section(t("ui.settings.section.ai")),
-    `󰙨 ${t("ui.settings.persona")} │ ${settings.persona} ›`,
-    getToggleLabel("tts", "󰔡", t("ui.settings.tts")),
-    ...(settings.features.tts ? [
-      `  󰔊 ${t("ui.settings.change_tts_voice")} ›`,
-      `  󰁾 ${t("ui.settings.tts_speed_settings")} ›`,
-      `  󰔡 ${t("ui.settings.natural_voices")} │ ${settings.tts.naturalVoices.enabled ? "󰄬 " + t("common.on") : "󱃓 " + t("common.off")}`,
-      ...(settings.tts.naturalVoices.enabled ? [
-        `    󰒓 ${t("ui.settings.natural_voices_settings")} ›`,
-      ] : []),
-    ] : []),
-    getToggleLabel("toolDisplay", "󰘚", t("ui.settings.tool_display")),
-    section(t("ui.settings.section.history")),
-    getToggleLabel("chatHistory", "󰭹", t("ui.settings.chat_history")),
-    section(t("ui.settings.section.system")),
-    getToggleLabel("dangerousCommandConfirmation", "󱇎", t("ui.settings.confirmation")),
-    `󰖟 ${t("ui.settings.language")} │ ${langDisplay} ›`,
-    `󰆓 ${t("common.close")}`,
-  ];
+  if (settings.features.tts) {
+    rows.push({
+      type: "nav",
+      icon: "󰔊",
+      label: t("ui.settings.change_tts_voice"),
+      value: settings.tts.voiceId,
+      panel: "tts-voice",
+      depth: 1,
+    });
+    rows.push({
+      type: "nav",
+      icon: "󰁾",
+      label: t("ui.settings.tts_speed_settings"),
+      value: `${settings.tts.speed}×`,
+      panel: "tts-speed",
+      depth: 1,
+    });
+    rows.push({
+      type: "toggle",
+      icon: "󰔡",
+      label: t("ui.settings.natural_voices"),
+      key: "tts.naturalVoice.enabled",
+      value: settings.tts.naturalVoices.enabled,
+      depth: 1,
+    });
 
-  const themeOverride = `
-    window { width: 580px; }
-    listview { lines: ${menuItems.length}; }
-    element selected.normal {
-      background-color: @accent-light;
-      text-color: @text-primary;
-      border: 0px 0px 0px 2px;
-      border-color: @accent-color;
+    if (settings.tts.naturalVoices.enabled) {
+      rows.push({
+        type: "nav",
+        icon: "󰒓",
+        label: t("ui.settings.natural_voices_settings"),
+        panel: "natural-voices-settings",
+        depth: 2,
+      });
+    }
+  }
+
+  rows.push({
+    type: "toggle",
+    icon: "󰘚",
+    label: t("ui.settings.tool_display"),
+    key: "ui.toolDisplay",
+    value: settings.features.toolDisplay,
+  });
+
+  rows.push({ type: "section", label: t("ui.settings.section.history") });
+  rows.push({
+    type: "toggle",
+    icon: "󰭹",
+    label: t("ui.settings.chat_history"),
+    key: "history.enabled",
+    value: settings.features.chatHistory,
+  });
+
+  rows.push({ type: "section", label: t("ui.settings.section.system") });
+  rows.push({
+    type: "toggle",
+    icon: "󱇎",
+    label: t("ui.settings.confirmation"),
+    key: "system.confirmations",
+    value: settings.features.dangerousCommandConfirmation,
+  });
+  rows.push({
+    type: "nav",
+    icon: "󰖟",
+    label: t("ui.settings.language"),
+    value: langDisplay,
+    panel: "language",
+    key: "i18n.locale",
+  });
+
+  return rows;
+}
+
+function applyToggle(key: SettingKey): void {
+  switch (key) {
+    case "tts.enabled":
+      settingsManager.toggleFeature("tts");
+      break;
+    case "tts.naturalVoice.enabled":
+      settingsManager.setNaturalVoicesEnabled(!settingsManager.get().tts.naturalVoices.enabled);
+      break;
+    case "ui.toolDisplay":
+      settingsManager.toggleFeature("toolDisplay");
+      break;
+    case "history.enabled":
+      settingsManager.toggleFeature("chatHistory");
+      break;
+    case "system.confirmations":
+      settingsManager.toggleFeature("dangerousCommandConfirmation");
+      break;
+    case "i18n.locale":
+      //navigational setting. toggling is not applicable.
+      break;
+  }
+}
+
+function buildSettingsThemeOverride(colors: ColorTokens, rowCount: number): string {
+  return `
+    window { width: 540px; }
+    listview { lines: ${rowCount}; }
+    element selected.normal element-text {
+      border-color: ${colors.accentPurple};
     }
   `;
+}
 
-  const resultObj = await rofiMenu(
-    menuItems.join("\n"),
+async function promptSettings(rows: SettingsRow[], selectedRow: number, colors: ColorTokens): Promise<boolean> {
+  const headerIndices = new Set<number>();
+  rows.forEach((row, index) => {
+    if (row.type === "section") headerIndices.add(index);
+  });
+
+  const renderedRows = rows.map((row) => renderRow(row, colors, t));
+  const safeSelectedRow = Math.max(0, Math.min(selectedRow, rows.length - 1));
+  const focusedRow = rows[safeSelectedRow];
+
+  const result = await rofiMenu(
+    renderedRows.join("\n"),
     t("ui.settings.title"),
-    themeOverride,
+    buildSettingsThemeOverride(colors, rows.length),
     t("ui.settings.search"),
-    `󰌑 ${t("common.select")} │ 󱊷 ${t("common.exit")}`
+    focusedRow ? buildFooterHint(focusedRow, t) : "",
+    "",
+    true, // isMessagePango
+    true, // isMarkupRows
+    {
+      kbCustom1: "space",
+      format: "i",
+      selectedRow: safeSelectedRow,
+      themePath: SETTINGS_THEME_PATH,
+      fixedNumLines: false,
+    }
   );
 
-  if (resultObj.code !== 0 || !resultObj.output) {
+  // Cancelled or otherwise closed without a selection.
+  if ((result.code !== 0 && result.code !== 10) || !result.output) {
     return false;
   }
 
-  const result = resultObj.output;
-  
-  const is = (icon: string, label: string) =>
-    result.trimStart().startsWith(`${icon} ${label}`);
-
-  if (result.startsWith(SECTION_PREFIX)) {
-    return rofiSettings();
+  const selectedIndex = parseInt(result.output, 10);
+  if (Number.isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= rows.length) {
+    return false;
   }
 
-  if (is("󰔡", t("ui.settings.tts"))) {
-    settingsManager.toggleFeature("tts");
-    return rofiSettings();
+  // Headers are non-selectable dividers; re-prompt at the same position.
+  if (headerIndices.has(selectedIndex)) {
+    return promptSettings(rows, selectedIndex, colors);
   }
 
-  if (is("󰘚", t("ui.settings.tool_display"))) {
-    settingsManager.toggleFeature("toolDisplay");
-    return rofiSettings();
+  const selectedRowData = rows[selectedIndex];
+  if (!selectedRowData) {
+    return false;
   }
 
-  if (is("󰭹", t("ui.settings.chat_history"))) {
-    settingsManager.toggleFeature("chatHistory");
-    return rofiSettings();
-  }
-
-  if (is("󱇎", t("ui.settings.confirmation"))) {
-    settingsManager.toggleFeature("dangerousCommandConfirmation");
-    return rofiSettings();
-  }
-
-  if (is("󰙨", t("ui.settings.persona"))) {
-    const personas = ["default", "tsundere", "catgirl", "deredere", "kuudere", "dandere"];
-    const personaOptions = personas.map((p) => {
-      const desc = t(`ui.settings.personas.${p}`);
-      return `${settings.persona === p ? "󰄬 " : "   "}${p} - ${desc}`;
-    });
-    personaOptions.push(`󰜺 ${t("common.back")}`);
-
-    const personaRes = await rofiMenu(
-      personaOptions.join("\n"),
-      t("ui.settings.select_persona"),
-      "",
-      t("ui.settings.type_to_search"),
-      `󰌑 ${t("common.select")} │ 󱊷 ${t("common.back")} │ 󰍉 ${t("common.search")}`
-    );
-    const selection = personaRes.output;
-    if (personaRes.code === 0 && selection && !selection.startsWith("󰜺")) {
-      const cleanLabel = selection.trimStart().replace(/^󰄬\s+/, "");
-      const selectedId = cleanLabel.split(" - ")[0];
-      if (selectedId) settingsManager.setPersona(selectedId);
+  if (result.code === 10) {
+    if (selectedRowData.type === "toggle") {
+      applyToggle(selectedRowData.key);
+      const newRows = buildSettingsRows(getLang());
+      return promptSettings(newRows, selectedIndex, colors);
     }
-    return rofiSettings();
+    return promptSettings(rows, selectedIndex, colors);
   }
 
-  if (is("󰖟", t("ui.settings.language"))) {
-    const langs = [
-      `${currentLang === "id" ? "󰄬 " : "   "}Bahasa Indonesia (id)`,
-      `${currentLang === "en" ? "󰄬 " : "   "}English (en)`,
-      `${currentLang === "ja" ? "󰄬 " : "   "}日本語 (ja)`,
-      `󰜺 ${t("common.back")}`
-    ];
-    const langRes = await rofiMenu(
-      langs.join("\n"),
-      t("ui.settings.select_language"),
-      "",
-      t("ui.settings.type_to_search"),
-      `󰌑 ${t("common.select")} │ 󱊷 ${t("common.back")} │ 󰍉 ${t("common.search")}`
-    );
-    const langSelection = langRes.output;
-    if (langRes.code === 0 && langSelection && !langSelection.startsWith("󰜺")) {
-      if (langSelection.includes("(id)")) settingsManager.setLanguage("id");
-      if (langSelection.includes("(en)")) settingsManager.setLanguage("en");
-      if (langSelection.includes("(ja)")) settingsManager.setLanguage("ja");
-    }
-    return rofiSettings();
+  // Enter (exit code 0)
+  if (selectedRowData.type === "toggle") {
+    applyToggle(selectedRowData.key);
+    const newRows = buildSettingsRows(getLang());
+    return promptSettings(newRows, selectedIndex, colors);
   }
 
-  if (is("󰔊", t("ui.settings.change_tts_voice"))) {
-    const currentVoice = settings.tts?.voiceId || "";
-    const markActive = (v: string) => {
-      const id = v.split(" - ")[0]?.trim();
-      return `${id === currentVoice ? "󰄬 " : "   "}${v}`;
-    };
-
-    let voiceOptions: string[] = [];
-    if (currentLang === "id") {
-      voiceOptions = [
-        "id-ID-GadisNeural - Gadis (Female)",
-        "id-ID-ArdiNeural - Ardi (Male)",
-      ].map(markActive);
-    } else if (currentLang === "en") {
-      voiceOptions = [
-        "en-US-AvaNeural - Ava (Female)",
-        "en-US-AndrewNeural - Andrew (Male)",
-        "en-GB-SoniaNeural - Sonia (Female)",
-      ].map(markActive);
-    } else if (currentLang === "ja") {
-      voiceOptions = [
-        "ja-JP-NanamiNeural - Nanami (Female)",
-        "ja-JP-KeitaNeural - Keita (Male)",
-      ].map(markActive);
-    } else {
-      voiceOptions.push(`  ${t("ui.settings.no_voices_for_language")}`);
-    }
-    voiceOptions.push(`󰜺 ${t("common.back")}`);
-
-    const voiceRes = await rofiMenu(
-      voiceOptions.join("\n"),
-      t("ui.settings.select_voice"),
-      "",
-      t("ui.settings.type_to_search"),
-      `󰌑 ${t("common.select")} │ 󱊷 ${t("common.back")} │ 󰍉 ${t("common.search")}`
-    );
-    const voice = voiceRes.output;
-    if (voiceRes.code === 0 && voice && !voice.startsWith("󰜺")) {
-      const rawId = voice.split(" - ")[0]?.trim() ?? "";
-      const voiceId = rawId.startsWith("󰄬 ")
-        ? rawId.slice(2).trim()
-        : rawId.trimStart();
-      if (voiceId) settingsManager.setTTSVoice(voiceId);
-    }
-    return rofiSettings();
-  }
-
-  if (is("󰔡", t("ui.settings.natural_voices"))) {
-    settingsManager.setNaturalVoicesEnabled(!settings.tts.naturalVoices.enabled);
-    return rofiSettings();
-  }
-
-  if (is("󰒓", t("ui.settings.natural_voices_settings"))) {
-    const nv = settings.tts.naturalVoices;
-    const nvItems = [
-      `󰔊 ${t("ui.settings.latency_masking")} │ ${nv.latencyMasking?.enabled ? "󰄬 " + t("common.on") : "󱃓 " + t("common.off")}`,
-      `󰙨 ${t("ui.settings.disfluency")} │ ${nv.disfluency?.enabled ? "󰄬 " + t("common.on") : "󱃓 " + t("common.off")}`,
-      `󰁾 ${t("ui.settings.volume")} │ ${nv.volume}% ›`,
-      `󰜺 ${t("common.back")}`,
-    ];
-
-    const nvRes = await rofiMenu(
-      nvItems.join("\n"),
-      t("ui.settings.natural_voices_settings"),
-      "",
-      t("ui.settings.type_to_search"),
-      `󰌑 ${t("common.select")} │ 󱊷 ${t("common.back")}`
-    );
-    const nvSelection = nvRes.output;
-    if (nvRes.code === 0 && nvSelection && !nvSelection.startsWith("󰜺")) {
-      if (nvSelection.trimStart().startsWith(`󰔊 ${t("ui.settings.latency_masking")}`)) {
-        settingsManager.setNaturalVoicesLatencyMaskingEnabled(!nv.latencyMasking?.enabled);
-      } else if (nvSelection.trimStart().startsWith(`󰙨 ${t("ui.settings.disfluency")}`)) {
-        settingsManager.setNaturalVoicesDisfluencyEnabled(!nv.disfluency?.enabled);
-      } else if (nvSelection.trimStart().startsWith(`󰁾 ${t("ui.settings.volume")}`)) {
-        const currentVolume = nv.volume;
-        const VOLUME_MAP: [string, number][] = [
-          ["25%", 25],
-          ["50%", 50],
-          ["75%", 75],
-          [`100% (${t("common.default")})`, 100],
-        ];
-        const volItems = VOLUME_MAP.map(([label, value]) =>
-          `${Math.abs(value - currentVolume) < 1 ? "󰄬 " : "   "}${label}`
-        );
-        volItems.push(`󰜺 ${t("common.back")}`);
-
-        const volRes = await rofiMenu(
-          volItems.join("\n"),
-          t("ui.settings.volume"),
-          "",
-          t("ui.settings.type_to_search"),
-          `󰌑 ${t("common.select")} │ 󱊷 ${t("common.back")}`
-        );
-        const vol = volRes.output;
-        if (volRes.code === 0 && vol && !vol.startsWith("󰜺")) {
-          const cleanLabel = vol.trimStart().replace(/^󰄬\s+/, "");
-          const entry = VOLUME_MAP.find(([label]) => label === cleanLabel);
-          if (entry) settingsManager.setNaturalVoicesVolume(entry[1]);
-        }
-      }
-    }
-    return rofiSettings();
-  }
-
-  if (is("󰁾", t("ui.settings.tts_speed_settings"))) {
-    const currentSpeed = settings.tts?.speed || 1.0;
-    const SPEED_MAP: [string, number][] = [
-      ["0.5×",                    0.5],
-      ["0.75×",                   0.75],
-      [`1.0× (${t("common.default")})`, 1.0],
-      ["1.25×",                   1.25],
-      ["1.5×",                    1.5],
-      ["2.0×",                    2.0],
-    ];
-    const speedItems = SPEED_MAP.map(([label, value]) =>
-      `${Math.abs(value - currentSpeed) < 0.01 ? "󰄬 " : "   "}${label}`
-    );
-    speedItems.push(`󰜺 ${t("common.back")}`);
-
-    const speedRes = await rofiMenu(
-      speedItems.join("\n"),
-      t("ui.settings.tts_speed"),
-      "",
-      t("ui.settings.type_to_search"),
-      `󰌑 ${t("common.select")} │ 󱊷 ${t("common.back")} │ 󰍉 ${t("common.search")}`
-    );
-    const speed = speedRes.output;
-    if (speedRes.code === 0 && speed && !speed.startsWith("󰜺")) {
-      const cleanLabel = speed.trimStart().replace(/^󰄬\s+/, "");
-      const entry = SPEED_MAP.find(([label]) => label === cleanLabel);
-      if (entry) settingsManager.setTTSSpeed(entry[1]);
-    }
-    return rofiSettings();
-  }
-
-  if (is("󰆓", t("common.close"))) {
-    return true;
+  if (selectedRowData.type === "nav") {
+    await handleNavPanel(selectedRowData);
+    const newRows = buildSettingsRows(getLang());
+    return promptSettings(newRows, selectedIndex, colors);
   }
 
   return false;
+}
+
+async function handleNavPanel(row: NavRow): Promise<void> {
+  switch (row.panel) {
+    case "persona":
+      await promptPersonaPanel();
+      break;
+    case "language":
+      await promptLanguagePanel();
+      break;
+    case "tts-voice":
+      await promptTTSVoicePanel();
+      break;
+    case "tts-speed":
+      await promptTTSSpeedPanel();
+      break;
+    case "natural-voices-settings":
+      await promptNaturalVoicesSettingsPanel();
+      break;
+  }
+}
+
+async function promptPersonaPanel(): Promise<void> {
+  const settings = settingsManager.get();
+  const options = PERSONAS.map((p) => {
+    const desc = t(`ui.settings.personas.${p}`);
+    return `${settings.persona === p ? "󰄬 " : "   "}${p} - ${desc}`;
+  });
+  options.push(`󰜺 ${t("common.back")}`);
+
+  const result = await rofiMenu(
+    options.join("\n"),
+    t("ui.settings.select_persona"),
+    "",
+    t("ui.settings.type_to_search"),
+    `󰌑 ${t("common.select")} │ 󱊷 ${t("common.back")} │ 󰍉 ${t("common.search")}`
+  );
+
+  if (result.code === 0 && result.output && !result.output.startsWith("󰜺")) {
+    const cleanLabel = result.output.trimStart().replace(/^󰄬\s+/, "");
+    const selectedId = cleanLabel.split(" - ")[0];
+    if (selectedId) settingsManager.setPersona(selectedId);
+  }
+}
+
+async function promptLanguagePanel(): Promise<void> {
+  const currentLang = getLang();
+  const langs: [string, string][] = [
+    ["id", "Bahasa Indonesia"],
+    ["en", "English"],
+    ["ja", "日本語"],
+  ];
+  const options = langs.map(([code, name]) =>
+    `${currentLang === code ? "󰄬 " : "   "}${name} (${code})`
+  );
+  options.push(`󰜺 ${t("common.back")}`);
+
+  const result = await rofiMenu(
+    options.join("\n"),
+    t("ui.settings.select_language"),
+    "",
+    t("ui.settings.type_to_search"),
+    `󰌑 ${t("common.select")} │ 󱊷 ${t("common.back")} │ 󰍉 ${t("common.search")}`
+  );
+
+  if (result.code === 0 && result.output && !result.output.startsWith("󰜺")) {
+    if (result.output.includes("(id)")) settingsManager.setLanguage("id");
+    else if (result.output.includes("(en)")) settingsManager.setLanguage("en");
+    else if (result.output.includes("(ja)")) settingsManager.setLanguage("ja");
+  }
+}
+
+async function promptTTSVoicePanel(): Promise<void> {
+  const settings = settingsManager.get();
+  const currentLang = getLang();
+  const currentVoice = settings.tts.voiceId;
+
+  const markActive = (v: string) => {
+    const id = v.split(" - ")[0]?.trim() ?? "";
+    return `${id === currentVoice ? "󰄬 " : "   "}${v}`;
+  };
+
+  let voiceOptions: string[] = [];
+  if (currentLang === "id") {
+    voiceOptions = [
+      "id-ID-GadisNeural - Gadis (Female)",
+      "id-ID-ArdiNeural - Ardi (Male)",
+    ].map(markActive);
+  } else if (currentLang === "en") {
+    voiceOptions = [
+      "en-US-AvaNeural - Ava (Female)",
+      "en-US-AndrewNeural - Andrew (Male)",
+      "en-GB-SoniaNeural - Sonia (Female)",
+    ].map(markActive);
+  } else if (currentLang === "ja") {
+    voiceOptions = [
+      "ja-JP-NanamiNeural - Nanami (Female)",
+      "ja-JP-KeitaNeural - Keita (Male)",
+    ].map(markActive);
+  } else {
+    voiceOptions.push(`  ${t("ui.settings.no_voices_for_language")}`);
+  }
+  voiceOptions.push(`󰜺 ${t("common.back")}`);
+
+  const result = await rofiMenu(
+    voiceOptions.join("\n"),
+    t("ui.settings.select_voice"),
+    "",
+    t("ui.settings.type_to_search"),
+    `󰌑 ${t("common.select")} │ 󱊷 ${t("common.back")} │ 󰍉 ${t("common.search")}`
+  );
+
+  if (result.code === 0 && result.output && !result.output.startsWith("󰜺")) {
+    const rawId = result.output.split(" - ")[0]?.trim() ?? "";
+    const voiceId = rawId.startsWith("󰄬 ") ? rawId.slice(2).trim() : rawId.trimStart();
+    if (voiceId) settingsManager.setTTSVoice(voiceId);
+  }
+}
+
+async function promptTTSSpeedPanel(): Promise<void> {
+  const currentSpeed = settingsManager.get().tts.speed;
+  const SPEED_MAP: [string, number][] = [
+    ["0.5×", 0.5],
+    ["0.75×", 0.75],
+    [`1.0× (${t("common.default")})`, 1.0],
+    ["1.25×", 1.25],
+    ["1.5×", 1.5],
+    ["2.0×", 2.0],
+  ];
+  const speedItems = SPEED_MAP.map(([label, value]) =>
+    `${Math.abs(value - currentSpeed) < 0.01 ? "󰄬 " : "   "}${label}`
+  );
+  speedItems.push(`󰜺 ${t("common.back")}`);
+
+  const result = await rofiMenu(
+    speedItems.join("\n"),
+    t("ui.settings.tts_speed"),
+    "",
+    t("ui.settings.type_to_search"),
+    `󰌑 ${t("common.select")} │ 󱊷 ${t("common.back")} │ 󰍉 ${t("common.search")}`
+  );
+
+  if (result.code === 0 && result.output && !result.output.startsWith("󰜺")) {
+    const cleanLabel = result.output.trimStart().replace(/^󰄬\s+/, "");
+    const entry = SPEED_MAP.find(([label]) => label === cleanLabel);
+    if (entry) settingsManager.setTTSSpeed(entry[1]);
+  }
+}
+
+function buildNaturalVoicesSettingsRows(): SettingsRow[] {
+  const nv = settingsManager.get().tts.naturalVoices;
+  const rows: SettingsRow[] = [];
+
+  rows.push({
+    type: "toggle",
+    icon: "󰔊",
+    label: t("ui.settings.latency_masking"),
+    key: "tts.naturalVoice.latencyMasking",
+    value: nv.latencyMasking?.enabled ?? false,
+  });
+
+  rows.push({
+    type: "toggle",
+    icon: "󰙨",
+    label: t("ui.settings.disfluency"),
+    key: "tts.naturalVoice.disfluency",
+    value: nv.disfluency?.enabled ?? false,
+  });
+
+  rows.push({
+    type: "nav",
+    icon: "󰁾",
+    label: t("ui.settings.volume"),
+    value: `${nv.volume}%`,
+    panel: "natural-voices-volume",
+  });
+
+  return rows;
+}
+
+function applyNaturalVoicesToggle(key: SettingKey): void {
+  const nv = settingsManager.get().tts.naturalVoices;
+  switch (key) {
+    case "tts.naturalVoice.latencyMasking":
+      settingsManager.setNaturalVoicesLatencyMaskingEnabled(!nv.latencyMasking?.enabled);
+      break;
+    case "tts.naturalVoice.disfluency":
+      settingsManager.setNaturalVoicesDisfluencyEnabled(!nv.disfluency?.enabled);
+      break;
+  }
+}
+
+async function promptNaturalVoicesSettingsPanel(): Promise<void> {
+  const scheme = await resolveColorScheme();
+  const colors = getColorTokens(scheme);
+  const rows = buildNaturalVoicesSettingsRows();
+
+  const renderedRows = rows.map((row) => renderRow(row, colors, t));
+
+  const result = await rofiMenu(
+    renderedRows.join("\n"),
+    t("ui.settings.natural_voices_settings"),
+    "",
+    t("ui.settings.type_to_search"),
+    `󰌑 ${t("common.select")} │ 󱊷 ${t("common.back")}`,
+    "",
+    true,
+    true,
+    { kbCustom1: "space", format: "i" }
+  );
+
+  if (result.code === 10 || result.code === 0) {
+    if (!result.output) return;
+
+    const selectedIndex = parseInt(result.output, 10);
+    if (Number.isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= rows.length) {
+      return;
+    }
+
+    const selectedRow = rows[selectedIndex];
+    if (!selectedRow) return;
+
+    if (selectedRow.type === "toggle") {
+      applyNaturalVoicesToggle(selectedRow.key);
+      await promptNaturalVoicesSettingsPanel();
+    } else if (selectedRow.type === "nav" && selectedRow.panel === "natural-voices-volume") {
+      const nv = settingsManager.get().tts.naturalVoices;
+      await promptNaturalVoicesVolumePanel(nv.volume);
+    }
+  }
+}
+
+async function promptNaturalVoicesVolumePanel(currentVolume: number): Promise<void> {
+  const VOLUME_MAP: [string, number][] = [
+    ["25%", 25],
+    ["50%", 50],
+    ["75%", 75],
+    [`100% (${t("common.default")})`, 100],
+  ];
+  const volItems = VOLUME_MAP.map(([label, value]) =>
+    `${Math.abs(value - currentVolume) < 1 ? "󰄬 " : "   "}${label}`
+  );
+  volItems.push(`󰜺 ${t("common.back")}`);
+
+  const result = await rofiMenu(
+    volItems.join("\n"),
+    t("ui.settings.volume"),
+    "",
+    t("ui.settings.type_to_search"),
+    `󰌑 ${t("common.select")} │ 󱊷 ${t("common.back")}`
+  );
+
+  if (result.code === 0 && result.output && !result.output.startsWith("󰜺")) {
+    const cleanLabel = result.output.trimStart().replace(/^󰄬\s+/, "");
+    const entry = VOLUME_MAP.find(([label]) => label === cleanLabel);
+    if (entry) settingsManager.setNaturalVoicesVolume(entry[1]);
+  }
+}
+
+export async function rofiSettings(): Promise<boolean> {
+  const scheme = await resolveColorScheme();
+  const colors = getColorTokens(scheme);
+  const rows = buildSettingsRows(getLang());
+  const initialRow = rows.findIndex((row) => row.type !== "section");
+  return promptSettings(rows, initialRow >= 0 ? initialRow : 0, colors);
 }

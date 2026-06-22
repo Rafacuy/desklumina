@@ -481,6 +481,129 @@ Generates and plays audio for the given text. Uses adaptive chunking, optional n
 
 ---
 
+## Settings UI API
+
+**Files**: `src/ui/settings.ts`, `src/ui/settings/rows.ts`, `src/ui/settings/tokens.ts`, `src/ui/settings/footer.ts`, `src/ui/settings/section.ts`, `src/constants/settings-keys.ts`
+
+### `SettingKey` Type
+
+**File**: `src/constants/settings-keys.ts`
+
+Typed union of dot-path keys used by toggle rows to identify settings:
+
+```typescript
+type SettingKey =
+  | "tts.enabled"
+  | "tts.naturalVoice.enabled"
+  | "tts.naturalVoice.latencyMasking"
+  | "tts.naturalVoice.disfluency"
+  | "ui.toolDisplay"
+  | "history.enabled"
+  | "system.confirmations"
+  | "i18n.locale";
+```
+
+### Row Type Definitions
+
+**File**: `src/ui/settings/rows.ts`
+
+```typescript
+type RowDepth = 0 | 1 | 2;
+
+interface SectionRow {
+  type: "section";
+  label: string;
+}
+
+interface NavRow {
+  type: "nav";
+  icon: string;
+  label: string;
+  value?: string;
+  panel: string;
+  key?: SettingKey;
+  depth?: RowDepth;
+}
+
+interface ToggleRow {
+  type: "toggle";
+  icon: string;
+  label: string;
+  key: SettingKey;
+  value: boolean;
+  depth?: RowDepth;
+}
+
+type SettingsRow = SectionRow | NavRow | ToggleRow;
+```
+
+### `renderRow(row: SettingsRow, colors: ColorTokens, t: I18nFn): string`
+
+Renders a single settings row to a Pango markup string. Dispatches to `renderNavRow`, `renderToggleRow`, or `sectionHeader` based on row type.
+
+### `renderTogglePill(on: boolean, colors: ColorTokens, t: I18nFn): string`
+
+Renders the ON/OFF pill badge for toggle rows using Pango `background` and `foreground` spans.
+
+### `renderBracketTogglePill(on: boolean, colors: ColorTokens, t: I18nFn): string`
+
+Fallback pill variant using bracket notation when background spans are unsupported.
+
+### Color Tokens
+
+**File**: `src/ui/settings/tokens.ts`
+
+```typescript
+interface ColorTokens {
+  textPrimary: string;    // Main row labels
+  textSecondary: string;  // Values, sub-row labels
+  textMuted: string;      // Section lines, hints
+  accentPurple: string;   // Selected row accent bar
+  pillOnBg: string;       // ON pill background
+  pillOnFg: string;       // ON pill text
+  pillOffBg: string;      // OFF pill background
+  pillOffFg: string;      // OFF pill text
+}
+
+async function resolveColorScheme(): Promise<"light" | "dark">;
+function getColorTokens(scheme: "light" | "dark"): ColorTokens;
+```
+
+Resolves the active GTK color scheme via `gsettings` (org.gnome.desktop.interface color-scheme, then gtk-theme fallback).
+
+### Footer Hints
+
+**File**: `src/ui/settings/footer.ts`
+
+```typescript
+function buildFooterHint(focusedRow: SettingsRow, t: I18nFn): string;
+```
+
+Returns a Pango-wrapped hint string based on the focused row type:
+- `section` → `settings.hint.close`
+- `toggle` → `settings.hint.toggle` + `settings.hint.close`
+- `nav` → `settings.hint.open` + `settings.hint.close`
+
+### Section Header
+
+**File**: `src/ui/settings/section.ts`
+
+```typescript
+function sectionHeader(label: string, panelWidth = 42): string;
+```
+
+Generates a non-selectable section divider with padded dashes and styled label.
+
+### Settings Theme
+
+**File**: `src/ui/themes/settings.rasi`
+
+Rofi theme extending `lumina.rasi` with:
+- Selected row background color (`@bg-alt`)
+- Left accent border (`#7F77DD`) on selected row text element
+
+---
+
 ## Daemon Socket Protocol
 
 **Transport**: HTTP over Unix Domain Socket  

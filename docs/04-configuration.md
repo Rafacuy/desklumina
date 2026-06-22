@@ -225,18 +225,6 @@ To ensure high performance and low memory usage, DeskLumina enforces the followi
 
 ---
 
-## Interactive Settings (Rofi)
-
-You can adjust most settings within the Rofi interface.
-
-1. Launch DeskLumina: `bun run start`.
-2. Press `Tab` to expand the menu.
-3. Select **Settings**.
-4. Navigate the menu to toggle features, change languages, or select a **Persona**.
-5. Select **Save & Exit** to apply changes.
-
----
-
 ## Provider CLI
 
 DeskLumina includes a `provider` subcommand for managing providers from the terminal:
@@ -253,6 +241,7 @@ DeskLumina includes a `provider` subcommand for managing providers from the term
 DeskLumina uses **Rofi** for its graphical interface. You can customize the appearance by modifying the CSS-like `.rasi` files.
 
 - **Main Theme**: `src/ui/themes/lumina.rasi`
+- **Settings Theme**: `src/ui/themes/settings.rasi`
 - **Colors & Styles**: Edit the variables at the top of the `.rasi` file to change background colors, fonts, and borders.
 - **Theme Caching**: DeskLumina caches the resolved theme path to avoid repeated filesystem lookups. The cache is invalidated when the theme file is modified.
 
