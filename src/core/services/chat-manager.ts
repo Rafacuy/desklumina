@@ -1,11 +1,11 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync, renameSync, statSync } from "fs";
 import { join } from "path";
-import { homedir } from "os";
 import type { AIMessage, AIRequestContext, Chat, ChatMessage, ToolCall, ToolResult, ChatMetadata, ToolExtraData } from "../../types";
 import { settingsManager } from "./settings-manager";
 import { logger } from "../../logger";
 import { t, cleanAssistantResponse } from "../../utils";
-import { cleanTrackTitle } from "../../utils/formatting/format";
+import { cleanTrackTitle, escapeHtml } from "../../utils/formatting/format";
+import { formatWebSearchContext } from "../../utils/formatting/web-search";
 import { tokenManager } from "./token-manager";
 
 const TOOL_LABELS: Record<string, string> = {
@@ -17,7 +17,16 @@ const TOOL_LABELS: Record<string, string> = {
   notify: "tool.sending_notification",
 };
 
-const CHAT_DIR = join(homedir(), ".config/desklumina/chats");
+// Pango palette (literals cuz @aliases dont resolve in -markup-rows)
+const HISTORY_COLOR = {
+  textPrimary: "#2E2A26",   
+  accent: "#7060CA",        
+  muted: "#A79F96",         
+} as const;
+
+const HISTORY_LINE_MAX_CHARS = 110;
+
+const CHAT_DIR = join(Bun.env.HOME!, ".config/desklumina/chats");
 const MAX_HISTORY_TOKENS = 4000;
 const MAX_CHATS = 100;
 
@@ -51,6 +60,12 @@ function getToolLabel(tool: string): string {
 
 function cleanContent(content: string): string {
   return cleanAssistantResponse(content);
+}
+
+function truncateText(text: string, maxChars: number): string {
+  const chars = Array.from(text);
+  if (chars.length <= maxChars) return text;
+  return chars.slice(0, maxChars).join("") + "...";
 }
 
 type ExtraFormatter = (value: unknown) => string;
@@ -100,8 +115,11 @@ const EXTRA_FORMATTERS: Record<string, ExtraFormatter> = {
     if (s.query) parts.push(`query="${s.query}"`);
     if (s.totalMatches !== undefined) parts.push(`total=${s.totalMatches}`);
     if (s.returnedMatches !== undefined) parts.push(`returned=${s.returnedMatches}`);
+    if (s.provider) parts.push(`provider=${s.provider}`);
+    if (s.warnings && s.warnings.length > 0) parts.push(`warnings=${s.warnings.join("; ")}`);
     return parts.length > 0 ? `summary: ${parts.join(", ")}` : "";
   },
+  webSearch: (val) => formatWebSearchContext({ webSearch: val as ToolExtraData["webSearch"] }),
 };
 
 function formatToolContext(result: ToolResult): string {
@@ -427,8 +445,6 @@ export class ChatManager {
       if (msg.role === "tool") {
         const toolLine = (msg.toolResults || [])
           .map((result) => {
-            // Dispatched (background) results are still in flight — show ↗
-            // rather than the misleading ✓/✕ completion mark.
             const mark = result.dispatched
               ? "↗"
               : result.success === false ? "✕" : "✓";
@@ -456,6 +472,69 @@ export class ChatManager {
     }
 
     return preview.join("\n");
+  }
+
+  /** Pango lines for history view. 
+   *
+   * oldest -> 
+  * newest! 
+  */
+  getHistoryPangoLines(maxLines: number = 60): string[] {
+    return this.getHistoryPangoLinesWithMapping(maxLines).lines;
+  }
+
+  getHistoryPangoLinesWithMapping(maxLines: number = 60): { lines: string[]; messageIndices: number[] } {
+    const settings = settingsManager.get();
+    if (!settings.features.chatHistory) return { lines: [], messageIndices: [] };
+    if (!this.currentChat || this.currentChat.messages.length === 0) return { lines: [], messageIndices: [] };
+
+    const messages = this.currentChat.messages as InternalMessage[];
+    //Trim from the front so most recent messages are always shown
+    const start = Math.max(0, messages.length - maxLines);
+    const lines: string[] = [];
+    const messageIndices: number[] = [];
+
+    for (let i = start; i < messages.length; i++) {
+      const msg = messages[i]!;
+
+      if (msg.role === "tool") {
+        const toolLines = (msg.toolResults || [])
+          .map((result) => {
+            const mark = result.dispatched
+              ? "↗"
+              : result.success === false ? "✕" : "✓";
+            const label = escapeHtml(getToolLabel(result.tool));
+            const arg = result.normalizedArg
+              ? `(${escapeHtml(result.normalizedArg)})`
+              : "";
+            return `<span foreground="${HISTORY_COLOR.muted}" style="italic" size="smaller">⚙ ${label} ${arg} ${mark}</span>`;
+          });
+        lines.push(...toolLines);
+        messageIndices.push(...toolLines.map(() => i));
+        continue;
+      }
+
+      const content = cleanContent(msg.content);
+      if (!content) continue;
+
+      const truncated = truncateText(content, HISTORY_LINE_MAX_CHARS);
+      const safe = escapeHtml(truncated);
+
+      if (msg.role === "user") {
+        lines.push(
+          `<span weight="bold" foreground="${HISTORY_COLOR.textPrimary}">${escapeHtml(t("common.you"))}:</span> ` +
+          `<span foreground="${HISTORY_COLOR.textPrimary}">${safe}</span>`
+        );
+      } else {
+        lines.push(
+          `<span weight="bold" foreground="${HISTORY_COLOR.accent}">${escapeHtml(t("common.lumina"))}:</span> ` +
+          `<span foreground="${HISTORY_COLOR.textPrimary}">${safe}</span>`
+        );
+      }
+      messageIndices.push(i);
+    }
+
+    return { lines, messageIndices };
   }
 
   private toAPIMessage(message: InternalMessage): AIMessage {

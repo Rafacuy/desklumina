@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "fs
 import { dirname, resolve } from "path";
 
 const THEME_SOURCE = resolve(
-  process.env.HOME ?? "/tmp",
+  Bun.env.HOME ?? "/tmp",
   ".config/desklumina/src/ui/themes/lumina.rasi"
 );
 const CACHE_DIR = resolve("/tmp", "desklumina-cache");

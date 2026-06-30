@@ -1,10 +1,9 @@
 import { existsSync, statSync } from "fs";
 import { join } from "path";
-import { homedir } from "os";
 import type { Settings } from "../../types";
 import { DEFAULT_SETTINGS } from "../../types";
 
-const SETTINGS_PATH = join(homedir(), ".config/desklumina/settings.json");
+const SETTINGS_PATH = join(Bun.env.HOME!, ".config/desklumina/settings.json");
 
 interface SettingsCacheState {
   settings: Settings;

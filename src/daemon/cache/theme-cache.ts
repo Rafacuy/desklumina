@@ -1,13 +1,13 @@
-import { existsSync, mkdirSync, statSync } from "fs";
+import { mkdir } from "node:fs/promises";
 import { resolve, dirname } from "path";
 
 const THEME_SOURCE = resolve(
-  process.env.HOME ?? "/tmp",
+  Bun.env.HOME ?? "/tmp",
   ".config/desklumina/src/ui/themes/lumina.rasi"
 );
 
 function getCachePath(): string {
-  const xdgCache = process.env.XDG_CACHE_HOME || resolve(process.env.HOME ?? "/tmp", ".cache");
+  const xdgCache = Bun.env.XDG_CACHE_HOME || resolve(Bun.env.HOME ?? "/tmp", ".cache");
   return resolve(xdgCache, "desklumina/lumina.min.rasi");
 }
 
@@ -87,7 +87,7 @@ export class ThemeCache {
   private loadPromise: Promise<string> | null = null;
 
   async getOrLoad(): Promise<string> {
-    if (this.state && !this.isStale()) return this.state.path;
+    if (this.state && !(await this.isStale())) return this.state.path;
     if (this.loadPromise) return this.loadPromise;
 
     this.loadPromise = this.load();
@@ -106,10 +106,10 @@ export class ThemeCache {
     this.state = null;
   }
 
-  private isStale(): boolean {
+  private async isStale(): Promise<boolean> {
     if (!this.state) return true;
     try {
-      const stats = statSync(THEME_SOURCE);
+      const stats = await Bun.file(THEME_SOURCE).stat();
       return stats.mtimeMs !== this.state.mtime || stats.size !== this.state.size;
     } catch {
       return true;
@@ -117,7 +117,7 @@ export class ThemeCache {
   }
 
   private async load(): Promise<string> {
-    if (!existsSync(THEME_SOURCE)) {
+    if (!(await Bun.file(THEME_SOURCE).exists())) {
       throw new Error(`Theme source not found: ${THEME_SOURCE}`);
     }
 
@@ -126,13 +126,13 @@ export class ThemeCache {
 
     const cachePath = getCachePath();
     const cacheDir = dirname(cachePath);
-    if (!existsSync(cacheDir)) {
-      mkdirSync(cacheDir, { recursive: true });
+    if (!(await Bun.file(cacheDir).exists())) {
+      await mkdir(cacheDir, { recursive: true });
     }
 
     await Bun.write(cachePath, minified);
 
-    const stats = statSync(THEME_SOURCE);
+    const stats = await Bun.file(THEME_SOURCE).stat();
     this.state = {
       path: cachePath,
       mtime: stats.mtimeMs,

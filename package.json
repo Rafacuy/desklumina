@@ -1,19 +1,26 @@
 {
   "name": "desklumina",
-  "version": "1.20.3",
-  "devDependencies": {
-    "@types/bun": "^1.3.13",
-    "typescript": "^6.0.3"
-  },
-  "description": "AI automation agent for Linux desktops",
+  "version": "1.22.3",
   "scripts": {
-    "start": "bun run src/main.ts",
-    "dev": "bun --watch run src/main.ts --chat",
+    "// DEV (source, transpile on-the-fly)": "",
+    "start": "bun run src/main-launcher.ts",
+    "dev": "bun --watch run src/main-launcher.ts --chat",
+    "send": "bun run src/main-launcher.ts --send",
+    "daemon": "bun run src/main-daemon.ts",
+    "daemon:start": "bun run src/main-daemon.ts &",
+    "daemon:status": "bun run src/main-launcher.ts --daemon-status",
+    "// PROD (compiled binary, no transpile)": "",
+    "start:prod": "./bin/desklumina-launcher",
+    "send:prod": "./bin/desklumina-launcher --send",
+    "daemon:prod": "./bin/desklumina-daemon",
+    "daemon:start:prod": "./bin/desklumina-daemon &",
+    "daemon:status:prod": "./bin/desklumina-launcher --daemon-status",
+    "// BUILD": "",
+    "build:launcher": "bun build ./src/main-launcher.ts --compile --outfile ./bin/desklumina-launcher --target bun --minify",
+    "build:daemon": "bun build ./src/main-daemon.ts --compile --outfile ./bin/desklumina-daemon --target bun --minify",
+    "build": "bun run build:launcher && bun run build:daemon",
+    "// UTILS": "",
     "lint": "bun x tsc --noEmit",
-    "daemon": "bun run src/main.ts --daemon",
-    "daemon:start": "bun run src/main.ts --daemon &",
-    "daemon:status": "bun run src/main.ts --daemon-status",
-    "send": "bun run src/main.ts --send",
     "version:sync": "bun run scripts/sync-version.ts",
     "version:set": "bun run scripts/bump-version.ts",
     "i18n:refactor": "bun run scripts/i18n-refactor.ts",
@@ -25,5 +32,10 @@
   "dependencies": {
     "edge-tts-universal": "^1.4.0",
     "mathjs": "^15.2.0"
-  }
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "typescript": "^6.0.3"
+  },
+  "description": "AI automation agent for Linux desktops"
 }

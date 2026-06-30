@@ -1,8 +1,7 @@
 import { existsSync, statSync } from "fs";
 import { join } from "path";
-import { homedir } from "os";
 
-const LOCALES_DIR = join(homedir(), ".config/desklumina/src/locales");
+const LOCALES_DIR = join(Bun.env.HOME!, ".config/desklumina/src/locales");
 
 interface I18nCacheEntry {
   data: Record<string, string>;

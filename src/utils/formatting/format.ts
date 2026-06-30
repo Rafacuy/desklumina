@@ -69,3 +69,32 @@ export function escapeHtml(text: string): string {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 }
+
+export function escapeControlChars(text: string): string {
+  return text.replace(/[\x00-\x08\x0b-\x1f\x7f]/g, "");
+}
+
+export function collapseWhitespace(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+export function normalizeText(text: string): string {
+  return collapseWhitespace(escapeControlChars(text));
+}
+
+export function stripHtmlTags(text: string): string {
+  return text.replace(/<[^>]+>/g, " ");
+}
+
+export function normalizeDate(value: unknown): string | undefined {
+  if (!value) return undefined;
+  if (typeof value === "number") {
+    const d = new Date(value);
+    if (!Number.isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  }
+  const s = String(value).trim();
+  if (!s) return undefined;
+  const isoMatch = s.match(/(\d{4}-\d{2}-\d{2})/);
+  if (isoMatch) return isoMatch[1];
+  return s;
+}

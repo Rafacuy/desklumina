@@ -33,7 +33,7 @@ export async function executeToolCalls(
     const mode = getDispatchMode(call.tool, call.arg);
 
     if (mode === "non-blocking") {
-      const operationId = crypto.randomUUID();
+      const operationId = Bun.randomUUIDv7();
 
       resultStore.registerPending({
         id: operationId,

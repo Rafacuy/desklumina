@@ -88,7 +88,7 @@ The project is organized into several key directories under `src/`:
 
 - **`tts/`**: Text-to-speech pipeline. Includes the adaptive chunker, natural voice disfluency planner, and latency masking.
 
-- **`ui/`**: User interface components including Rofi logic, themes, tool result rendering, and error classification. 
+- **`ui/`**: User interface components including Rofi logic, themes, tool result rendering, error classification, chat history view, and the conversation viewer.  
 
 - **`security/`**: Confirmation dialogs and dangerous command analysis.
 

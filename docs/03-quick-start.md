@@ -89,6 +89,10 @@ Try these commands to explore DeskLumina's capabilities:
 - `terminal date`
 - `terminal uname -a`
 
+### Web Search
+- `search the web for the latest Linux kernel news`
+- `who won the World Cup in 2022?`
+
 ---
 
 ## Getting Help

@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-const args = process.argv.slice(2);
+const args = Bun.argv.slice(2);
 const mode = args[0];
 
 async function main() {

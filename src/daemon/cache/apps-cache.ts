@@ -1,8 +1,7 @@
 import { existsSync, statSync } from "fs";
 import { join } from "path";
-import { homedir } from "os";
 
-const APPS_PATH = join(homedir(), ".config/desklumina/src/config/apps.json");
+const APPS_PATH = join(Bun.env.HOME!, ".config/desklumina/src/config/apps.json");
 
 interface AppsCacheState {
   apps: Record<string, string>;

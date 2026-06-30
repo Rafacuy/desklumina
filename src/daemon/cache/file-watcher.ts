@@ -1,10 +1,9 @@
 import { watch, existsSync, type FSWatcher } from "fs";
 import { join } from "path";
-import { homedir } from "os";
 import type { CacheManager } from "./cache-manager";
 import { logger } from "../../logger";
 
-const CONFIG_DIR = join(homedir(), ".config/desklumina");
+const CONFIG_DIR = join(Bun.env.HOME!, ".config/desklumina");
 const LOCALES_DIR = join(CONFIG_DIR, "src/locales");
 const DEBOUNCE_MS = 200;
 

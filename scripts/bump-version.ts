@@ -9,7 +9,7 @@ function isSemver(v: string): boolean {
 }
 
 async function main() {
-  const nextVersion = process.argv.slice(2)[0];
+  const nextVersion = Bun.argv.slice(2)[0];
   if (!nextVersion) {
     console.error("Usage: bun run version:set <version>");
     process.exit(1);

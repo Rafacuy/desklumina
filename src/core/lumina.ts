@@ -27,7 +27,10 @@ export class Lumina {
     onChunk?: (chunk: string, callback?: ToolCallbackPayload) => void,
     onError?: (error: unknown) => void
   ): Promise<string> {
-    logger.info("lumina", `User: ${userMessage}`);
+    const preview = typeof userMessage === "string" && userMessage.length > 200
+      ? `${userMessage.slice(0,200)}...[truncated ${userMessage.length} chars]`
+      : userMessage;
+    logger.info("lumina", `User: ${preview}`);
 
     const systemPrompt = await buildSystemPrompt(userMessage);
     const contextState = this.chatManager

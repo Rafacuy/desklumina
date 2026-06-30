@@ -1,12 +1,11 @@
-import { homedir } from "os";
 import { join } from "path";
-import { existsSync, readFileSync, mkdirSync, renameSync } from "fs";
+import { existsSync, readFileSync, mkdirSync, renameSync, writeFileSync } from "fs";
 import type { Settings } from "../../types";
 import { DEFAULT_SETTINGS } from "../../types";
 import { logger } from "../../logger";
 import { setLang } from "../../utils/localization/i18n";
 
-const SETTINGS_DIR = join(homedir(), ".config/desklumina");
+const SETTINGS_DIR = join(Bun.env.HOME!, ".config/desklumina");
 const SETTINGS_PATH = join(SETTINGS_DIR, "settings.json");
 const FLUSH_DEBOUNCE_MS = 500;
 
@@ -41,6 +40,7 @@ export class SettingsManager {
         if (saved && typeof saved === "object") {
           this.settings = { ...DEFAULT_SETTINGS, ...saved };
           this.settings.features = { ...DEFAULT_SETTINGS.features, ...(saved.features || {}) };
+          this.settings.webSearch = { ...DEFAULT_SETTINGS.webSearch, ...(saved.webSearch || {}) };
           this.settings.tts = { ...DEFAULT_SETTINGS.tts, ...(saved.tts || {}) };
           this.settings.tts.naturalVoices = {
             ...DEFAULT_SETTINGS.tts.naturalVoices,
@@ -68,13 +68,6 @@ export class SettingsManager {
             setLang(this.settings.language);
           }
 
-          if (saved.tts?.naturalVoices?.thresholdMs !== undefined) {
-            logger.warn("settings", "naturalVoices.thresholdMs is deprecated; use naturalVoices.latencyMasking.deadlineMs");
-          }
-          if (saved.tts?.naturalVoices?.maxOverhangMs !== undefined) {
-            logger.warn("settings", "naturalVoices.maxOverhangMs is deprecated and will be removed in a future release");
-          }
-
           return;
         }
       }
@@ -95,7 +88,6 @@ export class SettingsManager {
       try {
         this.ensureDir();
         const tempPath = `${SETTINGS_PATH}.tmp`;
-        const { writeFileSync } = require("fs");
         writeFileSync(tempPath, JSON.stringify(this.settings, null, 2));
         renameSync(tempPath, SETTINGS_PATH);
         this.dirty = false;
@@ -182,6 +174,21 @@ export class SettingsManager {
 
   setPersona(persona: string) {
     this.settings.persona = persona;
+    this.scheduleFlush();
+  }
+
+  setWebSearchProvider(provider: Settings["webSearch"]["defaultProvider"]) {
+    this.settings.webSearch.defaultProvider = provider;
+    this.scheduleFlush();
+  }
+
+  toggleWebSearchFallback() {
+    this.settings.webSearch.fallbackEnabled = !this.settings.webSearch.fallbackEnabled;
+    this.scheduleFlush();
+  }
+
+  setWebSearchSafeSearch(enabled: boolean) {
+    this.settings.webSearch.safeSearch = enabled;
     this.scheduleFlush();
   }
 

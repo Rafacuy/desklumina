@@ -1,5 +1,4 @@
 import { t, tf } from "../../utils";
-import { homedir } from "os";
 import { basename, dirname, join } from "path";
 import { stat } from "fs/promises";
 import { expandTilde } from "../../utils/system/path";
@@ -76,7 +75,7 @@ const fileHandlers: Record<string, (ctx: FileOpContext) => Promise<ToolExecution
         exitCode: 2,
       });
     }
-    if (args[0] === "/" || args[0] === homedir()) {
+    if (args[0] === "/" || args[0] === Bun.env.HOME) {
       return buildResult("delete", t("tool.result.invalid_request"), false, {
         stderr: "Dangerous operation cancelled",
         exitCode: 2,

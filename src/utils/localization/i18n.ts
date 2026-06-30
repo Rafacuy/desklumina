@@ -33,7 +33,7 @@ export const t = (key: string): string => {
   const resolved = dictionary ? resolvePath(dictionary, key) : undefined;
 
   if (resolved === undefined) {
-    if (process.env.NODE_ENV !== "production") {
+    if (Bun.env.NODE_ENV !== "production") {
       // console.warn(`[i18n] Missing key: "${key}" for locale: "${currentLang}"`);
     }
     return key;

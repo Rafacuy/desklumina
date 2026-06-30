@@ -11,7 +11,7 @@ export const STREAM_LOG_INTERVAL_MS = (() => {
 })();
 
 export function newRequestId(): string {
-  return crypto.randomUUID();
+  return Bun.randomUUIDv7();
 }
 
 export interface StreamMetricsHandlerState {

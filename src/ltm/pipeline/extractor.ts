@@ -278,8 +278,7 @@ export async function generateEmbedding(
   if (!resolved) return null;
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await resolved.provider.embed?.({
       input: text,
@@ -298,7 +297,7 @@ export async function generateEmbedding(
     logger.debug("ltm:embedding", `ltm:embedding failed provider=${resolved.provider.id} model=${resolved.model}: ${String(error)}`);
     return null;
   } finally {
-    clearTimeout(timeout);
+    clearTimeout(timer);
   }
 }
 

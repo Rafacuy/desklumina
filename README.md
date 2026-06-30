@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="docs/img/logo.png" width="85%" alt="DeskLumina LOGO">
+    <img src="docs/img/logo.png" width="75%" height="70%" alt="DeskLumina LOGO">
 </p>
 <h1 align="center">DeskLumina</h1>
 
@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.20.3-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.22.3-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
   <img src="https://img.shields.io/badge/Framework-Bun-black?style=for-the-badge&logo=bun" alt="Framework">
   <img src="https://img.shields.io/badge/Status-STABLE-green?style=for-the-badge" alt="Build Status">
@@ -52,7 +52,7 @@ By leveraging a multi-provider AI layer (Groq, OpenAI, Anthropic, Gemini, OpenRo
 ## 🛠️ Requirements
 
 ### Essential
-- **[Bun](https://bun.sh/)**: High-performance JS/TS runtime (v1.3.9+).
+- **[Bun](https://bun.sh/)**: High-performance JS/TS runtime (v1.3.14+).
 - **API Key**: At least one provider key (Groq, OpenAI, Anthropic, Gemini, OpenRouter, or Hugging Face).
 - **[Rofi](https://github.com/davatorium/rofi)**: Standard Linux distribution package for the UI.
 
@@ -95,6 +95,7 @@ bun run start
 - **Math**: "what is 15% of 340?" or "convert 100 km to miles"
 - **Media**: "play music" or "volume 50"
 - **System**: "what's the current date?"
+- **Web Search**: "search the web for latest Linux news" or "find images of cats"
 
 ---
 

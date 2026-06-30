@@ -206,11 +206,15 @@
       "preview_ready": "プレビュー準備完了",
       "preview_unavailable": "プレビュー利用不可",
       "search_complete": "検索完了: {count} 件一致",
-      "selected": "選択済み: {path}",
+      "search_failed": "検索に失敗しました: {reason}",
+      "no_results": "結果が見つかりません",
+      "selected": "選択済: {path}",
       "tracks_found": "{count} 曲が見つかりました:",
       "unknown_alias": "❌ 未知のアプリケーションエイリアス: {alias}"
     },
     "running_terminal": "ターミナルコマンドを実行しています",
+    "web_search": "ウェブ検索",
+    "web_searching": "ウェブを検索中",
     "search_playlists": "プレイリストを検索...",
     "search_tracks": "トラックを検索...",
     "select_music": "音楽を選択",
@@ -230,6 +234,15 @@
   },
   "ui": {
     "empty_chat": "空のチャット",
+    "empty_history": "まだメッセージがありません",
+    "conversation": "会話",
+    "conversationViewer": {
+      "title": "会話",
+      "copy": "メッセージをコピー",
+      "copy_hint": "Alt+C でコピー",
+      "copied": "コピーしました"
+    },
+    "history_action": "履歴",
     "full_response": "全文表示",
     "loader": {
       "brain": "💫 脳みそウォーミングアップ中...",
@@ -272,6 +285,10 @@
       "title": "設定",
       "tool_display": "ツール表示",
       "tts": "テキスト読み上げ (TTS)",
+      "web_search": "ウェブ検索",
+      "web_search_provider": "デフォルトプロバイダー",
+      "web_search_fallback": "フォールバックを有効化",
+      "web_search_safe_search": "セーフサーチ",
       "natural_voices": "ナチュラルボイス",
       "natural_voices_settings": "ナチュラルボイス設定",
       "latency_masking": "レイテンシマスキング",

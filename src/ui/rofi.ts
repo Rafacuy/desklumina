@@ -26,8 +26,7 @@ const TTS_BUTTON_GLYPH = "■";
 let activeMenuProc: ReturnType<typeof spawn> | null = null;
 let responsePanelAutoDismissed = false;
 
-//Pre-computed static theme fragments 
-// to avoid re-allocation on every spawn
+// static theme fragments - avoid re-allocating each spawn
 const STATIC_LISTVIEW_DISABLED = "listview { enabled: false; } mainbox { children: [inputbar, message]; }";
 const STATIC_INPUTBAR_ONLY = "listview { enabled: false; } mainbox { children: [inputbar]; }";
 
@@ -38,76 +37,32 @@ function escapeRasiString(value: string): string {
 export async function rofiChatInput(
   chatManager: ChatManager,
   prompt: string = "Lumina",
-  isExpanded: boolean = false
-): Promise<{ action: "send" | "new" | "select" | "settings" | "expand_toggle" | "exit"; input?: string }> {
-  const currentChat = chatManager.getCurrentChat();
-  const historyPreview = chatManager.getChatHistoryPreview(400);
-
-  const menuItems: string[] = [];
-
-  if (isExpanded) {
-    // Show management options in expanded mode
-    if (historyPreview) {
-      menuItems.push(`── ${t("ui.recent_messages")} ──`);
-      menuItems.push(historyPreview);
-      menuItems.push("──────────────────");
-    }
-
-    menuItems.push(`📂 ${t("ui.select_chat")}`);
-    menuItems.push(`⚙️ ${t("ui.settings.title")}`);
-    menuItems.push(`✖ ${t("common.close")}`);
-  }
-
-  const themeOverride = isExpanded 
-    ? "" 
-    : STATIC_LISTVIEW_DISABLED;
-    
-const hints = isExpanded
-    ? `${t("common.send")} · Esc ${t("common.exit")} · Tab ${t("common.hide")}`
-    : `${t("common.send")} · Esc ${t("common.exit")} · Tab ${t("common.expand")}`;
+  initialInput?: string
+): Promise<{ action: "send" | "history" | "exit"; input?: string }> {
+  void chatManager;   //not used here but kept for symmetry (caller expects it)
+  const hints = `${t("common.send")} · Esc ${t("common.exit")} · Tab ${t("ui.history_action")} [${t("common.expand")}]`;
 
   const result = await rofiMenu(
-    menuItems.join("\n"), 
+    "",
     prompt,
-    themeOverride,
+    STATIC_LISTVIEW_DISABLED,
     t("ui.type_message"),
-    hints
+    hints,
+    "",
+    false,
+    false,
+    { filter: initialInput }
   );
 
-  if (result.code === 10) { // TAB pressed
-    return { action: "expand_toggle" };
+  if (result.code === 10) { // TAB pressed -> open History view
+    return { action: "history" };
   }
 
-  const input = result.output;
-
-  if (!input || result.code !== 0) {
+  if (!result.output || result.code !== 0) {
     return { action: "exit" };
   }
 
-  if (isExpanded) {
-    if (input === `📂 ${t("ui.select_chat")}`) {
-      return { action: "select" };
-    }
-
-    if (input === `⚙️ ${t("ui.settings.title")}`) {
-      return { action: "settings" };
-    }
-
-    if (input === `✖ ${t("common.close")}`) {
-      return { action: "exit" };
-    }
-
-    if (input.startsWith(`󱜙 ${t("common.you")}:`) || input.startsWith(`󱜙 ${t("common.lumina")}:`) || input.startsWith("──")) {
-      // If user clicks a history item, treat it as wanting to send a new message
-      const message = await rofiSimpleInput(t("common.message"), "");
-      if (message) {
-        return { action: "send", input: message };
-      }
-      return { action: "exit" };
-    }
-  }
-
-  return { action: "send", input };
+  return { action: "send", input: result.output };
 }
 
 export async function rofiSelectChat(chatManager: ChatManager): Promise<string | null> {
@@ -181,6 +136,8 @@ export interface RofiMenuOptions {
   themePath?: string;
   /** Pass `-no-fixed-num-lines` when false */
   fixedNumLines?: boolean;
+  /** Initial filter text to pre-fill the input */
+  filter?: string;
 }
 
 export async function rofiMenu(
@@ -222,6 +179,10 @@ export async function rofiMenu(
     args.push("-no-fixed-num-lines");
   }
   
+  if (options?.filter !== undefined) {
+    args.push("-filter", options.filter);
+  }
+
   if (isMarkupRows) {
     args.push("-markup-rows");
   }
@@ -504,7 +465,7 @@ export async function rofiSimpleInput(prompt: string, placeholder: string = ""):
   return result.output ?? "";
 }
 
-// configured color for error UI
+// Configured colors, for the error UI
 const ERROR_TITLE_COLOR = "#962626";
 const ERROR_SUGGESTION_COLOR = "#000000";
 const ERROR_RAW_COLOR = "#2E2A2658";
@@ -523,7 +484,7 @@ interface ErrorPanelResult {
  * and re-renders the same panel so the user can retry or copy again.
  */
 export async function rofiErrorPanel(originalError: unknown): Promise<ErrorPanelResult> {
-  // Category is stable across copy re-renders.
+  //Category doesnt change across copy re-renders (its stable)
   const category = classifyError(originalError);
   const rawError = buildRawErrorString(originalError);
   const keys = CATEGORY_I18N_KEYS[category]!;
@@ -632,47 +593,141 @@ export async function rofiChatLoop(
   chatManager: ChatManager,
   onMessage: (message: string) => Promise<string>
 ): Promise<void> {
-  let isExpanded = false;
-  
+  let pendingInput: string | undefined = undefined;
+
   while (true) {
-    const result = await rofiChatInput(chatManager, "Lumina", isExpanded);
+    const result = await rofiChatInput(chatManager, "Lumina", pendingInput);
+    pendingInput = undefined;
 
     switch (result.action) {
       case "exit":
         return;
 
-      case "expand_toggle":
-        isExpanded = !isExpanded;
+      case "history": {
+        //history handles select/settings/exit on its own
+        const { rofiHistoryView } = await import("./history");
+        const view = await rofiHistoryView(chatManager, result.input);
+        if (view.action === "select") {
+          const chatId = await rofiSelectChat(chatManager);
+          if (chatId === "__new__") {
+            chatManager.createChat();
+          } else if (chatId) {
+            chatManager.loadChat(chatId);
+          }
+        } else if (view.action === "settings") {
+          const { rofiSettings } = await import("./settings");
+          await rofiSettings();
+        } else if (view.action === "exit") {
+          return;
+        } else if (view.action === "send" && view.input) {
+          await handleSendMessage(chatManager, view.input, onMessage);
+        } else if (view.action === "hide") {
+          pendingInput = view.input;
+        }
         break;
+      }
 
       case "send":
         if (result.input) {
-          let currentInput: string | null = result.input;
-          
-          while (currentInput) {
-            const userMessageIndex = chatManager.getCurrentChat()?.messages.length || 0;
-            let loadingProc: ReturnType<typeof spawn> | null = null;
+          await handleSendMessage(chatManager, result.input, onMessage);
+        }
+        break;
+    }
+  }
+}
+
+//drives a single message thru the send/retry flow
+async function handleSendMessage(
+  chatManager: ChatManager,
+  initialInput: string,
+  onMessage: (message: string) => Promise<string>
+): Promise<void> {
+  let currentInput: string | null = initialInput;
+
+  while (currentInput) {
+    const userMessageIndex = chatManager.getCurrentChat()?.messages.length || 0;
+    let loadingProc: ReturnType<typeof spawn> | null = null;
+    try {
+      loadingProc = spawnLoaderOverlay();
+
+      const response = await onMessage(currentInput);
+
+      loadingProc.kill();
+      await loadingProc.exited.catch(() => {});
+
+      if (response && response !== "Done.") {
+        let showResponse = true;
+        let fullResponse = response;
+
+        while (showResponse) {
+          const panelResult = await rofiResponsePanel(fullResponse);
+
+          if (panelResult.action === "expand") {
+            await rofiExpandedResponse(fullResponse);
+          } else if (panelResult.action === "cancel_tts" || panelResult.action === "tts_complete") {
+            showResponse = true;
+          } else if (panelResult.action === "reply" && panelResult.input) {
+            currentInput = panelResult.input;
+            showResponse = false;
+          } else {
+            currentInput = null;
+            showResponse = false;
+          }
+        }
+      } else {
+        currentInput = null;
+      }
+    } catch (error) {
+      if (loadingProc) {
+        loadingProc.kill();
+        await loadingProc.exited.catch(() => {});
+      }
+
+      if (error instanceof ChatRequestError) {
+        let activeError: unknown = error.originalError;
+
+        // lumina.chat() already appended the user msg so we undo that here
+        const rollbackMessages = () => {
+          const currentChat = chatManager.getCurrentChat();
+          if (currentChat) {
+            const messagesToRemove = currentChat.messages.length - userMessageIndex;
+            for (let i = 0; i < messagesToRemove; i++) {
+              chatManager.removeLastMessage();
+            }
+          }
+        };
+        rollbackMessages();
+
+        let continueErrorLoop = true;
+        while (continueErrorLoop) {
+          const panelResult = await rofiErrorPanel(activeError);
+          if (panelResult.action === "retry") {
+            if (!currentInput) {
+              continueErrorLoop = false;
+              break;
+            }
+            const retryInput = currentInput;
             try {
               loadingProc = spawnLoaderOverlay();
 
-              const response = await onMessage(currentInput);
+              const retryResponse = await onMessage(retryInput);
 
-              loadingProc.kill();
-              await loadingProc.exited.catch(() => {});
-              
-              if (response && response !== "Done.") {
+              if (loadingProc) {
+                loadingProc.kill();
+                await loadingProc.exited.catch(() => {});
+              }
+
+              if (retryResponse && retryResponse !== "Done.") {
                 let showResponse = true;
-                let fullResponse = response;
-                
+                let fullResponse = retryResponse;
                 while (showResponse) {
-                  const panelResult = await rofiResponsePanel(fullResponse);
-                  
-                  if (panelResult.action === "expand") {
+                  const rp = await rofiResponsePanel(fullResponse);
+                  if (rp.action === "expand") {
                     await rofiExpandedResponse(fullResponse);
-                  } else if (panelResult.action === "cancel_tts" || panelResult.action === "tts_complete") {
+                  } else if (rp.action === "cancel_tts" || rp.action === "tts_complete") {
                     showResponse = true;
-                  } else if (panelResult.action === "reply" && panelResult.input) {
-                    currentInput = panelResult.input;
+                  } else if (rp.action === "reply" && rp.input) {
+                    currentInput = rp.input;
                     showResponse = false;
                   } else {
                     currentInput = null;
@@ -682,138 +737,56 @@ export async function rofiChatLoop(
               } else {
                 currentInput = null;
               }
-            } catch (error) {
+              continueErrorLoop = false;
+            } catch (retryError) {
               if (loadingProc) {
                 loadingProc.kill();
                 await loadingProc.exited.catch(() => {});
               }
-
-              if (error instanceof ChatRequestError) {
-                let activeError: unknown = error.originalError;
-
-                // lumina.chat() appends the user message internally; undo it.
-                const rollbackMessages = () => {
-                  const currentChat = chatManager.getCurrentChat();
-                  if (currentChat) {
-                    const messagesToRemove = currentChat.messages.length - userMessageIndex;
-                    for (let i = 0; i < messagesToRemove; i++) {
-                      chatManager.removeLastMessage();
-                    }
-                  }
-                };
+              if (retryError instanceof ChatRequestError) {
                 rollbackMessages();
-
-                let continueErrorLoop = true;
-                while (continueErrorLoop) {
-                  const panelResult = await rofiErrorPanel(activeError);
-                  if (panelResult.action === "retry") {
-                    if (!currentInput) {
-                      continueErrorLoop = false;
-                      break;
-                    }
-                    const retryInput = currentInput;
-                    try {
-                      loadingProc = spawnLoaderOverlay();
-
-                      const retryResponse = await onMessage(retryInput);
-
-                      if (loadingProc) {
-                        loadingProc.kill();
-                        await loadingProc.exited.catch(() => {});
-                      }
-
-                      if (retryResponse && retryResponse !== "Done.") {
-                        let showResponse = true;
-                        let fullResponse = retryResponse;
-                        while (showResponse) {
-                          const rp = await rofiResponsePanel(fullResponse);
-                          if (rp.action === "expand") {
-                            await rofiExpandedResponse(fullResponse);
-                          } else if (rp.action === "cancel_tts" || rp.action === "tts_complete") {
-                            showResponse = true;
-                          } else if (rp.action === "reply" && rp.input) {
-                            currentInput = rp.input;
-                            showResponse = false;
-                          } else {
-                            currentInput = null;
-                            showResponse = false;
-                          }
-                        }
-                      } else {
-                        currentInput = null;
-                      }
-                      continueErrorLoop = false;
-                    } catch (retryError) {
-                      if (loadingProc) {
-                        loadingProc.kill();
-                        await loadingProc.exited.catch(() => {});
-                      }
-                      if (retryError instanceof ChatRequestError) {
-                        rollbackMessages();
-                        activeError = retryError.originalError;
-                        continue;
-                      }
-                      if (retryError instanceof CancellationError) {
-                        currentInput = null;
-                        continueErrorLoop = false;
-                        break;
-                      }
-                      logger.error("ui", `Retry error: ${retryError instanceof Error ? retryError.message : String(retryError)}`);
-                      throw retryError;
-                    }
-                  } else if (panelResult.action === "reply" && panelResult.input) {
-                    currentInput = panelResult.input;
-                    continueErrorLoop = false;
-                  } else {
-                    currentInput = null;
-                    continueErrorLoop = false;
-                  }
-                }
+                activeError = retryError.originalError;
                 continue;
               }
-
-              const isCancellation = 
-                error instanceof CancellationError || 
-                (error && typeof error === 'object' && 'name' in error && error.name === "CancellationError");
-
-              if (isCancellation) {
-                logger.info("ui", "Cancellation detected, intercepting and hiding response panel");
-                
-                const currentChat = chatManager.getCurrentChat();
-                if (currentChat) {
-                  const messagesToRemove = currentChat.messages.length - userMessageIndex;
-                  logger.debug("ui", `Removing ${messagesToRemove} messages from history (undo)`);
-                  for (let i = 0; i < messagesToRemove; i++) {
-                    chatManager.removeLastMessage();
-                  }
-                }
+              if (retryError instanceof CancellationError) {
                 currentInput = null;
+                continueErrorLoop = false;
                 break;
               }
-              logger.error("ui", `Error in onMessage: ${error instanceof Error ? error.message : String(error)}`);
-              throw error;
+              logger.error("ui", `Retry error: ${retryError instanceof Error ? retryError.message : String(retryError)}`);
+              throw retryError;
             }
+          } else if (panelResult.action === "reply" && panelResult.input) {
+            currentInput = panelResult.input;
+            continueErrorLoop = false;
+          } else {
+            currentInput = null;
+            continueErrorLoop = false;
           }
         }
-        break;
+        continue;
+      }
 
-      case "select":
-        const chatId = await rofiSelectChat(chatManager);
-        if (chatId === "__new__") {
-          chatManager.createChat();
-        } else if (chatId) {
-          chatManager.loadChat(chatId);
+      const isCancellation =
+        error instanceof CancellationError ||
+        (error && typeof error === 'object' && 'name' in error && error.name === "CancellationError");
+
+      if (isCancellation) {
+        logger.info("ui", "Cancellation detected, intercepting and hiding response panel");
+
+        const currentChat = chatManager.getCurrentChat();
+        if (currentChat) {
+          const messagesToRemove = currentChat.messages.length - userMessageIndex;
+          logger.debug("ui", `Removing ${messagesToRemove} messages from history (undo)`);
+          for (let i = 0; i < messagesToRemove; i++) {
+            chatManager.removeLastMessage();
+          }
         }
+        currentInput = null;
         break;
-
-      case "settings":
-        const { rofiSettings } = await import("./settings");
-        await rofiSettings();
-        break;
-
-      case "new":
-        chatManager.createChat();
-        break;
+      }
+      logger.error("ui", `Error in onMessage: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
     }
   }
 }

@@ -69,6 +69,16 @@ export interface Settings {
   language: "id" | "en" | "ja";
   persona: string;
   features: FeatureFlags;
+  webSearch: {
+    defaultProvider: "auto" | "serper" | "serpapi" | "searxng" | "tavily";
+    fallbackEnabled: boolean;
+    defaultLimit: number;
+    defaultType: "web" | "news" | "images";
+    safeSearch: boolean;
+    language: string;
+    country: string;
+    includeRawContent: boolean;
+  };
   tts: {
     voiceId: string;
     speed: number;
@@ -77,7 +87,7 @@ export interface Settings {
   ltm: LtmSettings;
 }
 
-export const DEFAULT_SETTINGS: Settings = {
+export const DEFAULT_SETTINGS = {
   language: "en",
   persona: "default",
   features: {
@@ -86,6 +96,16 @@ export const DEFAULT_SETTINGS: Settings = {
     chatHistory: true,
     dangerousCommandConfirmation: true,
     ltm: true,
+  },
+  webSearch: {
+    defaultProvider: "auto",
+    fallbackEnabled: true,
+    defaultLimit: 5,
+    defaultType: "web",
+    safeSearch: false,
+    language: "",
+    country: "",
+    includeRawContent: false,
   },
   tts: {
     voiceId: "en-US-AvaNeural",
@@ -118,4 +138,4 @@ export const DEFAULT_SETTINGS: Settings = {
       topK: 5,
     },
   },
-};
+} satisfies Settings;

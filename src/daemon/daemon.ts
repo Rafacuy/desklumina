@@ -1,10 +1,8 @@
 import { t, tf, cleanAssistantResponse } from "../utils";
 import { Lumina, ChatManager } from "../core";
 import { logger } from "../logger";
-import { existsSync, mkdirSync, unlinkSync, chmodSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, unlinkSync, chmodSync } from "fs";
 import { join } from "path";
-import { homedir } from "os";
-import { randomUUID } from "crypto";
 import { CacheManager } from "./cache/cache-manager";
 import { startFileWatcher, stopFileWatcher } from "./cache/file-watcher";
 import { AsyncMutex } from "../utils/async-mutex";
@@ -34,9 +32,9 @@ export class DeskLuminaDaemon {
   private lastWarmupAt = 0;
 
   constructor() {
-    const runtimeDir = process.env.XDG_RUNTIME_DIR || join(homedir(), ".config/desklumina");
+    const runtimeDir = Bun.env.XDG_RUNTIME_DIR || join(Bun.env.HOME!, ".config/desklumina");
     this.socketPath = join(runtimeDir, "desklumina.sock");
-    this.tokenPath = join(homedir(), ".config/desklumina/.daemon-token");
+    this.tokenPath = join(Bun.env.HOME!, ".config/desklumina/.daemon-token");
     this.pidPath = join(runtimeDir, "desklumina.pid");
     this.ensureSocketDir();
   }
@@ -48,9 +46,10 @@ export class DeskLuminaDaemon {
     }
   }
 
-  private generateToken(): string {
-    const token = randomUUID();
-    writeFileSync(this.tokenPath, token, { mode: 0o600 });
+  private async generateToken(): Promise<string> {
+    const token = Bun.randomUUIDv7();
+    await Bun.write(this.tokenPath, token);
+    chmodSync(this.tokenPath, 0o600);
     this.token = token;
     return token;
   }
@@ -63,7 +62,7 @@ export class DeskLuminaDaemon {
 
     try {
       this.state = "binding";
-      this.generateToken();
+      await this.generateToken();
 
       if (existsSync(this.socketPath)) {
         unlinkSync(this.socketPath);
@@ -78,7 +77,7 @@ export class DeskLuminaDaemon {
         chmodSync(this.socketPath, 0o600);
       }
 
-      writeFileSync(this.pidPath, String(process.pid), { mode: 0o600 });
+      await Bun.write(this.pidPath, String(process.pid));
 
       this.state = "warming";
       this.chatManager = new ChatManager();

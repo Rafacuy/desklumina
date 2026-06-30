@@ -1,2 +1,7 @@
 [test]
 preload = ["./tests/setup.ts"]
+timeout = 10000
+coverageThreshold = 0.7
+
+[install]
+prefer = "offline"

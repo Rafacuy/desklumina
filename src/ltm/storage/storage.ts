@@ -1,8 +1,6 @@
 import { Database } from "bun:sqlite";
-import { mkdirSync } from "node:fs";
-import { dirname } from "node:path";
-import { homedir } from "node:os";
-import { randomUUID } from "node:crypto";
+import { mkdirSync } from "fs";
+import { dirname } from "path";
 import { logger } from "../../logger";
 import type { EpisodicVectorEntry, LayerType, LtmEntry } from "../core/types";
 
@@ -18,8 +16,8 @@ interface MemoryRow {
 }
 
 function expandPath(path: string): string {
-  if (path === "~") return homedir();
-  if (path.startsWith("~/")) return `${homedir()}${path.slice(1)}`;
+  if (path === "~") return Bun.env.HOME!;
+  if (path.startsWith("~/")) return `${Bun.env.HOME!}${path.slice(1)}`;
   return path;
 }
 
@@ -122,7 +120,7 @@ export class LtmStore {
 
   insertEpisodic(value: string, embedding: string | null = null): LtmEntry {
     const now = Date.now();
-    const id = randomUUID();
+    const id = Bun.randomUUIDv7();
     this.getDb().query(`
       INSERT INTO memories (id, layer, key, value, access_count, last_accessed, created_at, embedding)
       VALUES ($id, 'episodic', NULL, $value, 0, $now, $now, $embedding)
@@ -255,7 +253,7 @@ export class LtmStore {
       ON CONFLICT(layer, key) WHERE key IS NOT NULL AND layer IN ('fact', 'pattern')
       DO UPDATE SET value = excluded.value, last_accessed = excluded.last_accessed
     `).run({
-      id: randomUUID(),
+      id: Bun.randomUUIDv7(),
       layer,
       key,
       value,

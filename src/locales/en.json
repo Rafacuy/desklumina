@@ -206,11 +206,15 @@
       "preview_ready": "Preview ready",
       "preview_unavailable": "Preview unavailable",
       "search_complete": "Search complete: {count} matches",
+      "search_failed": "Search failed: {reason}",
+      "no_results": "No results found",
       "selected": "Selected: {path}",
       "tracks_found": "Found {count} track(s):",
       "unknown_alias": "❌ Unknown application alias: {alias}"
     },
     "running_terminal": "Running terminal command",
+    "web_search": "Web search",
+    "web_searching": "Searching the web",
     "search_playlists": "Search playlists...",
     "search_tracks": "Search tracks...",
     "select_music": "Select Music",
@@ -230,6 +234,15 @@
   },
   "ui": {
     "empty_chat": "Empty chat",
+    "empty_history": "No messages yet",
+    "conversation": "Conversation",
+    "conversationViewer": {
+      "title": "Conversation",
+      "copy": "Copy message",
+      "copy_hint": "Alt+C to copy",
+      "copied": "Copied"
+    },
+    "history_action": "History",
     "full_response": "Full Response",
     "loader": {
       "brain": "💫 Warming up the brain cells...",
@@ -272,6 +285,10 @@
       "title": "Settings",
       "tool_display": "Tool Display",
       "tts": "Text-to-Speech",
+      "web_search": "Web Search",
+      "web_search_provider": "Default Provider",
+      "web_search_fallback": "Enable Fallback",
+      "web_search_safe_search": "Safe Search",
       "natural_voices": "Natural Voices",
       "natural_voices_settings": "Natural Voices Settings",
       "latency_masking": "Latency Masking",

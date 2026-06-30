@@ -83,6 +83,22 @@ The value accepts either `provider:model` (e.g. `gemini:gemini-embedding-001`) o
 3. Otherwise, walk the main chat fallback chain (`DESKLUMINA_MODEL` + `DESKLUMINA_FALLBACKS`) and pick the first registered provider whose capabilities declare `embeddingsSupported: true`.
 4. If no embedding-capable provider is registered, embedding generation returns `null`. The LTM pipeline degrades gracefully: episodic rows are stored without embeddings, and retrieval falls back to lexical FTS search.
 
+### Web Search Configuration
+
+Set one or more of these API keys to enable the `web_search` tool. 
+DeskLumina will fall back if a provider goes down or rate limits.
+
+| Variable | Description |
+|----------|-------------|
+| `SERPER_API_KEY` | API key for Serper.dev |
+| `SERPAPI_API_KEY` | API key for SerpApi |
+| `TAVILY_API_KEY` | API key for Tavily |
+| `SEARXNG_BASE_URL` | Base URL for a SearXNG instance (e.g., `https://searx.example.com`) |
+| `SEARXNG_AUTH_HEADER_NAME` | (Optional) Auth header name if using a private SearXNG instance |
+| `SEARXNG_AUTH_HEADER_VALUE`| (Optional) Auth header value if using a private SearXNG instance |
+| `DESKLUMINA_WEB_SEARCH_PROVIDER` | Which provider to use by default. `auto` just picks the first configured one. |
+| `DESKLUMINA_WEB_SEARCH_TIMEOUT_MS` | Timeout for searches in ms (e.g., `8000`). |
+
 ---
 
 ## Models Configuration File (models.json)
@@ -179,6 +195,16 @@ DeskLumina stores user preferences in `~/.config/desklumina/settings.json`.
       "threshold": 0.65,
       "topK": 5
     }
+  },
+  "webSearch": {
+    "defaultProvider": "auto",
+    "fallbackEnabled": true,
+    "defaultLimit": 5,
+    "defaultType": "web",
+    "safeSearch": false,
+    "language": "",
+    "country": "",
+    "includeRawContent": false
   }
 }
 ```
@@ -208,6 +234,14 @@ DeskLumina stores user preferences in `~/.config/desklumina/settings.json`.
 - **`ltm.semanticRetrieval.enabled`**: Enables semantic episodic retrieval (embedding + cosine similarity).
 - **`ltm.semanticRetrieval.threshold`**: Similarity threshold for episodic match filtering (default `0.65`).
 - **`ltm.semanticRetrieval.topK`**: Maximum episodic matches injected per prompt (default `5`).
+- **`webSearch.defaultProvider`**: The default provider for web searches (`auto`, `serper`, `serpapi`, `searxng`, `tavily`).
+- **`webSearch.fallbackEnabled`**: Automatically fall back to another provider if the default fails.
+- **`webSearch.defaultLimit`**: Default number of search results to return.
+- **`webSearch.defaultType`**: Default search type (`web`, `news`, `images`).
+- **`webSearch.safeSearch`**: Enable safe search filtering if supported by the provider.
+- **`webSearch.language`**: Default language code for searches.
+- **`webSearch.country`**: Default country code for searches.
+- **`webSearch.includeRawContent`**: Include raw content previews in results when supported.
 
 ### LTM Semantic Retrieval Notes
 

@@ -20,6 +20,7 @@ const TOOL_CONFIG: Record<string, ToolConfig> = {
   notify: { icon: "🔔", label: "tool.sending_notification", resultLabel: "tool.notification_sent" },
   music: { icon: "🎶", label: "tool.music_system", resultLabel: "tool.music_controlled" },
   math: { icon: "🧮", label: "math.loading", resultLabel: "math.result_label" },
+  web_search: { icon: "🌐", label: "tool.web_searching", resultLabel: "tool.web_search" },
 };
 
 /**
@@ -188,6 +189,23 @@ function summarizeResult(result: ToolResult): string[] {
         const moreWord = t("common.more") || "more";
         lines.push(`• +${files.length - 3} ${moreWord}`);
       }
+    }
+    return lines;
+  }
+
+  if (result.tool === "web_search") {
+    const webSearch = result.extra?.webSearch;
+    if (!webSearch) return [];
+    const lines: string[] = [];
+    if (result.status === "no_results") {
+      lines.push(t("tool.result.no_results"));
+    } else {
+      lines.push(tf("tool.result.search_complete", { count: webSearch.returnedCount }));
+    }
+    webSearch.results.slice(0, 3).forEach((r) => lines.push(`• ${r.title}`));
+    if (webSearch.results.length > 3) {
+      const moreWord = t("common.more") || "more";
+      lines.push(`• +${webSearch.results.length - 3} ${moreWord}`);
     }
     return lines;
   }

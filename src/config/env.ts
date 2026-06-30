@@ -2,28 +2,12 @@ import { Validation } from "../utils/validation";
 import { validateProviderRuntimeConfig, type ProviderRuntimeConfig } from "../ai/config/runtime";
 import { loadModelsConfig } from "../ai/config/models-config";
 
-let deprecationWarningsEmitted = false;
-
-function emitDeprecationWarnings(): void {
-  if (deprecationWarningsEmitted) return;
-  deprecationWarningsEmitted = true;
-
-  if (!Bun.env.DESKLUMINA_MODEL && Bun.env.MODEL_NAME) {
-    console.warn("\x1b[33m[DEPRECATED] MODEL_NAME is deprecated. Use DESKLUMINA_MODEL instead (format: provider:model). Create models.json for full configuration.\x1b[0m");
-  }
-  if (!Bun.env.DESKLUMINA_FALLBACKS && Bun.env.FALLBACK_MODELS) {
-    console.warn("\x1b[33m[DEPRECATED] FALLBACK_MODELS is deprecated. Use DESKLUMINA_FALLBACKS instead (format: provider:model,...). Create models.json for full configuration.\x1b[0m");
-  }
-}
-
 /**
  * Resolves the effective provider runtime configuration from current
  * environment variables and models.json. This function reads fresh
  * values on every call and never relies on stale cached state.
  */
 export function resolveProviderRuntimeConfig(): ProviderRuntimeConfig {
-  emitDeprecationWarnings();
-
   const groqApiKey = Bun.env.GROQ_API_KEY;
   const openaiApiKey = Bun.env.OPENAI_API_KEY;
   const anthropicApiKey = Bun.env.ANTHROPIC_API_KEY;
@@ -31,8 +15,8 @@ export function resolveProviderRuntimeConfig(): ProviderRuntimeConfig {
   const openrouterApiKey = Bun.env.OPENROUTER_API_KEY;
   const hfApiKey = Bun.env.HF_API_KEY;
 
-  const deskluminaModel = Bun.env.DESKLUMINA_MODEL || Bun.env.MODEL_NAME;
-  const deskluminaFallbacks = Bun.env.DESKLUMINA_FALLBACKS || Bun.env.FALLBACK_MODELS;
+  const deskluminaModel = Bun.env.DESKLUMINA_MODEL;
+  const deskluminaFallbacks = Bun.env.DESKLUMINA_FALLBACKS;
   const deskluminaEmbedModel = Bun.env.DESKLUMINA_EMBED_MODEL;
 
   let primaryModel = deskluminaModel || "";
@@ -136,12 +120,42 @@ export const env = {
     return Bun.env.HF_API_KEY || "";
   },
   get MODEL_NAME(): string {
-    return Bun.env.DESKLUMINA_MODEL || Bun.env.MODEL_NAME || "";
+    return Bun.env.DESKLUMINA_MODEL || "";
   },
   get FALLBACK_MODELS(): string | undefined {
-    return Bun.env.DESKLUMINA_FALLBACKS || Bun.env.FALLBACK_MODELS;
+    return Bun.env.DESKLUMINA_FALLBACKS;
   },
   get EMBED_MODEL(): string | undefined {
     return Bun.env.DESKLUMINA_EMBED_MODEL || undefined;
+  },
+  get SERPER_API_KEY(): string {
+    return Bun.env.SERPER_API_KEY || "";
+  },
+  get SERPAPI_API_KEY(): string {
+    return Bun.env.SERPAPI_API_KEY || "";
+  },
+  get SEARXNG_BASE_URL(): string {
+    return Bun.env.SEARXNG_BASE_URL || "";
+  },
+  get SEARXNG_AUTH_HEADER_NAME(): string {
+    return Bun.env.SEARXNG_AUTH_HEADER_NAME || "";
+  },
+  get SEARXNG_AUTH_HEADER_VALUE(): string {
+    return Bun.env.SEARXNG_AUTH_HEADER_VALUE || "";
+  },
+  get TAVILY_API_KEY(): string {
+    return Bun.env.TAVILY_API_KEY || "";
+  },
+  get DESKLUMINA_WEB_SEARCH_PROVIDER(): string {
+    return Bun.env.DESKLUMINA_WEB_SEARCH_PROVIDER || "";
+  },
+  get DESKLUMINA_WEB_SEARCH_TIMEOUT_MS(): number | undefined {
+    const raw = Bun.env.DESKLUMINA_WEB_SEARCH_TIMEOUT_MS;
+    if (!raw) return undefined;
+    const parsed = parseInt(raw, 10);
+    if (Number.isNaN(parsed)) return undefined;
+    const MIN_TIMEOUT_MS = 2000;
+    const MAX_TIMEOUT_MS = 20000;
+    return Math.max(MIN_TIMEOUT_MS, Math.min(MAX_TIMEOUT_MS, parsed));
   },
 };

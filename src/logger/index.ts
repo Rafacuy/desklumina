@@ -1,10 +1,9 @@
 import { writeFileSync, appendFileSync, existsSync, mkdirSync, statSync, renameSync, unlinkSync } from "fs";
 import { join } from "path";
-import { homedir } from "os";
 
 type LogLevel = "debug" | "info" | "warn" | "error" | "fatal";
 
-const LOG_DIR = join(homedir(), ".config/desklumina/logs");
+const LOG_DIR = join(Bun.env.HOME!, ".config/desklumina/logs");
 const ERROR_LOG = join(LOG_DIR, "error.log");
 const GENERAL_LOG = join(LOG_DIR, "general.log");
 const MAX_LOG_SIZE = 10 * 1024 * 1024; // 10MB

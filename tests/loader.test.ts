@@ -5,7 +5,7 @@ import { join } from "path";
 import { randomLoaderImage, startLoader, stopLoader } from "../src/ui/loader";
 
 describe("Loader: Single-line spinner", () => {
-  let originalWrite: typeof process.stdout.write;
+  let originalWrite: typeof Bun.stdout.write;
   let writeCallCount = 0;
   let logCallCount = 0;
 
@@ -13,10 +13,10 @@ describe("Loader: Single-line spinner", () => {
     writeCallCount = 0;
     logCallCount = 0;
     
-    originalWrite = process.stdout.write;
-    process.stdout.write = mock((chunk: any) => {
+    originalWrite = Bun.stdout.write;
+    Bun.stdout.write = mock((chunk: any) => {
       writeCallCount++;
-      return true;
+      return chunk?.length ?? 0;
     }) as any;
 
     console.log = mock(() => {
@@ -26,7 +26,7 @@ describe("Loader: Single-line spinner", () => {
 
   afterEach(() => {
     stopLoader();
-    process.stdout.write = originalWrite;
+    Bun.stdout.write = originalWrite;
   });
 
   test("uses process.stdout.write instead of console.log", async () => {
@@ -40,9 +40,9 @@ describe("Loader: Single-line spinner", () => {
 
   test("uses carriage return for single-line updates", async () => {
     const writes: string[] = [];
-    process.stdout.write = mock((chunk: any) => {
+    Bun.stdout.write = mock((chunk: any) => {
       writes.push(String(chunk));
-      return true;
+      return chunk?.length ?? 0;
     }) as any;
 
     startLoader();
@@ -55,9 +55,9 @@ describe("Loader: Single-line spinner", () => {
 
   test("clears the line on stop", async () => {
     const writes: string[] = [];
-    process.stdout.write = mock((chunk: any) => {
+    Bun.stdout.write = mock((chunk: any) => {
       writes.push(String(chunk));
-      return true;
+      return chunk?.length ?? 0;
     }) as any;
 
     startLoader();
@@ -70,9 +70,9 @@ describe("Loader: Single-line spinner", () => {
 
   test("does not create new lines during rotation", async () => {
     const writes: string[] = [];
-    process.stdout.write = mock((chunk: any) => {
+    Bun.stdout.write = mock((chunk: any) => {
       writes.push(String(chunk));
-      return true;
+      return chunk?.length ?? 0;
     }) as any;
 
     startLoader();

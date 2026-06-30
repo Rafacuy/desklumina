@@ -8,3 +8,4 @@ export { handleFileManagement, parseFileManagementCommand, parseQuotedArgs } fro
 export { music } from "./frameworks/music";
 export { clipboard } from "./frameworks/clipboard";
 export { notify } from "./frameworks/notify";
+export { webSearch } from "./frameworks/web-search";

@@ -17,7 +17,7 @@ A guide for developers looking to extend DeskLumina or contribute to the core pr
 
 ## Environment Setup
 
-1.  **Bun**: Ensure you have [Bun](https://bun.sh/) (v1.3.9+) installed.
+1.  **Bun**: Ensure you have [Bun](https://bun.sh/) (v1.3.14+) installed.
 2.  **Dependencies**: Run `bun install`.
 3.  **Dev Mode**: Use `bun run dev` for a persistent terminal chat loop.
 4.  **Linting**: Run `bun run lint` to check for TypeScript errors.
@@ -291,6 +291,42 @@ Contextual hints use i18n keys:
 - `settings.hint.open`: for navigation rows
 - `settings.hint.toggle`: for toggle rows
 - `settings.hint.close`: for all rows
+
+---
+
+## Chat History View Architecture
+
+The Chat History View replaces the old "Tab to expand" menu with a dedicated, fixed-height Rofi window. Understanding this architecture is helpful when modifying or extending history-related UI.
+
+### Module Structure
+
+| Module | Purpose |
+|--------|---------|
+| `src/ui/history.ts` | Main History View (`rofiHistoryView`), index-based selection via `-format i`, Pango-styled rows |
+| `src/ui/conversation-view.ts` | Message viewer (`rofiConversationView`) with Copy (Alt+C) and Expand (Tab) actions |
+| `src/ui/themes/history.rasi` | Rofi theme: fixed-height `listview` (10 lines), `scrollbar` widget, `markup-rows: true` |
+| `src/core/services/chat-manager.ts` | `getHistoryPangoLines()` / `getHistoryPangoLinesWithMapping()` -- generates Pango markup lines from stored chat messages |
+
+### Key Design 
+
+**Index-based selection**: The view uses `-format i` to return the selected row index rather than row text. This avoids fragility against Pango markup in row content. A helper function (`resolveHistorySelection` in `history.ts`) maps the integer result to menu actions (Select Chat, Settings, Exit) or conversation row indices.
+
+**Fixed-height listview**: The `history.rasi` theme sets `fixed-height: true` on the listview with `lines: 10`. The window reserves exactly that many rows; the listview scrolls internally once the conversation exceeds the limit. This guarantees the menu rows (Select Chat, Settings, Exit) and the entry bar never scroll off-screen.
+
+**Pango markup in rows**: Because the listview uses `markup-rows: true`, the `@` color aliases defined in `lumina.rasi` do not apply to row content. Row colors are set with explicit Pango `<span foreground="...">` attributes, using the same hex values as the alias palette (`#7060CA` for accent, `#2E2A26` for text-primary, `#A79F96` for muted, `#E4A7A1` for error).
+
+**Conversation Viewer**: When a history row is selected, `history.ts` resolves the nearest non-tool message index and opens `rofiConversationView`. The viewer renders the message in a styled panel with a Copy button (`Alt+C`, mapped to `kb-custom-2`) and a Tab key to expand truncated content via `rofiExpandedResponse`.
+
+### Adding or Modifying History Rows
+
+1. Pango strings for history rows are built in `chat-manager.ts` (`getHistoryPangoLinesWithMapping`). Each row uses escaped content via `escapeHtml` to prevent XSS.
+2. Tool messages are rendered as muted, italic lines prefixed with a gear icon (⚙) and the tool label.
+3. User and assistant messages use bold labels with `common.you` / `common.lumina` prefixes.
+4. `HISTORY_LINE_MAX_CHARS` (110) controls truncation width; excess characters are replaced with `...`.
+
+### Testing
+
+- `tests/chat-manager.test.ts` includes a test for `getHistoryPangoLinesWithMapping`.
 
 ---
 

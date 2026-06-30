@@ -17,8 +17,8 @@ export function emitOrchestrationLog(event: AiOrchestrationEvent, options?: { no
   const { console: consoleLine, file } = formatOrchestrationEvent(event, { now, colorEnabled, mode }, sanitizeOrchestrationValue);
   enqueueGeneralLogLine(file);
   if (useStdout) {
-    process.stdout.write(`${consoleLine}\n`);
+    Bun.stdout.write(`${consoleLine}\n`);
   } else {
-    process.stderr.write(`${consoleLine}\n`);
+    Bun.stderr.write(`${consoleLine}\n`);
   }
 }

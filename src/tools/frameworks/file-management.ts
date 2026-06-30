@@ -1,6 +1,4 @@
 import { t, tf } from "../../utils/localization/i18n";
-import { homedir } from "os";
-import { env } from "process";
 import { basename, dirname, extname, join } from "path";
 import { mkdirSync, writeFileSync } from "fs";
 import { mkdir, readdir, stat, open } from "fs/promises";
@@ -18,7 +16,7 @@ import {
 } from "./file-shared";
 import type { FileMatch, FilePreview, ToolExecutionResult, ToolExecutionSummary } from "../../types";
 
-const XDG_STATE_HOME = env.XDG_STATE_HOME ?? join(homedir(), ".local/state");
+const XDG_STATE_HOME = Bun.env.XDG_STATE_HOME ?? join(Bun.env.HOME!, ".local/state");
 const HISTORY_DIR = join(XDG_STATE_HOME, "desklumina");
 const HISTORY_PATH = join(HISTORY_DIR, "file-search-history.json");
 const HISTORY_LIMIT = 25;

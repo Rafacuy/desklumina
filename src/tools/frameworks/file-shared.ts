@@ -1,5 +1,4 @@
 import { dirname, join, resolve } from "path";
-import { randomUUID } from "crypto";
 import { rename, unlink } from "fs/promises";
 import { expandTilde } from "../../utils/system/path";
 import type { ToolExecutionResult } from "../../types";
@@ -197,7 +196,7 @@ export function quoteToken(value: string): string {
  */
 export async function atomicWriteFile(path: string, content: string | Buffer): Promise<void> {
   const dir = dirname(path);
-  const tmpPath = join(dir, `.${randomUUID()}.tmp`);
+  const tmpPath = join(dir, `.${Bun.randomUUIDv7()}.tmp`);
   try {
     await Bun.write(tmpPath, content);
     await rename(tmpPath, path);

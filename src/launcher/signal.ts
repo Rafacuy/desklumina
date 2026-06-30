@@ -1,8 +1,7 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
-import { homedir } from "os";
 
-const runtimeDir = process.env.XDG_RUNTIME_DIR || join(homedir(), ".config/desklumina");
+const runtimeDir = Bun.env.XDG_RUNTIME_DIR || join(Bun.env.HOME!, ".config/desklumina");
 const PID_PATH = join(runtimeDir, "desklumina.pid");
 
 export function readDaemonPid(): number | null {

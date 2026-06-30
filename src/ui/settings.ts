@@ -1,4 +1,3 @@
-import { homedir } from "os";
 import { join } from "path";
 import { getLang, t } from "../utils/localization/i18n";
 import { settingsManager } from "../core/services/settings-manager";
@@ -7,8 +6,11 @@ import { resolveColorScheme, getColorTokens, type ColorTokens } from "./settings
 import { buildFooterHint } from "./settings/footer";
 import { renderRow, type SettingsRow, type NavRow } from "./settings/rows";
 import type { SettingKey } from "../constants/settings-keys";
+import type { Settings } from "../types";
 
-const SETTINGS_THEME_PATH = join(homedir(), ".config/desklumina/src/ui/themes/settings.rasi");
+const SETTINGS_THEME_PATH = join(Bun.env.HOME!, ".config/desklumina/src/ui/themes/settings.rasi");
+
+const PROVIDERS: Settings["webSearch"]["defaultProvider"][] = ["auto", "tavily", "serper", "serpapi", "searxng"];
 
 const LANG_NAMES: Record<string, string> = {
   id: "Bahasa Indonesia",
@@ -111,6 +113,30 @@ function buildSettingsRows(lang: string): SettingsRow[] {
     key: "i18n.locale",
   });
 
+  rows.push({ type: "section", label: t("ui.settings.web_search") });
+  rows.push({
+    type: "nav",
+    icon: "󰖟",
+    label: t("ui.settings.web_search_provider"),
+    value: settings.webSearch.defaultProvider,
+    panel: "web-search-provider",
+    key: "webSearch.provider",
+  });
+  rows.push({
+    type: "toggle",
+    icon: "󰔡",
+    label: t("ui.settings.web_search_fallback"),
+    key: "webSearch.fallback",
+    value: settings.webSearch.fallbackEnabled,
+  });
+  rows.push({
+    type: "toggle",
+    icon: "󰔡",
+    label: t("ui.settings.web_search_safe_search"),
+    key: "webSearch.safeSearch",
+    value: settings.webSearch.safeSearch,
+  });
+
   return rows;
 }
 
@@ -133,6 +159,12 @@ function applyToggle(key: SettingKey): void {
       break;
     case "i18n.locale":
       //navigational setting. toggling is not applicable.
+      break;
+    case "webSearch.fallback":
+      settingsManager.toggleWebSearchFallback();
+      break;
+    case "webSearch.safeSearch":
+      settingsManager.setWebSearchSafeSearch(!settingsManager.get().webSearch.safeSearch);
       break;
   }
 }
@@ -237,6 +269,29 @@ async function handleNavPanel(row: NavRow): Promise<void> {
     case "natural-voices-settings":
       await promptNaturalVoicesSettingsPanel();
       break;
+    case "web-search-provider":
+      await promptWebSearchProviderPanel();
+      break;
+  }
+}
+
+async function promptWebSearchProviderPanel(): Promise<void> {
+  const current = settingsManager.get().webSearch.defaultProvider;
+  const options = PROVIDERS.map((p) => `${current === p ? "󰄬 " : "   "}${p}`);
+  options.push(`󰜺 ${t("common.back")}`);
+
+  const result = await rofiMenu(
+    options.join("\n"),
+    t("ui.settings.web_search_provider"),
+    "",
+    t("ui.settings.type_to_search"),
+    `󰌑 ${t("common.select")} │ 󱊷 ${t("common.back")}`
+  );
+
+  if (result.code === 0 && result.output && !result.output.startsWith("󰜺")) {
+    const clean = result.output.trimStart().replace(/^󰄬\s+/, "");
+    const provider = PROVIDERS.find((p) => p === clean);
+    if (provider) settingsManager.setWebSearchProvider(provider);
   }
 }
 

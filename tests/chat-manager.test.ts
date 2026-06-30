@@ -116,6 +116,23 @@ describe("ChatManager", () => {
     statSpy.mockRestore();
   });
 
+  test("getHistoryPangoLinesWithMapping maps lines to original message indices", () => {
+    chatManager.createChat("Test");
+    chatManager.addMessage("First user message", "user");
+    chatManager.addMessage("First assistant reply", "assistant");
+    chatManager.addMessage("Second user message", "user");
+
+    const { lines, messageIndices } = chatManager.getHistoryPangoLinesWithMapping();
+
+    expect(lines.length).toBe(messageIndices.length);
+    expect(lines.length).toBeGreaterThanOrEqual(3);
+    // With only 3 messages, indices should be 0, 1, 2 
+    // (trimmed from the front when there are fewer than maxLines messages).
+    expect(messageIndices[0]).toBe(0);
+    expect(messageIndices[1]).toBe(1);
+    expect(messageIndices[2]).toBe(2);
+  });
+
   test("prunes chats handles missing files gracefully (ENOENT fix)", () => {
     const unlinkSpy = spyOn(fs, "unlinkSync").mockImplementation(() => {});
     const existsSpy = spyOn(fs, "existsSync").mockReturnValue(false); // File doesn't exist

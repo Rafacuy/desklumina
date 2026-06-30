@@ -19,7 +19,7 @@ Get DeskLumina up and running on your system. This guide covers all requirements
 
 ### Essential
 
-- **[Bun](https://bun.sh/)** v1.3.9 or higher.
+- **[Bun](https://bun.sh/)** v1.3.14 or higher.
 - **API Key**: At least one provider key (Groq, OpenAI, Anthropic, Gemini, OpenRouter, or Hugging Face).
 - **[Rofi](https://github.com/davatorium/rofi)** (Standard Linux distribution package).
 - **Core Utilities**: `bash`, `git`, `find`, `ls`, `mkdir`, `rm`, `mv`, `cp`.

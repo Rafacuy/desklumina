@@ -15,6 +15,8 @@ export type {
   ToolRegistry,
   ToolResult,
   TrackInfo,
+  WebSearchExtraData,
+  WebSearchResultItem,
   PendingOperation,
   CompletedOperation,
   DispatchedResult,

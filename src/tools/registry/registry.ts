@@ -6,6 +6,7 @@ import { music } from "../frameworks/music";
 import { clipboard } from "../frameworks/clipboard";
 import { notify } from "../frameworks/notify";
 import { mathTool } from "../frameworks/math";
+import { webSearch } from "../frameworks/web-search";
 import { logger } from "../../logger";
 import { CancellationError } from "../../types";
 import type { ToolExecutionResult, ToolHandler, ToolRegistry } from "../../types";
@@ -37,6 +38,7 @@ const tools: ToolRegistry = {
   clipboard: (action) => clipboard(action),
   notify: (args) => notify(args),
   math: (expr) => mathTool(expr),
+  web_search: (arg) => webSearch(arg),
 };
 
 export async function dispatch(toolName: string, arg: string): Promise<ToolExecutionResult> {
@@ -87,4 +89,3 @@ export function registerTool(name: string, handler: ToolHandler): void {
   tools[name] = handler;
   logger.info("tools", `Tool ${name} registered`);
 }
-

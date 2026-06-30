@@ -3,6 +3,9 @@ import { providerTokenCounter } from "../ai/middleware";
 import type { AIMessage, ToolResult, CompletedOperation, PendingOperation } from "../types";
 import { SAFE_TOKEN_LIMIT } from "../constants";
 import { cleanTrackTitle } from "../utils/formatting/format";
+import { formatWebSearchContext } from "../utils/formatting/web-search";
+
+export { formatWebSearchContext };
 
 export function formatToolResults(results: ToolResult[]): string {
   return results
@@ -35,11 +38,16 @@ export function formatToolResults(results: ToolResult[]): string {
         r.extra?.activePrimaryBackend ? `active_backend=${r.extra.activePrimaryBackend}` : "",
         ...trackLines,
         r.extra?.summary?.totalMatches !== undefined ? `matches=${r.extra.summary.totalMatches}` : "",
+        r.extra?.summary?.provider ? `provider=${r.extra.summary.provider}` : "",
+        r.extra?.summary?.warnings && r.extra.summary.warnings.length > 0
+          ? `warnings=${r.extra.summary.warnings.join("; ")}`
+          : "",
         r.extra?.selectedFile ? `file=${r.extra.selectedFile}` : "",
         r.extra?.files && r.extra.files.length > 0 ? "files:" : "",
         ...(r.extra?.files ? r.extra.files.slice(0, 3).map((file: any) => `  - ${file.path}`) : []),
         r.extra?.files && r.extra.files.length > 3 ? `  - (...and ${r.extra.files.length - 3} more)` : "",
         r.extra?.preview?.content ? `preview=\n${formatTruncated(r.extra.preview.content, 200)}` : "",
+        formatWebSearchContext(r.extra),
         r.stdout ? `stdout=\n${formatTruncated(r.stdout, 500)}` : "",
         r.stderr ? `stderr=\n${formatTruncated(r.stderr, 500)}` : "",
         r.success === false && r.result ? `msg=\n${formatTruncated(r.result, 500)}` : "",

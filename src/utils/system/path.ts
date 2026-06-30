@@ -2,7 +2,7 @@ import { join } from "path";
 
 export function expandTilde(path: string): string {
   if (path.startsWith("~")) {
-    const home = process.env.HOME || process.env.USERPROFILE;
+    const home = Bun.env.HOME || Bun.env.USERPROFILE;
     if (!home) {
       throw new Error("HOME environment variable is not set");
     }

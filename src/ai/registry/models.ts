@@ -1,6 +1,5 @@
-import { readFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
+import { readFileSync } from "fs";
+import { join } from "path";
 import type { ProviderId } from "../types";
 import { providerRegistry } from "./provider-registry";
 
@@ -61,7 +60,7 @@ export class ModelRegistry {
 
   private loadOverrides(): void {
     try {
-      const configPath = join(homedir(), ".config", "desklumina", "models.json");
+      const configPath = join(Bun.env.HOME!, ".config", "desklumina", "models.json");
       const data = readFileSync(configPath, "utf-8");
       const parsed = JSON.parse(data);
       if (parsed && typeof parsed === "object") {

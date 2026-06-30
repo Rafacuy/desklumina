@@ -8,7 +8,7 @@ Learn how to master DeskLumina's interactive and terminal interfaces.
 
 - [Interactive UI (Rofi)](#interactive-ui-rofi)
   - [Main Chat Interface](#main-chat-interface)
-  - [Chat History Preview](#chat-history-preview)
+  - [Chat History View](#chat-history-view)
   - [Agentic Workflow](#agentic-workflow)
   - [Settings Menu](#settings-menu)
 - [Terminal Mode](#terminal-mode)
@@ -42,11 +42,20 @@ When a request fails, DeskLumina displays an inline error panel with a categoriz
 
 The error panel uses the clipboard utilities `clipcatctl`, `wl-copy`, or `xclip` (resolved in that order based on availability and session type). No visual "Copied!" feedback is shown to avoid re-launching Rofi.
 
-### Chat History Preview
+### Chat History View
 
-**Access**: Press `Tab` to expand, then select **Select Chat**.
+**Access**: Press `Tab` to open the History View.
 
-- Chats are saved under `~/.config/desklumina/chats/` as JSON files.
+The History View is a fixed-height Rofi window with an internally scrollable listview, so the menu always stays on screen:
+
+- **Menu rows** are pinned at the top: **Select Chat**, **Settings**, and **Exit**.
+- A **"Conversation" separator** divides the menu from the chat history below.
+- **Conversation rows** use Pango markup with bold labels for user and assistant messages. Tool calls appear in muted italic text.
+- **Typing and pressing Enter** sends a message directly, without leaving the History View.
+- **Arrow keys** navigate the list; **Esc** returns to the chat input.
+- **Selecting a conversation row** opens the **Conversation Viewer**, which shows the full message content, a **Copy** button (or `Alt+C`), and a **Tab** shortcut to expand long messages.
+
+Chats are saved under `~/.config/desklumina/chats/` as JSON files.
 
 ### Agentic Workflow
 
@@ -76,6 +85,9 @@ The settings menu allows you to customize DeskLumina's behavior without editing 
 - **Persona**: Choose an assistant conversational personality.
 - **Tool Display**: Show or hide real-time tool execution logs.
 - **Security Confirmation**: Toggle interactive checks for dangerous commands.
+- **Web Search Provider**: Set the default provider for web searches.
+- **Enable Fallback**: Toggle automatic fallback to other search providers.
+- **Safe Search**: Toggle safe search filtering for web searches.
 - **TTS Voice & Speed**: Choose a voice and adjust playback speed.
 - **Natural Voices**: Toggle natural voice output with disfluency planning and latency masking.
 

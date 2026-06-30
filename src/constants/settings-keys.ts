@@ -12,4 +12,7 @@ export type SettingKey =
   | "ui.toolDisplay"
   | "history.enabled"
   | "system.confirmations"
-  | "i18n.locale";
+  | "i18n.locale"
+  | "webSearch.provider"
+  | "webSearch.fallback"
+  | "webSearch.safeSearch";

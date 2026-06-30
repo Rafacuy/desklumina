@@ -2,9 +2,7 @@ import { t } from "../utils";
 import { logger } from "../logger";
 import { settingsManager } from "../core/services/settings-manager";
 import { Communicate } from "edge-tts-universal";
-import { randomUUID } from "crypto";
 import { join } from "path";
-import { homedir } from "os";
 import { existsSync, mkdirSync, unlinkSync } from "fs";
 import { FillerPool, playFiller, type FillerPlayHandle } from "../tts/natural-voices";
 import { DisfluencyPlanner, type PlaybackPlan, type ChunkJob } from "../tts/disfluency-planner";
@@ -341,7 +339,7 @@ export async function textToSpeech(text: string): Promise<void> {
     return;
   }
 
-  const sessionId = randomUUID();
+  const sessionId = Bun.randomUUIDv7();
   const session = new PlaybackSession(sessionId);
 
   await sessionMutex.runExclusive(async () => {
@@ -354,7 +352,7 @@ export async function textToSpeech(text: string): Promise<void> {
 
   if (session.isCancelled()) return;
 
-  const tmpDir = join(homedir(), ".config/desklumina/tmp");
+  const tmpDir = join(Bun.env.HOME!, ".config/desklumina/tmp");
   if (!existsSync(tmpDir)) {
     try {
       mkdirSync(tmpDir, { recursive: true });
@@ -370,7 +368,7 @@ export async function textToSpeech(text: string): Promise<void> {
   const naturalVoicesEnabled = nvSettings?.enabled !== false;
   const assetsDir = nvSettings?.assetsDir
     ? nvSettings.assetsDir
-    : join(homedir(), ".config/desklumina/assets/natural-voices");
+    : join(Bun.env.HOME!, ".config/desklumina/assets/natural-voices");
 
   let fillerPool: FillerPool | null = null;
   if (naturalVoicesEnabled) {
@@ -389,7 +387,7 @@ export async function textToSpeech(text: string): Promise<void> {
   const jobs: ChunkJob[] = chunks.map((chunk, i) => ({
     id: i,
     text: chunk,
-    audioFile: join(tmpDir, `tts-${randomUUID()}-${i}.mp3`),
+    audioFile: join(tmpDir, `tts-${Bun.randomUUIDv7()}-${i}.mp3`),
     ready: false,
     error: false,
   }));
@@ -468,9 +466,7 @@ export async function textToSpeech(text: string): Promise<void> {
 
     const fillerVolume = nvSettings?.volume ?? 100;
     const latencyMaskingEnabled = nvSettings?.latencyMasking?.enabled !== false;
-    const deadlineMs = nvSettings?.latencyMasking?.deadlineMs
-      ?? nvSettings?.thresholdMs
-      ?? 400;
+    const deadlineMs = nvSettings?.latencyMasking?.deadlineMs ?? 400;
     const MAX_FILLER_OVERHANG_MS = nvSettings?.maxOverhangMs ?? 500;
 
     const awaitJobWithFillerMasking = async (

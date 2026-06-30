@@ -1,6 +1,7 @@
 import { t, cleanAssistantResponse } from "../utils";
 import { startLoader, stopLoader } from "../ui/loader";
 import type { ToolCallbackPayload } from "../types";
+import readline from "readline";
 
 function appendCallbackText(target: string, callback?: ToolCallbackPayload): string {
   if (!callback?.text) return target;
@@ -16,7 +17,6 @@ export async function terminalChatMode(): Promise<void> {
   const chatManager = new ChatManager();
   const lumina = new Lumina(chatManager);
 
-  const readline = require("readline");
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,

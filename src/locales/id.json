@@ -206,11 +206,15 @@
       "preview_ready": "Pratinjau siap",
       "preview_unavailable": "Pratinjau tidak tersedia",
       "search_complete": "Pencarian selesai: {count} cocok",
+      "search_failed": "Pencarian gagal: {reason}",
+      "no_results": "Tidak ada hasil",
       "selected": "Dipilih: {path}",
       "tracks_found": "Ditemukan {count} lagu:",
       "unknown_alias": "❌ Alias aplikasi tidak dikenal: {alias}"
     },
     "running_terminal": "Menjalankan perintah",
+    "web_search": "Pencarian web",
+    "web_searching": "Mencari di web",
     "search_playlists": "Cari playlist...",
     "search_tracks": "Cari lagu...",
     "select_music": "Pilih Musik",
@@ -230,6 +234,15 @@
   },
   "ui": {
     "empty_chat": "Chat kosong",
+    "empty_history": "Belum ada pesan",
+    "conversation": "Percakapan",
+    "conversationViewer": {
+      "title": "Percakapan",
+      "copy": "Salin pesan",
+      "copy_hint": "Alt+C untuk menyalin",
+      "copied": "Disalin"
+    },
+    "history_action": "Riwayat",
     "full_response": "Respons Lengkap",
     "loader": {
       "brain": "💫 Nyalain dulu otaknya...",
@@ -272,6 +285,10 @@
       "title": "Pengaturan",
       "tool_display": "Tampilan Alat",
       "tts": "Text-to-Speech",
+      "web_search": "Pencarian Web",
+      "web_search_provider": "Penyedia Default",
+      "web_search_fallback": "Aktifkan Fallback",
+      "web_search_safe_search": "Penelusuran Aman",
       "natural_voices": "Suara Natural",
       "natural_voices_settings": "Pengaturan Suara Natural",
       "latency_masking": "Penyamaran Latensi",

@@ -22,6 +22,7 @@ const TOOL_MODES: Record<string, ToolDispatchConfig> = {
   clipboard:{ mode: "blocking" },
   music:    { mode: "blocking" },
   media:    { mode: "blocking" },
+  web_search:{ mode: "blocking" },
   app:      { mode: "non-blocking" },
   notify:   { mode: "non-blocking" },
 };

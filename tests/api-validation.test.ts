@@ -1,15 +1,38 @@
-import { describe, test, expect, beforeEach, spyOn } from "bun:test";
+import { describe, test, expect, beforeEach, afterEach, mock, spyOn } from "bun:test";
 import { Validation } from "../src/utils/validation";
 import { logger } from "../src/logger";
-import { providerRegistry, streamAI, AllModelsFailedError } from "../src/ai";
-import { GroqProvider, OpenAIProvider, AuthenticationError, ProviderNetworkError } from "../src/ai";
+import { streamAI, AllModelsFailedError } from "../src/ai/runtime/orchestrator";
+import { providerRegistry } from "../src/ai/registry";
+import { GroqProvider, OpenAIProvider, AuthenticationError, ProviderNetworkError } from "../src/ai/providers";
 
 describe("API Dependency & Validation", () => {
+  const originalModel = Bun.env.DESKLUMINA_MODEL;
+  const originalFallbacks = Bun.env.DESKLUMINA_FALLBACKS;
 
   beforeEach(() => {
+    mock.restore();
+    Bun.env.DESKLUMINA_MODEL = "openai:gpt-4o";
+    Bun.env.DESKLUMINA_FALLBACKS = "groq:llama-3.3-70b-versatile";
     providerRegistry.reset();
     providerRegistry.register(new GroqProvider("gsk_test_key_1234567890123456789012345678901234567890"));
     providerRegistry.register(new OpenAIProvider("sk-test-key"));
+  });
+
+  afterEach(() => {
+    mock.restore();
+    providerRegistry.reset();
+
+    if (originalModel === undefined) {
+      delete Bun.env.DESKLUMINA_MODEL;
+    } else {
+      Bun.env.DESKLUMINA_MODEL = originalModel;
+    }
+
+    if (originalFallbacks === undefined) {
+      delete Bun.env.DESKLUMINA_FALLBACKS;
+    } else {
+      Bun.env.DESKLUMINA_FALLBACKS = originalFallbacks;
+    }
   });
 
   describe("Environment Validation", () => {
@@ -48,13 +71,11 @@ describe("API Dependency & Validation", () => {
       providerRegistry.register(new OpenAIProvider("sk-test-key-123456789012345678901234567890", mockFetch));
 
       const gen = streamAI(
-        [{ role: "user", content: "hi" }],
-        "openai:gpt-4o",
-        ["groq:llama-3.3-70b-versatile"]
+        [{ role: "user", content: "hi" }]
       );
 
       // With all providers returning 429, AllModelsFailedError should be thrown
-      await expect(gen.next()).rejects.toThrow();
+      await expect(gen.next()).rejects.toThrow(AllModelsFailedError);
     });
 
     test("handles 401 Unauthorized by re-throwing immediately", async () => {
@@ -65,27 +86,25 @@ describe("API Dependency & Validation", () => {
       providerRegistry.register(new OpenAIProvider("sk-test-key-123456789012345678901234567890", mockFetch));
 
       const gen = streamAI(
-        [{ role: "user", content: "hi" }],
-        "openai:gpt-4o",
-        ["groq:llama-3.3-70b-versatile"]
+        [{ role: "user", content: "hi" }]
       );
 
       // 401 should re-throw immediately without attempting fallback
-      await expect(gen.next()).rejects.toThrow();
+      await expect(gen.next()).rejects.toThrow(AuthenticationError);
     });
 
     test("handles network timeout/failure", async () => {
       const mockFetch = () =>
         Promise.reject(new DOMException("The operation was aborted.", "AbortError"));
 
+      Bun.env.DESKLUMINA_FALLBACKS = "";
       providerRegistry.register(new OpenAIProvider("sk-test-key-123456789012345678901234567890", mockFetch));
 
       const gen = streamAI(
-        [{ role: "user", content: "hi" }],
-        "openai:gpt-4o"
+        [{ role: "user", content: "hi" }]
       );
 
-      await expect(gen.next()).rejects.toThrow();
+      await expect(gen.next()).rejects.toThrow(ProviderNetworkError);
     });
   });
 });

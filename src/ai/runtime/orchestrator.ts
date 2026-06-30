@@ -100,7 +100,7 @@ export async function* streamAI(messages: readonly AIMessage[]): AsyncGenerator<
 
   const attemptedModels: string[] = [];
   let lastError: Error | undefined;
-  const turnRequestId = crypto.randomUUID();
+  const turnRequestId = Bun.randomUUIDv7();
 
   for (let i = 0; i < resolvedModels.length; i++) {
     const resolvedModel = resolvedModels[i]!;

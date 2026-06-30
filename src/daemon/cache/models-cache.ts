@@ -1,9 +1,8 @@
 import { existsSync, statSync } from "fs";
 import { join } from "path";
-import { homedir } from "os";
 import { loadModelsConfig, type ModelsConfig } from "../../ai/config/models-config";
 
-const MODELS_PATH = join(homedir(), ".config/desklumina/models.json");
+const MODELS_PATH = join(Bun.env.HOME!, ".config/desklumina/models.json");
 
 interface ModelsCacheState {
   config: ModelsConfig | null;

@@ -2,8 +2,8 @@ import { logger } from "../../logger";
 
 export function resolveClipboardBinary(): "clipcatctl" | "wl-copy" | "xclip" | null {
   const isWayland =
-    !!process.env.WAYLAND_DISPLAY ||
-    process.env.XDG_SESSION_TYPE === "wayland";
+    !!Bun.env.WAYLAND_DISPLAY ||
+    Bun.env.XDG_SESSION_TYPE === "wayland";
 
   if (Bun.which("clipcatctl")) return "clipcatctl";
   if (isWayland && Bun.which("wl-copy")) return "wl-copy";

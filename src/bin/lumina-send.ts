@@ -4,7 +4,7 @@ import { DaemonClient } from "../daemon";
 import { logger } from "../logger";
 
 async function main() {
-  const args = process.argv.slice(2);
+  const args = Bun.argv.slice(2);
   const command = args.join(" ");
 
   if (!command) {

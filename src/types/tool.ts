@@ -28,6 +28,42 @@ export interface ToolExecutionSummary {
   totalMatches?: number;
   filteredMatches?: number;
   returnedMatches?: number;
+  provider?: string;
+  warnings?: string[];
+}
+
+export interface WebSearchResultItem {
+  title: string;
+  url: string;
+  snippet: string;
+  source: string;
+  rank: number;
+  provider: "serper" | "serpapi" | "searxng" | "tavily";
+  providerRank?: number;
+  score?: number;
+  publishedDate?: string;
+  type: "organic" | "news" | "image" | "answer" | "knowledge" | "related";
+  thumbnailUrl?: string;
+  rawContentPreview?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface WebSearchExtraData {
+  provider: "serper" | "serpapi" | "searxng" | "tavily";
+  query: string;
+  type: "web" | "news" | "images";
+  requestedLimit: number;
+  returnedCount: number;
+  elapsedMs: number;
+  warnings: string[];
+  requestId?: string;
+  providerAnswer?: {
+    provider: "serper" | "serpapi" | "searxng" | "tavily";
+    text: string;
+    attributed: boolean;
+  };
+  results: WebSearchResultItem[];
+  metadata?: Record<string, unknown>;
 }
 
 export interface ToolCallbackPayload {
@@ -63,6 +99,7 @@ export interface ToolExtraData {
   selectedFile?: string;
   preview?: FilePreview;
   summary?: ToolExecutionSummary;
+  webSearch?: WebSearchExtraData;
 }
 
 export interface ToolExecutionResult {

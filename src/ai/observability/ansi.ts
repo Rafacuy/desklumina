@@ -1,11 +1,11 @@
 const RESET = "\x1b[0m";
 
 export function colorEnabledForStream(useStdout: boolean): boolean {
-  const noColor = process.env.NO_COLOR;
+  const noColor = Bun.env.NO_COLOR;
   if (noColor !== undefined && noColor !== "") {
     return false;
   }
-  const force = process.env.FORCE_COLOR;
+  const force = Bun.env.FORCE_COLOR;
   if (force === "1" || force === "true") {
     return true;
   }

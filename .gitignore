@@ -5,6 +5,7 @@ node_modules
 # output
 out
 dist
+bin
 *.tgz
 
 # code coverage
@@ -100,6 +101,8 @@ Desktop.ini
 *.mjs
 *.cjs
 *.d.ts
+desklumina-daemon
+desklumina-launcher
 !src/**/*.d.ts
 
 # --- Security ---

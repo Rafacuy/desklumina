@@ -233,6 +233,32 @@ Evaluate mathematical expressions, equations, and unit conversions securely in-p
 
 ---
 
+## Web Search Tool (`web_search`)
+
+Search the web for current information, news, or images. Returns concise, attributed results with titles, URLs, and snippets. Use this when you need facts about recent events or anything not in the model's training data.
+
+- **Schema**: `web_search {"query": string, "provider"?: "serper"|"serpapi"|"searxng"|"tavily"|"auto", "type"?: "web"|"news"|"images", "limit"?: number, "language"?: string, "country"?: string, "timeRange"?: "day"|"week"|"month"|"year", "includeRawContent"?: boolean, "includeImages"?: boolean}`
+- **Quoting**: Arguments MUST be a valid JSON object string. Double quotes for keys and values.
+- **Escaping**: JSON-standard backslash escaping for quotes in payload.
+
+### Parameters:
+- **`query`** (required): The search query.
+- **`provider`**: Which provider to use (`auto`, `serper`, `serpapi`, `searxng`, `tavily`).
+- **`type`**: Type of search (`web`, `news`, `images`).
+- **`limit`**: Number of results to return.
+- **`language`**: Language code.
+- **`country`**: Country code.
+- **`timeRange`**: Date range (`day`, `week`, `month`, `year`).
+- **`includeRawContent`**: Whether to fetch and include raw content previews.
+- **`includeImages`**: Whether to include image results.
+
+### Examples:
+- `{"tool": "web_search", "args": "{\"query\": \"latest linux kernel release\"}"}`
+- `{"tool": "web_search", "args": "{\"query\": \"Mars rover news\", \"type\": \"news\", \"limit\": 3}"}`
+- `{"tool": "web_search", "args": "{\"query\": \"desklumina github\", \"provider\": \"tavily\"}"}`
+
+---
+
 ## Next Steps
 
 - 🛡️ **[Security Guide](09-security.md)**: Learn about safe execution and confirmation.

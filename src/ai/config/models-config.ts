@@ -1,6 +1,5 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
-import { homedir } from "os";
 import type { ProviderConfig } from "../types";
 
 export interface ModelBinding extends ProviderConfig {
@@ -92,7 +91,7 @@ export function parseModelsConfig(raw: unknown): ModelsConfig {
  * Returns null if the file does not exist.
  */
 export function loadModelsConfig(): ModelsConfig | null {
-  const path = join(homedir(), ".config/desklumina/models.json");
+  const path = join(Bun.env.HOME!, ".config/desklumina/models.json");
   if (!existsSync(path)) {
     return null;
   }

@@ -1,7 +1,6 @@
 import { logger } from "../logger";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
-import { homedir } from "os";
 
 export class DaemonClient {
   private socketPath: string;
@@ -11,9 +10,9 @@ export class DaemonClient {
   private cachedPid: number | null = null;
 
   constructor() {
-    const runtimeDir = process.env.XDG_RUNTIME_DIR || join(homedir(), ".config/desklumina");
+    const runtimeDir = Bun.env.XDG_RUNTIME_DIR || join(Bun.env.HOME!, ".config/desklumina");
     this.socketPath = join(runtimeDir, "desklumina.sock");
-    this.tokenPath = join(homedir(), ".config/desklumina/.daemon-token");
+    this.tokenPath = join(Bun.env.HOME!, ".config/desklumina/.daemon-token");
     this.pidPath = join(runtimeDir, "desklumina.pid");
   }
 
