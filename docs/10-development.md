@@ -19,9 +19,10 @@ A guide for developers looking to extend DeskLumina or contribute to the core pr
 
 1.  **Bun**: Ensure you have [Bun](https://bun.sh/) (v1.3.14+) installed.
 2.  **Dependencies**: Run `bun install`.
-3.  **Dev Mode**: Use `bun run dev` for a persistent terminal chat loop.
-4.  **Linting**: Run `bun run lint` to check for TypeScript errors.
-5.  **Provider Setup**: Set at least one provider API key in `.env`. Use `bun run start -- provider list` to verify which providers are registered.
+3.  **Build (Optional)**: Run `bun run build` to compile the launcher and daemon to binaries for faster launches. Use `bun run start:prod` and `bun run daemon:prod` to run the compiled versions.
+4.  **Dev Mode**: Use `bun run dev` for a persistent terminal chat loop.
+5.  **Linting**: Run `bun run lint` to check for TypeScript errors.
+6.  **Provider Setup**: Set at least one provider API key in `.env`. Use `bun run start -- provider list` to verify which providers are registered.
 
 ---
 

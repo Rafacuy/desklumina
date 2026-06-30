@@ -89,6 +89,7 @@ Launch the interactive UI and try these commands:
 ```bash
 bun run start
 ```
+[!TIP] For faster launch, run `bun run build` once and then run `bun run start:prod` 
 
 - **App**: "open browser" or "launch telegram"
 - **Files**: "list files in ~/Downloads" or "create a folder named Work"

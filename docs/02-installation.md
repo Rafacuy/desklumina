@@ -54,7 +54,24 @@ Use Bun to install the required Node.js and Bun dependencies:
 bun install
 ```
 
-### 3. Setup Environment Variables
+### 3. (Optional) Build for Faster Launch
+
+For faster launches, you can compile the launcher and daemon to binaries:
+
+```bash
+bun run build
+```
+
+This creates `./bin/desklumina-launcher` and `./bin/desklumina-daemon` executables that skip transpilation overhead. Use the `:prod` scripts to run the compiled binaries:
+
+```bash
+bun run start:prod
+bun run daemon:prod
+```
+
+If you skip this step, DeskLumina will transpile on-the-fly (slower startup but no build required).
+
+### 4. Setup Environment Variables
 
 Copy the example environment file and add your API key:
 

@@ -23,6 +23,7 @@ Get started with DeskLumina and run your first commands. This guide covers basic
    ```bash
    bun run start
    ```
+   [!TIP]: For faster launches, run `bun run build` first to compile binaries, then use `bun run start:prod`.
 3. A Rofi input box will appear. Type:
    ```text
    open telegram
