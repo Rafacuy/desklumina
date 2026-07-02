@@ -102,6 +102,66 @@ You only need **one** key to get going. The rest of this README shows you exactl
 ## Get it running
 
 <details>
+<summary><strong>Got Rofi? That's the screen you'll actually be staring at [MANDATORY]</strong></summary>
+<br>
+
+Let's be clear about what Rofi actually is here: it's not a dependency you can shrug off, it's the entire UI. Every prompt, every panel, every menu you'll ever see is Rofi rendering on top of your keystroke. No Rofi, no DeskLumina, just a daemon talking to itself in the dark.
+
+Needs **Rofi 1.7+** at minimum, older builds technically launch but render like garbage. Latest stable is **2.0.0** (Wayland support now ships built-in, no separate fork needed anymore). Check what you've got:
+
+```bash
+rofi -v
+```
+
+Below 1.7, or nothing printed? Install it:
+
+<br>
+
+<details>
+<summary>Arch / Manjaro</summary>
+
+```bash
+sudo pacman -S rofi
+```
+
+</details>
+
+<details>
+<summary>Debian / Ubuntu</summary>
+
+```bash
+sudo apt install rofi
+```
+
+> **NOTE**: Debian/Ubuntu repos ship old builds. If `rofi -v` still comes back under 1.7 after this, pull a newer one straight from [davatorium/rofi releases](https://github.com/davatorium/rofi/releases).
+
+</details>
+
+<details>
+<summary>Fedora</summary>
+
+```bash
+sudo dnf install rofi
+```
+
+</details>
+
+<details>
+<summary>openSUSE</summary>
+
+```bash
+sudo zypper install rofi
+```
+
+</details>
+
+<br>
+
+> **NOTE**: Running Wayland? As of Rofi 2.0.0, Wayland support is built in natively, no extra package needed. If your distro repo still hands you something older than 2.0.0 without Wayland, build from source via meson, see [davatorium/rofi](https://github.com/davatorium/rofi#building-and-installing) for instructions. 
+
+</details>
+
+<details>
 <summary><strong>Have you installed Bun? [MANDATORY]</strong></summary>
 <br>
 
