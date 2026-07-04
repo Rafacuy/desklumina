@@ -18,11 +18,22 @@ const TOOL_LABELS: Record<string, string> = {
 };
 
 // Pango palette (literals cuz @aliases dont resolve in -markup-rows)
-const HISTORY_COLOR = {
-  textPrimary: "#2E2A26",   
-  accent: "#7060CA",        
-  muted: "#A79F96",         
+const LIGHT_COLORS = {
+  textPrimary: "#2E2A26",
+  accent: "#7060CA",
+  muted: "#A79F96",
 } as const;
+
+const DARK_COLORS = {
+  textPrimary: "#e8e8e8",
+  accent: "#9F97ED",
+  muted: "#8a8a8a",
+} as const;
+
+function getHistoryColors() {
+  const isDark = settingsManager.getDarkMode();
+  return isDark ? DARK_COLORS : LIGHT_COLORS;
+}
 
 const HISTORY_LINE_MAX_CHARS = 110;
 
@@ -488,6 +499,7 @@ export class ChatManager {
     if (!settings.features.chatHistory) return { lines: [], messageIndices: [] };
     if (!this.currentChat || this.currentChat.messages.length === 0) return { lines: [], messageIndices: [] };
 
+    const colors = getHistoryColors();
     const messages = this.currentChat.messages as InternalMessage[];
     //Trim from the front so most recent messages are always shown
     const start = Math.max(0, messages.length - maxLines);
@@ -507,7 +519,7 @@ export class ChatManager {
             const arg = result.normalizedArg
               ? `(${escapeHtml(result.normalizedArg)})`
               : "";
-            return `<span foreground="${HISTORY_COLOR.muted}" style="italic" size="smaller">⚙ ${label} ${arg} ${mark}</span>`;
+            return `<span foreground="${colors.muted}" style="italic" size="smaller">⚙ ${label} ${arg} ${mark}</span>`;
           });
         lines.push(...toolLines);
         messageIndices.push(...toolLines.map(() => i));
@@ -522,13 +534,13 @@ export class ChatManager {
 
       if (msg.role === "user") {
         lines.push(
-          `<span weight="bold" foreground="${HISTORY_COLOR.textPrimary}">${escapeHtml(t("common.you"))}:</span> ` +
-          `<span foreground="${HISTORY_COLOR.textPrimary}">${safe}</span>`
+          `<span weight="bold" foreground="${colors.textPrimary}">${escapeHtml(t("common.you"))}:</span> ` +
+          `<span foreground="${colors.textPrimary}">${safe}</span>`
         );
       } else {
         lines.push(
-          `<span weight="bold" foreground="${HISTORY_COLOR.accent}">${escapeHtml(t("common.lumina"))}:</span> ` +
-          `<span foreground="${HISTORY_COLOR.textPrimary}">${safe}</span>`
+          `<span weight="bold" foreground="${colors.accent}">${escapeHtml(t("common.lumina"))}:</span> ` +
+          `<span foreground="${colors.textPrimary}">${safe}</span>`
         );
       }
       messageIndices.push(i);

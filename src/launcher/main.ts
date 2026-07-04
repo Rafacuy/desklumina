@@ -167,13 +167,17 @@ async function rofiMode(): Promise<void> {
     fireFastPathSignal(daemonPid);
   }
 
+  const { settingsManager } = await import("../core/services/settings-manager");
+  const { setThemeMode, setThemePathOverride } = await import("../ui/theme-cache");
+
+  setThemeMode(settingsManager.getDarkMode() ? "dark" : "light");
+
   const daemonUp = await isDaemonAvailable();
   if (daemonUp) {
     const { DaemonClient } = await import("../daemon");
     const client = new DaemonClient();
     const themePath = await client.getThemePath();
     if (themePath) {
-      const { setThemePathOverride } = await import("../ui/theme-cache");
       setThemePathOverride(themePath);
     }
   } else {

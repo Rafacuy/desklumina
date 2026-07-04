@@ -4,6 +4,7 @@ This file describes features and ideas that are **not yet implemented**. Do not 
 
 ## Short-Term (v1.x)
 
+- [ ] **Enhanced Response Panel**: Improve and upgrade the representation for response panel (Chat UI) to be more modern and minimalist.
 - [ ] **Enhanced Visual Tool Display**: Improve the visual presentation of tool outputs in the UI to be more scannable and user-friendly.
 - [ ] **Local LLM Integration**: Support for local AI inference engines like Ollama or Llama.cpp for privacy-conscious users who want to run the full stack locally.
 - [ ] **Offline TTS**: Expand the text-to-speech engine to support offline models in addition to the current Edge TTS pipeline.

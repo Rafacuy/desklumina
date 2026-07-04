@@ -273,7 +273,8 @@
       "section": {
         "ai": "AI Assistant",
         "history": "History",
-        "system": "System"
+        "system": "System",
+        "customization": "Customization"
       },
       "change_tts_voice": "Change TTS Voice",
       "chat_history": "Chat History",
@@ -289,6 +290,7 @@
       "web_search_provider": "Default Provider",
       "web_search_fallback": "Enable Fallback",
       "web_search_safe_search": "Safe Search",
+      "dark_mode": "Dark Mode",
       "natural_voices": "Natural Voices",
       "natural_voices_settings": "Natural Voices Settings",
       "latency_masking": "Latency Masking",

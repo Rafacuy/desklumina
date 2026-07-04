@@ -6,7 +6,7 @@
 /*    ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝╚══════╝ */
 /*
  * WELCOMEE!
- * This is a configuration theme for DeskLumina!
+ * This is a configuration theme for DeskLumina - Dark Mode!
  *
  * [!!] Alias contract (referenced by -theme-str overrides in rofi.ts):
  *   @bg, @fg, @accent-color, @border-subtle, @accent-light,
@@ -21,27 +21,27 @@
 /* ▐█▄▪▐█▐█▌▐▌▐█▌.▐▌██▄▪▐█▐█ ▪▐▌▐█▌▐▌ */
 /* ·▀▀▀▀ .▀▀▀  ▀█▄▀▪·▀▀▀▀  ▀  ▀ .▀▀▀  */
 * {
-    /* Base surfaces */
-    bg:               #FCFAF7;
-    surface:          #F6F3EE;
-    surface-alt:      #F1ECE6;
+    /* Base surfaces - Dark theme */
+    bg:               #1a1a1a;
+    surface:          #2a2a2a;
+    surface-alt:      #3a3a3a;
 
     /* Borders */
-    border-subtle:    #E5DDD3;
-    border-focus:     #DDD4C8;
+    border-subtle:    #4a4a4a;
+    border-focus:     #6a6a6a;
 
     /* Typography */
-    text-primary:     #2E2A26;
-    text-secondary:   #7F776F;
-    text-muted:       #A79F96;
-    text-disabled:    #C2B9AE;
+    text-primary:     #e8e8e8;
+    text-secondary:   #b8b8b8;
+    text-muted:       #8a8a8a;
+    text-disabled:    #6a6a6a;
 
     /* Accent */
-    accent:           #7060CA;
+    accent:           #9F97ED;
     accent-bloom:     #C9B7FF;
-    accent-muted:     #9A8AD9;
-    accent-light:     #F0EBFF;
-    accent-surface:   #F8F5FF;
+    accent-muted:     #7F77DD;
+    accent-light:     #3a3a5a;
+    accent-surface:   #2a2a3a;
 
     /* Semantic feedback */
     error:            #E4A7A1;
@@ -61,10 +61,10 @@
 
 
 /* ▄▄▌ ▐ ▄▌▪   ▐ ▄ ·▄▄▄▄        ▄▄▌ ▐ ▄▌ */
-/* ██· █▌▐███ •█▌▐███▪ ██ ▪     ██· █▌▐█ */
+/* ██· █▌▐███ •█▌▐██▪ ██ ▪     ██· █▌▐█ */
 /* ██▪▐█▐▐▌▐█·▐█▐▐▌▐█· ▐█▌ ▄█▀▄ ██▪▐█▐▐▌ */
 /* ▐█▌██▐█▌▐█▌██▐█▌██. ██ ▐█▌.▐▌▐█▌██▐█▌ */
-/*  ▀▀▀▀ ▀▪▀▀▀▀▀ █▪▀▀▀▀▀•  ▀█▄▀▪ ▀▀▀▀ ▀▪ */
+/*  ▀▀▀▀▀ ▀▪▀▀▀  ▀█▄▀▪·▀▀▀▀  ▀█▄▀▪ ▀▀▀▀ ▀▪ */
 window {
     anchor:           northeast;
     location:         northeast;
@@ -112,6 +112,7 @@ inputbar {
     background-color: transparent;
 }
 
+
 prompt {
     text-color:       @accent-color;
     font:             "JetBrainsMono Nerd Font Medium 10";
@@ -155,9 +156,9 @@ textbox {
 
 /* ▄▄▌  ▪  .▄▄ · ▄▄▄▄▄     ▌ ▐·▪  ▄▄▄ .▄▄▌ ▐ ▄▌ */
 /* ██•  ██ ▐█ ▀. •██      ▪█·█▌██ ▀▄.▀·██· █▌▐█ */
-/* ██▪  ▐█·▄▀▀▀█▄ ▐█.▪    ▐█▐█•▐█·▐▀▀▪▄██▪▐█▐▐▌ */
-/* ▐█▌▐▌▐█▌▐█▄▪▐█ ▐█▌·     ███ ▐█▌▐█▄▄▌▐█▌██▐█▌ */
-/* .▀▀▀ ▀▀▀ ▀▀▀▀  ▀▀▀     . ▀  ▀▀▀ ▀▀▀  ▀▀▀▀ ▀▪ */
+/* ██▪  ▐█·▄▀▀▀█▄ ▐█.▪    ▐█· ▐█.▪▐▀▀▪▄██▪▐█▐▐▌ */
+/* ▐█▌▐▌▐█▌▐█▄▪▐█ ▐█▌·    ▐█▌ ▐█▌·▐█▄▄▌▐█ ██▌▐█▌ ▐█▌· */
+/* .▀▀▀ ▀▀▀ ▀▀▀▀  ▀▀▀     ▀▀▀ ▀▀▀  ▀▀▀ ▀▀  █▪▀▀▀ ▀▀▀▀  */
 listview {
     lines:            8;
     markup-rows:      true;
@@ -266,6 +267,7 @@ element selected.active {
 /* ▐█▌ ▐█▌·▐█▄▄▌██ ██▌▐█▌    ▐███▌▐█▌.▐▌██▐█▌ ▐█▌·▐█▄▄▌██▐█▌ ▐█▌· */
 /* ▀▀▀ ▀▀▀  ▀▀▀ ▀▀  █▪▀▀▀    ·▀▀▀  ▀█▄▀▪▀▀ █▪ ▀▀▀  ▀▀▀ ▀▀ █▪ ▀▀▀  */
 
+/* Base element */
 element-text {
     background-color: inherit;
     text-color:       inherit;

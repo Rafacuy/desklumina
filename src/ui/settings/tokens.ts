@@ -1,4 +1,5 @@
 import { spawn } from "bun";
+import { settingsManager } from "../../core/services/settings-manager";
 
 export type ColorScheme = "light" | "dark";
 
@@ -67,12 +68,18 @@ async function gsettingsValue(schema: string, key: string): Promise<string | nul
 /**
  * Resolve the active color scheme at runtime.
  *
- * First tries `org.gnome.desktop.interface color-scheme`, then falls back
- * to inspecting the GTK theme name.
+ * First checks user's dark mode preference from settings, then falls back
+ * to `org.gnome.desktop.interface color-scheme`, then to inspecting the GTK theme name.
  *
  * Defaults to light when neither source is available.
  */
 export async function resolveColorScheme(): Promise<ColorScheme> {
+  // Check user's dark mode preference first
+  const userDarkMode = settingsManager.getDarkMode();
+  if (userDarkMode) {
+    return "dark";
+  }
+
   const colorScheme = await gsettingsValue("org.gnome.desktop.interface", "color-scheme");
   if (colorScheme) {
     const normalized = colorScheme.toLowerCase();

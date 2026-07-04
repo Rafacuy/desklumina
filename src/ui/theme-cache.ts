@@ -1,19 +1,27 @@
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "fs";
 import { dirname, resolve } from "path";
 
-const THEME_SOURCE = resolve(
+const THEME_SOURCE_LIGHT = resolve(
   Bun.env.HOME ?? "/tmp",
   ".config/desklumina/src/ui/themes/lumina.rasi"
 );
+const THEME_SOURCE_DARK = resolve(
+  Bun.env.HOME ?? "/tmp",
+  ".config/desklumina/src/ui/themes/lumina-dark.rasi"
+);
 const CACHE_DIR = resolve("/tmp", "desklumina-cache");
-const CACHE_PATH = resolve(CACHE_DIR, "lumina.min.rasi");
+const CACHE_PATH_LIGHT = resolve(CACHE_DIR, "lumina.min.rasi");
+const CACHE_PATH_DARK = resolve(CACHE_DIR, "lumina-dark.min.rasi");
 
 interface CacheState {
   mtime: number;
   size: number;
 }
 
-let cachedState: CacheState | null = null;
+let cachedStateLight: CacheState | null = null;
+let cachedStateDark: CacheState | null = null;
+
+let currentThemeMode: "light" | "dark" = "light";
 
 /**
  * Conservative Rasi minifier
@@ -98,22 +106,33 @@ function minifyRasi(src: string): string {
     .join("\n");
 }
 
-function buildCache(): void {
-  if (!existsSync(THEME_SOURCE)) {
-    throw new Error(`Theme source not found: ${THEME_SOURCE}`);
+function buildCache(sourcePath: string, cachePath: string, cacheState: CacheState | null): void {
+  if (!existsSync(sourcePath)) {
+    throw new Error(`Theme source not found: ${sourcePath}`);
   }
 
-  const raw = readFileSync(THEME_SOURCE, "utf-8");
+  const raw = readFileSync(sourcePath, "utf-8");
   const minified = minifyRasi(raw);
 
   if (!existsSync(CACHE_DIR)) {
     mkdirSync(CACHE_DIR, { recursive: true });
   }
 
-  writeFileSync(CACHE_PATH, minified, "utf-8");
+  writeFileSync(cachePath, minified, "utf-8");
 
-  const stats = statSync(THEME_SOURCE);
-  cachedState = { mtime: stats.mtimeMs, size: stats.size };
+  const stats = statSync(sourcePath);
+  if (cacheState) {
+    cacheState.mtime = stats.mtimeMs;
+    cacheState.size = stats.size;
+  }
+}
+
+function buildLightCache(): void {
+  buildCache(THEME_SOURCE_LIGHT, CACHE_PATH_LIGHT, cachedStateLight);
+}
+
+function buildDarkCache(): void {
+  buildCache(THEME_SOURCE_DARK, CACHE_PATH_DARK, cachedStateDark);
 }
 
 /**
@@ -121,16 +140,35 @@ function buildCache(): void {
  * This is safe even if the file is edited rapidly because mtime granularity
  * is millisecond-level on Linux filesystems
  */
-function isStale(): boolean {
-  if (!existsSync(CACHE_PATH)) return true;
-  if (!cachedState) return true;
+function isLightStale(): boolean {
+  if (!existsSync(CACHE_PATH_LIGHT)) return true;
+  if (!cachedStateLight) return true;
 
   try {
-    const stats = statSync(THEME_SOURCE);
-    return stats.mtimeMs !== cachedState.mtime || stats.size !== cachedState.size;
+    const stats = statSync(THEME_SOURCE_LIGHT);
+    return stats.mtimeMs !== cachedStateLight.mtime || stats.size !== cachedStateLight.size;
   } catch {
     return true;
   }
+}
+
+function isDarkStale(): boolean {
+  if (!existsSync(CACHE_PATH_DARK)) return true;
+  if (!cachedStateDark) return true;
+
+  try {
+    const stats = statSync(THEME_SOURCE_DARK);
+    return stats.mtimeMs !== cachedStateDark.mtime || stats.size !== cachedStateDark.size;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Set the current theme mode (light/dark)
+ */
+export function setThemeMode(mode: "light" | "dark"): void {
+  currentThemeMode = mode;
 }
 
 /**
@@ -140,10 +178,17 @@ function isStale(): boolean {
  *refreshes it whenever the source file changes
  */
 export function getThemePath(): string {
-  if (isStale()) {
-    buildCache();
+  if (currentThemeMode === "dark") {
+    if (isDarkStale()) {
+      buildDarkCache();
+    }
+    return CACHE_PATH_DARK;
+  } else {
+    if (isLightStale()) {
+      buildLightCache();
+    }
+    return CACHE_PATH_LIGHT;
   }
-  return CACHE_PATH;
 }
 
 let themePathOverride: string | null = null;
@@ -153,7 +198,18 @@ export function setThemePathOverride(path: string | null): void {
 }
 
 export function getThemePathWithOverride(): string {
-  if (themePathOverride && existsSync(themePathOverride)) return themePathOverride;
+  // If dark mode is enabled, always use dark theme (overrides daemon theme)
+  if (currentThemeMode === "dark") {
+    if (isDarkStale()) {
+      buildDarkCache();
+    }
+    return CACHE_PATH_DARK;
+  }
+  
+  // Otherwise, use daemon theme override if available, or default theme
+  if (themePathOverride && existsSync(themePathOverride)) {
+    return themePathOverride;
+  }
   return getThemePath();
 }
 
@@ -162,5 +218,6 @@ export function getThemePathWithOverride(): string {
  * Useful after programmatic edits or for benchmarkin
  */
 export function refreshThemeCache(): void {
-  buildCache();
+  buildLightCache();
+  buildDarkCache();
 }

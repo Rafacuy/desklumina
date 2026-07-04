@@ -1,0 +1,20 @@
+/* Settings panel theme - Dark Mode
+ * 
+ * Overrides lumina-dark.rasi for Settings UI.
+ */
+@import "lumina-dark.rasi"
+
+* {
+    bg-alt: @surface-alt;
+}
+
+element selected.normal {
+    background-color: @bg-alt;
+}
+
+element selected.normal element-text {
+    border:       0 0 0 2px;
+    border-color: #9F97ED;
+    padding:      2px 0 2px 8px;
+    border-radius: 0;
+}

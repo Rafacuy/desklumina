@@ -6,10 +6,26 @@ import { logger } from "../logger";
 import { rofiMenu, rofiExpandedResponse } from "./rofi";
 import { formatRofiResponse } from "../utils/formatting/table-formatter";
 import { cleanAssistantResponse } from "../utils";
+import { settingsManager } from "../core/services/settings-manager";
 
 const COPY_KEY = "Alt+c";
-const COLOR_MUTED = "#A79F96";
-const COLOR_SUCCESS = "#4A8A5A";
+
+// Light theme colors
+const LIGHT_COLORS_CV = {
+  muted: "#A79F96",
+  success: "#4A8A5A",
+};
+
+// Dark theme colors
+const DARK_COLORS_CV = {
+  muted: "#8a8a8a",
+  success: "#A9D6B0",
+};
+
+function getConvViewColors() {
+  const isDark = settingsManager.getDarkMode();
+  return isDark ? DARK_COLORS_CV : LIGHT_COLORS_CV;
+}
 
 function escapeRasiString(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
@@ -73,6 +89,9 @@ interface RenderResult {
 async function renderPanel(rawContent: string, copied: boolean): Promise<RenderResult> {
   const WRAP_WIDTH = 50;
   const MAX_LISTVIEW_LINES = 12;
+  
+  // Get current colors based on theme mode
+  const colors = getConvViewColors();
 
   const firstPass = formatRofiResponse(rawContent, WRAP_WIDTH);
   
@@ -93,14 +112,14 @@ async function renderPanel(rawContent: string, copied: boolean): Promise<RenderR
     : allLines;
 
   const truncationHint = needsTruncation
-    ? `<span foreground="${COLOR_MUTED}">  ${escapeHtml(t("ui.panel.truncated"))} </span>`
+    ? `<span foreground="${colors.muted}">  ${escapeHtml(t("ui.panel.truncated"))} </span>`
     : "";
 
   const copyFeedback = copied
-    ? ` <span foreground="${COLOR_SUCCESS}" size="small" weight="bold">✓ ${escapeHtml(t("ui.conversationViewer.copied"))}</span>`
+    ? ` <span foreground="${colors.success}" size="small" weight="bold">✓ ${escapeHtml(t("ui.conversationViewer.copied"))}</span>`
     : "";
   const hint =
-    `<span foreground="${COLOR_MUTED}" size="small">` +
+    `<span foreground="${colors.muted}" size="small">` +
     `󰆏 ${escapeHtml(t("ui.conversationViewer.copy_hint"))} · ` +
     `󱊷 [ESC] ${escapeHtml(t("common.back"))}` +
     `</span>${copyFeedback}`;

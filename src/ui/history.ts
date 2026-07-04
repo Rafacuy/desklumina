@@ -4,8 +4,10 @@ import { t } from "../utils/localization/i18n";
 import { escapeHtml } from "../utils/formatting/format";
 import { rofiMenu } from "./rofi";
 import { rofiConversationView } from "./conversation-view";
+import { settingsManager } from "../core/services/settings-manager";
 
-const HISTORY_THEME_PATH = join(Bun.env.HOME!, ".config/desklumina/src/ui/themes/history.rasi");
+const HISTORY_THEME_PATH_LIGHT = join(Bun.env.HOME!, ".config/desklumina/src/ui/themes/history.rasi");
+const HISTORY_THEME_PATH_DARK = join(Bun.env.HOME!, ".config/desklumina/src/ui/themes/history-dark.rasi");
 
 export interface HistoryViewResult {
   action: "select" | "settings" | "exit" | "send" | "view" | "hide";
@@ -19,11 +21,28 @@ const IDX_EXIT = 2;
 const IDX_SEPARATOR = 3;
 const MENU_ROW_COUNT = IDX_SEPARATOR + 1;
 
-const COLOR_ACCENT = "#7060CA";       // ≈ @accent          - Select Chat
-const COLOR_SECONDARY = "#7F776F";    // ≈ @text-secondary  - Settings
-const COLOR_ERROR = "#E4A7A1";        // ≈ @error           - Exit
-const COLOR_MUTED = "#A79F96";        // ≈ @text-muted      - chevron / separator
-const COLOR_TEXT = "#2E2A26";         // ≈ @text-primary    - menu labels
+// Light theme colors (default)
+const LIGHT_COLORS = {
+  accent: "#7060CA",
+  secondary: "#7F776F",
+  error: "#E4A7A1",
+  muted: "#A79F96",
+  text: "#2E2A26",
+};
+
+// Dark theme colors
+const DARK_COLORS = {
+  accent: "#9F97ED",
+  secondary: "#b8b8b8",
+  error: "#E4A7A1",
+  muted: "#8a8a8a",
+  text: "#e8e8e8",
+};
+
+function getHistoryColors() {
+  const isDark = settingsManager.getDarkMode();
+  return isDark ? DARK_COLORS : LIGHT_COLORS;
+}
 
 // Nerd Font glyphs (code-point escapes cuz glyphs are easy to mistype)
 const ICON_SELECT_CHAT = "\u{F075}"; // nf-fa-comment    - chat
@@ -33,33 +52,36 @@ const ICON_EXIT = "\u{F011}";        // nf-fa-power_off  - exit
 export async function rofiHistoryView(chatManager: ChatManager, initialInput?: string): Promise<HistoryViewResult> {
   while (true) {
     const rows: string[] = [];
+    
+    // Get current colors based on theme mode
+    const colors = getHistoryColors();
 
     // Menu
     rows.push(
-      `<span foreground="${COLOR_ACCENT}">${ICON_SELECT_CHAT}</span>  ` +
-      `<span foreground="${COLOR_TEXT}">${escapeHtml(t("ui.select_chat"))}</span>  ` +
-      `<span foreground="${COLOR_MUTED}" alpha="50%">›</span>`
+      `<span foreground="${colors.accent}">${ICON_SELECT_CHAT}</span>  ` +
+      `<span foreground="${colors.text}">${escapeHtml(t("ui.select_chat"))}</span>  ` +
+      `<span foreground="${colors.muted}" alpha="50%">›</span>`
     );
     rows.push(
-      `<span foreground="${COLOR_SECONDARY}">${ICON_SETTINGS}</span>  ` +
-      `<span foreground="${COLOR_TEXT}">${escapeHtml(t("ui.settings.title"))}</span>  ` +
-      `<span foreground="${COLOR_MUTED}" alpha="50%">›</span>`
+      `<span foreground="${colors.secondary}">${ICON_SETTINGS}</span>  ` +
+      `<span foreground="${colors.text}">${escapeHtml(t("ui.settings.title"))}</span>  ` +
+      `<span foreground="${colors.muted}" alpha="50%">›</span>`
     );
     rows.push(
-      `<span foreground="${COLOR_ERROR}">${ICON_EXIT}</span>  ` +
-      `<span foreground="${COLOR_TEXT}">${escapeHtml(t("common.exit"))}</span>`
+      `<span foreground="${colors.error}">${ICON_EXIT}</span>  ` +
+      `<span foreground="${colors.text}">${escapeHtml(t("common.exit"))}</span>`
     );
 
     const sepLabel = escapeHtml(t("ui.conversation"));
     rows.push(
-      `<span foreground="${COLOR_MUTED}">${"─".repeat(6)} </span>` +
-      `<span weight="bold" foreground="${COLOR_MUTED}" size="smaller">${sepLabel}</span>` +
-      `<span foreground="${COLOR_MUTED}"> ${"─".repeat(20)}</span>`
+      `<span foreground="${colors.muted}">${"─".repeat(6)} </span>` +
+      `<span weight="bold" foreground="${colors.muted}" size="smaller">${sepLabel}</span>` +
+      `<span foreground="${colors.muted}"> ${"─".repeat(20)}</span>`
     );
 
     const { lines: historyLines, messageIndices } = chatManager.getHistoryPangoLinesWithMapping();
     if (historyLines.length === 0) {
-      rows.push(`<span foreground="${COLOR_MUTED}" style="italic">${escapeHtml(t("ui.empty_history"))}</span>`);
+      rows.push(`<span foreground="${colors.muted}" style="italic">${escapeHtml(t("ui.empty_history"))}</span>`);
     } else {
       rows.push(...historyLines);
     }
@@ -77,7 +99,7 @@ export async function rofiHistoryView(chatManager: ChatManager, initialInput?: s
       false,
       /* isMarkupRows */ true,
       {
-        themePath: HISTORY_THEME_PATH,
+        themePath: settingsManager.getDarkMode() ? HISTORY_THEME_PATH_DARK : HISTORY_THEME_PATH_LIGHT,
         selectedRow: historyLines.length > 0 ? MENU_ROW_COUNT : IDX_SELECT_CHAT,
         filter: initialInput
       }

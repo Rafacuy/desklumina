@@ -10,6 +10,7 @@ export type SettingKey =
   | "tts.naturalVoice.latencyMasking"
   | "tts.naturalVoice.disfluency"
   | "ui.toolDisplay"
+  | "ui.darkMode"
   | "history.enabled"
   | "system.confirmations"
   | "i18n.locale"

@@ -273,7 +273,8 @@
       "section": {
         "ai": "AI アシスタント",
         "history": "履歴",
-        "system": "システム"
+        "system": "システム",
+        "customization": "カスタマイズ"
       },
       "change_tts_voice": "TTS 音声を変更",
       "chat_history": "チャット履歴",
@@ -289,6 +290,7 @@
       "web_search_provider": "デフォルトプロバイダー",
       "web_search_fallback": "フォールバックを有効化",
       "web_search_safe_search": "セーフサーチ",
+      "dark_mode": "ダークモード",
       "natural_voices": "ナチュラルボイス",
       "natural_voices_settings": "ナチュラルボイス設定",
       "latency_masking": "レイテンシマスキング",

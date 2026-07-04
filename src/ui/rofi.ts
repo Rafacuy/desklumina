@@ -404,11 +404,13 @@ export async function rofiResponsePanel(
       margin: 0px;
       padding: 14px 24px;
       children: [prompt, entry];
+      background-color: transparent;
     }
     prompt {
       text-color: @accent-color;
       font: "JetBrainsMono Nerd Font Medium 10";
       vertical-align: 0.5;
+      background-color: transparent;
     }
     entry {
       placeholder: "${t("ui.reply_placeholder")}";
@@ -417,6 +419,7 @@ export async function rofiResponsePanel(
       vertical-align: 0.5;
       cursor-color: @accent-bloom;
       cursor-width: 1px;
+      background-color: transparent;
     }
     listview {
       enabled: false;
@@ -537,11 +540,13 @@ export async function rofiErrorPanel(originalError: unknown): Promise<ErrorPanel
       margin: 0px;
       padding: 14px 24px;
       children: [prompt, entry];
+      background-color: transparent;
     }
     prompt {
       text-color: @accent-color;
       font: "JetBrainsMono Nerd Font Medium 10";
       vertical-align: 0.5;
+      background-color: transparent;
     }
     entry {
       placeholder: "${escapeRasiString(t("ui.type_reply"))}";
@@ -550,6 +555,7 @@ export async function rofiErrorPanel(originalError: unknown): Promise<ErrorPanel
       vertical-align: 0.5;
       cursor-color: @accent-bloom;
       cursor-width: 1px;
+      background-color: transparent;
     }
     listview {
       enabled: false;

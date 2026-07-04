@@ -9,6 +9,7 @@ DeskLumina uses three configuration files located in your root config directory.
 - [Settings (settings.json)](#settings-settingsjson)
   - [Core Settings](#core-settings)
   - [Feature Flags](#feature-flags)
+  - [UI Customization](#ui-customization)
   - [Web Search Configuration](#web-search-configuration)
   - [Text-to-Speech Settings](#text-to-speech-settings)
   - [Long-Term Memory Settings](#long-term-memory-settings)
@@ -126,6 +127,23 @@ User preferences reside in `~/.config/desklumina/settings.json`. You can modify 
 <td><code>features.ltm</code></td>
 <td>boolean</td>
 <td>Toggle the SQLite-backed long-term memory system. When disabled, the system neither extracts nor retrieves memories.</td>
+</tr>
+</table>
+
+### UI Customization
+
+The <code>ui.customization</code> object controls visual aspects of the Rofi interface.
+
+<table>
+<tr>
+<th>Key</th>
+<th>Values</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><code>ui.customization.darkMode</code></td>
+<td>boolean</td>
+<td>Enable the dark color scheme. Defaults to <code>true</code>. You can toggle it in Settings under the Customization section.</td>
 </tr>
 </table>
 

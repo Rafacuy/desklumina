@@ -27,9 +27,10 @@ These shortcuts apply when the main input window or error panel is focused.
 | File | Purpose |
 | --- | --- |
 | `.env` | API keys, primary model (`DESKLUMINA_MODEL`), fallback chains (`DESKLUMINA_FALLBACKS`) |
-| `settings.json` | UI language, TTS preferences, default web search provider, LTM toggles |
+| `settings.json` | UI language, dark mode, TTS preferences, default web search provider, LTM toggles |
 | `models.json` | Alternative to `.env` for complex model logic (primary, fallbacks, aliases) |
 | `src/config/apps.json` | Natural language application aliases mapped to system binaries |
-| `src/ui/themes/lumina.rasi` | Primary UI theme (colors, fonts) |
+| `src/ui/themes/lumina.rasi` | Light theme (colors, fonts) |
+| `src/ui/themes/lumina-dark.rasi` | Dark theme variant |
 
 

@@ -65,6 +65,26 @@ export interface NaturalVoiceSettings {
   latencyMasking?: LatencyMaskingSettings;
 }
 
+export interface CustomIconSettings {
+  enabled: boolean;
+  path: string | null;
+  size: number;
+  fallback: string;
+}
+
+export interface ActionHintsSettings {
+  enabled: boolean;
+}
+
+export interface UICustomization {
+  schemaVersion: number;
+  promptDirection: string;
+  darkMode: boolean;
+  simplifyUI: boolean;
+  actionHints: ActionHintsSettings;
+  customIcon: CustomIconSettings;
+}
+
 export interface Settings {
   language: "id" | "en" | "ja";
   persona: string;
@@ -85,6 +105,9 @@ export interface Settings {
     naturalVoices: NaturalVoiceSettings;
   };
   ltm: LtmSettings;
+  ui: {
+    customization: UICustomization;
+  };
 }
 
 export const DEFAULT_SETTINGS = {
@@ -136,6 +159,23 @@ export const DEFAULT_SETTINGS = {
       enabled: true,
       threshold: 0.65,
       topK: 5,
+    },
+  },
+  ui: {
+    customization: {
+      schemaVersion: 1,
+      promptDirection: "CENTER_TOP",
+      darkMode: true,
+      simplifyUI: true,
+      actionHints: {
+        enabled: true,
+      },
+      customIcon: {
+        enabled: true,
+        path: null,
+        size: 20,
+        fallback: "default",
+      },
     },
   },
 } satisfies Settings;

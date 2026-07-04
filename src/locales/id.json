@@ -273,7 +273,8 @@
       "section": {
         "ai": "Asisten AI",
         "history": "Riwayat",
-        "system": "Sistem"
+        "system": "Sistem",
+        "customization": "Kustomisasi"
       },
       "change_tts_voice": "Ganti Suara TTS",
       "chat_history": "Riwayat Chat",
@@ -289,6 +290,7 @@
       "web_search_provider": "Penyedia Default",
       "web_search_fallback": "Aktifkan Fallback",
       "web_search_safe_search": "Penelusuran Aman",
+      "dark_mode": "Mode Gelap",
       "natural_voices": "Suara Natural",
       "natural_voices_settings": "Pengaturan Suara Natural",
       "latency_masking": "Penyamaran Latensi",

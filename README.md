@@ -478,10 +478,19 @@ bun run start
 Then just type. A session looks something like this:
 
 <div align="center">
-<img src="docs/img/ui-preview_000.png" height="80%" width="80%" alt="DeskLumina preview">
+<img src="docs/img/ui-preview_000.webp" height="80%" width="80%" alt="DeskLumina preview">
 </div>
 
-:+1: Here you go! :shipit:
+Prefer a darker palette? DeskLumina ships a dark mode too:
+ 
+<div align="center">
+<img src="docs/img/ui-preview-dark.webp" height="80%" width="80%" alt="DeskLumina dark mode preview">
+</div>
+
+***Here you go :shipit:!***
+
+> [!IMPORTANT]
+> You can activate dark mode in <kbd>Settings</kbd>.
 
 > [!WARNING]
 > A safety layer sits between DeskLumina and your shell. Anything destructive, `rm -rf` and its relatives, gets intercepted and asks for confirmation first. Nothing dangerous runs silently.

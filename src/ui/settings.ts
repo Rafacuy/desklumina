@@ -5,10 +5,16 @@ import { rofiMenu } from "./rofi";
 import { resolveColorScheme, getColorTokens, type ColorTokens } from "./settings/tokens";
 import { buildFooterHint } from "./settings/footer";
 import { renderRow, type SettingsRow, type NavRow } from "./settings/rows";
+import { setThemeMode } from "./theme-cache";
 import type { SettingKey } from "../constants/settings-keys";
 import type { Settings } from "../types";
 
-const SETTINGS_THEME_PATH = join(Bun.env.HOME!, ".config/desklumina/src/ui/themes/settings.rasi");
+const SETTINGS_THEME_PATH_LIGHT = join(Bun.env.HOME!, ".config/desklumina/src/ui/themes/settings.rasi");
+const SETTINGS_THEME_PATH_DARK = join(Bun.env.HOME!, ".config/desklumina/src/ui/themes/settings-dark.rasi");
+
+function getSettingsThemePath(): string {
+  return settingsManager.getDarkMode() ? SETTINGS_THEME_PATH_DARK : SETTINGS_THEME_PATH_LIGHT;
+}
 
 const PROVIDERS: Settings["webSearch"]["defaultProvider"][] = ["auto", "tavily", "serper", "serpapi", "searxng"];
 
@@ -113,6 +119,15 @@ function buildSettingsRows(lang: string): SettingsRow[] {
     key: "i18n.locale",
   });
 
+  rows.push({ type: "section", label: t("ui.settings.section.customization") });
+  rows.push({
+    type: "toggle",
+    icon: "",
+    label: t("ui.settings.dark_mode"),
+    key: "ui.darkMode",
+    value: settings.ui.customization.darkMode,
+  });
+
   rows.push({ type: "section", label: t("ui.settings.web_search") });
   rows.push({
     type: "nav",
@@ -166,13 +181,23 @@ function applyToggle(key: SettingKey): void {
     case "webSearch.safeSearch":
       settingsManager.setWebSearchSafeSearch(!settingsManager.get().webSearch.safeSearch);
       break;
+    case "ui.darkMode":
+      settingsManager.toggleDarkMode();
+      setThemeMode(settingsManager.getDarkMode() ? "dark" : "light");
+      break;
   }
 }
 
 function buildSettingsThemeOverride(colors: ColorTokens, rowCount: number): string {
   return `
-    window { width: 540px; }
-    listview { lines: ${rowCount}; }
+    window { 
+      width: 540px; 
+      height: 400px;
+    }
+    listview { 
+      lines: ${rowCount}; 
+      fixed-height: true;
+    }
     element selected.normal element-text {
       border-color: ${colors.accentPurple};
     }
@@ -202,8 +227,8 @@ async function promptSettings(rows: SettingsRow[], selectedRow: number, colors: 
       kbCustom1: "space",
       format: "i",
       selectedRow: safeSelectedRow,
-      themePath: SETTINGS_THEME_PATH,
-      fixedNumLines: false,
+      themePath: getSettingsThemePath(),
+      fixedNumLines: true,
     }
   );
 
@@ -533,6 +558,9 @@ async function promptNaturalVoicesVolumePanel(currentVolume: number): Promise<vo
 }
 
 export async function rofiSettings(): Promise<boolean> {
+  // Initialize theme mode based on dark mode setting
+  setThemeMode(settingsManager.getDarkMode() ? "dark" : "light");
+  
   const scheme = await resolveColorScheme();
   const colors = getColorTokens(scheme);
   const rows = buildSettingsRows(getLang());

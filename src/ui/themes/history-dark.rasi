@@ -1,0 +1,44 @@
+/* Chat History theme - Dark Mode
+ *
+ * NOTE: this is the only place that is allowed to switch listview to
+ * `fixed-height: true`. The base theme intentionally keeps it `false` so the
+ * short input box does not reserve ghost lines.
+ */
+@import "lumina-dark.rasi"
+
+window {
+    height:         620px;
+    border:         1px;
+    border-color:   @border-subtle;
+}
+
+mainbox {
+    children:       [inputbar, listview, message];
+}
+
+entry {
+    placeholder:       "Type a message or filter history…";
+}
+
+listview {
+    /*
+     * fixed-height: the window reserves exactly lines rows 
+     * the listview
+     * scrolls internally once rows exceed that. 
+     */
+    lines:          10;
+    fixed-height:   true;
+    scrollbar:      true;
+    markup-rows:    true;
+    padding:        6px;
+    spacing:        2px;
+}
+
+scrollbar {
+    background-color: transparent;
+    handle-color:     @border-focus;
+    handle-width:     4px;
+    border-radius:    2px;
+    width:            6px;
+    margin:           6px 3px;
+}

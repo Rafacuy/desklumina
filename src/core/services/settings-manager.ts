@@ -64,6 +64,31 @@ export class SettingsManager {
             ...(saved.ltm?.semanticRetrieval || {}),
           };
 
+          // Handle ui.customization section
+          if (saved.ui && saved.ui.customization) {
+            this.settings.ui = {
+              customization: {
+                ...DEFAULT_SETTINGS.ui.customization,
+                ...(saved.ui.customization || {}),
+              },
+            };
+            // Ensure nested objects are properly merged
+            if (saved.ui.customization.actionHints) {
+              this.settings.ui.customization.actionHints = {
+                ...DEFAULT_SETTINGS.ui.customization.actionHints,
+                ...(saved.ui.customization.actionHints || {}),
+              };
+            }
+            if (saved.ui.customization.customIcon) {
+              this.settings.ui.customization.customIcon = {
+                ...DEFAULT_SETTINGS.ui.customization.customIcon,
+                ...(saved.ui.customization.customIcon || {}),
+              };
+            }
+          } else {
+            this.settings.ui = { ...DEFAULT_SETTINGS.ui };
+          }
+
           if (this.settings.language) {
             setLang(this.settings.language);
           }
@@ -217,6 +242,20 @@ export class SettingsManager {
       enabled,
     };
     this.scheduleFlush();
+  }
+
+  toggleDarkMode() {
+    this.settings.ui.customization.darkMode = !this.settings.ui.customization.darkMode;
+    this.scheduleFlush();
+  }
+
+  setDarkMode(enabled: boolean) {
+    this.settings.ui.customization.darkMode = enabled;
+    this.scheduleFlush();
+  }
+
+  getDarkMode(): boolean {
+    return this.settings.ui?.customization?.darkMode ?? DEFAULT_SETTINGS.ui.customization.darkMode;
   }
 }
 
