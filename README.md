@@ -42,16 +42,22 @@
 
 ## So, what is this thing
 
-<img src="docs/img/lumina-mascot.png" align="right" width="170" alt="Lumina, the DeskLumina mascot">
-Say hi to **Lumina**. She doesn't run anything and she's not an actual chat window, she's just the face DeskLumina wears instead of being another blank box in your app drawer.
- 
+<table>
+<tr>
+<td width="35%" align="center">
+<img src="docs/img/lumina-mascot.png" width="100%" alt="Lumina, the DeskLumina mascot">
+</td>
+<td width="65%">
+Say hi to <b>Lumina</b>, the face behind the prompt. She's not an actual chat window, she's just here to give the project a personality instead of another generic terminal icon. 
+</td>
+</tr>
+</table>
+
 DeskLumina sits on your desktop and waits for you to type. Yeah sure, clicking an icon in Plank is faster for opening Spotify, nobody's arguing that. But typing wins the second the task isn't one click away, `find that PDF I downloaded last week`, `close everything except the terminal`, `what's eating my RAM right now`. No dock icon for that. No keyboard shortcut you'll ever remember for that.
- 
+
 ***Say it in plain language, it figures out the intent, picks the right tool, and runs it.***
- 
+
 It doesn't ship its own model. Pick a provider, Groq, OpenAI, Anthropic, and a few others, and DeskLumina borrows its brain from there. Most have a free or near-free tier, use it.
- 
-<br clear="right">
 
 <p>
 <img src="https://img.shields.io/badge/Local_model-on_roadmap-A78BFA?style=flat-square" alt="Local model on roadmap">
