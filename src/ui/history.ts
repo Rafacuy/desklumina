@@ -23,7 +23,7 @@ const MENU_ROW_COUNT = IDX_SEPARATOR + 1;
 
 // Light theme colors (default)
 const LIGHT_COLORS = {
-  accent: "#7060CA",
+  accent: "#1861b5",
   secondary: "#7F776F",
   error: "#E4A7A1",
   muted: "#A79F96",
@@ -32,7 +32,7 @@ const LIGHT_COLORS = {
 
 // Dark theme colors
 const DARK_COLORS = {
-  accent: "#9F97ED",
+  accent: "#186bc9",
   secondary: "#b8b8b8",
   error: "#E4A7A1",
   muted: "#8a8a8a",

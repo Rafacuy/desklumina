@@ -20,7 +20,7 @@ const STREAM_BATCH_MS = 50;
 const MAX_LISTVIEW_LINES = 12;
 const WRAP_WIDTH = 50;
 const MUTED_COLOR = "#A79F96";
-const TTS_CANCEL_COLOR = "#e05252";
+const TTS_CANCEL_COLOR = "#B3402B";
 const TTS_BUTTON_GLYPH = "■";
 
 let activeMenuProc: ReturnType<typeof spawn> | null = null;
@@ -283,8 +283,8 @@ export async function rofiExpandedResponse(fullMessage: string): Promise<void> {
       font: "JetBrainsMono Nerd Font 10";
     }
     element selected.normal {
-      background-color: @accent-light;
-      text-color: @accent-color;
+      background-color: transparent;
+      text-color: @text-primary;
     }
     element-text {
       wrap: true;
@@ -350,15 +350,16 @@ export async function rofiResponsePanel(
 
   const ttsActive = isTTSPlaying();
   const ttsButtonTheme = ttsActive
-    ? `configuration { kb-custom-2: ""; }
+    ? `* { accent-tts: ${TTS_CANCEL_COLOR}; }
+       configuration { kb-custom-2: ""; }
        inputbar {
          children: [prompt, entry, button];
        }
        button {
          action: "kb-custom-2";
-          content: "${TTS_BUTTON_GLYPH}";
+         content: "${TTS_BUTTON_GLYPH}";
          cursor: pointer;
-         text-color: ${TTS_CANCEL_COLOR};
+         text-color: @accent-tts;
          font: "JetBrainsMono Nerd Font Medium 10";
          padding: 0px 8px;
          expand: false;
@@ -373,7 +374,7 @@ export async function rofiResponsePanel(
   const themeOverride = `
     window {
       width: ${windowWidth}px;
-      height: 550px;
+      anchor: northeast;
       border-radius: 20px;
       border: 1px;
       border-color: @border-subtle;
@@ -407,7 +408,7 @@ export async function rofiResponsePanel(
       background-color: transparent;
     }
     prompt {
-      text-color: @accent-color;
+      text-color: #059ba3;
       font: "JetBrainsMono Nerd Font Medium 10";
       vertical-align: 0.5;
       background-color: transparent;

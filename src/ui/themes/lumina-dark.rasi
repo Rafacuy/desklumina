@@ -42,6 +42,8 @@
     accent-muted:     #7F77DD;
     accent-light:     #3a3a5a;
     accent-surface:   #2a2a3a;
+    name-accent:      #297bd9;
+    selection-bg:     #036596;
 
     /* Semantic feedback */
     error:            #E4A7A1;
@@ -114,7 +116,7 @@ inputbar {
 
 
 prompt {
-    text-color:       @accent-color;
+    text-color:       @name-accent;
     font:             "JetBrainsMono Nerd Font Medium 10";
     vertical-align:   0.5;
     padding:          0px 6px 0px 0px;
@@ -244,20 +246,20 @@ element alternate.active {
 }
 
 element selected.normal {
-    background-color: @accent-light;
-    text-color:       @accent;
+    background-color: @selection-bg;
+    text-color:       @text-primary;
     border:           0px;
 }
 
 element selected.urgent {
-    background-color: @accent-light;
+    background-color: @selection-bg;
     text-color:       @error;
     border:           0px;
 }
 
 element selected.active {
-    background-color: @accent-light;
-    text-color:       @accent;
+    background-color: @selection-bg;
+    text-color:       @text-primary;
     border:           0px;
 }
 

@@ -133,7 +133,7 @@ async function renderPanel(rawContent: string, copied: boolean): Promise<RenderR
   const themeOverride = `
     window {
       width: ${windowWidth}px;
-      height: 550px;
+      anchor: northeast;
       border-radius: 20px;
       border: 1px;
       border-color: @border-subtle;
@@ -153,9 +153,10 @@ async function renderPanel(rawContent: string, copied: boolean): Promise<RenderR
     }
     textbox {
       text-color: @text-primary;
-      font: "JetBrainsMono Nerd Font 10";
+      font: "JetBrainsMono Nerd Font 10.5";
       expand: true;
       wrap: true;
+      line-height: 1.5;
     }
     inputbar {
       border: 1px 0px 0px 0px;
@@ -186,6 +187,9 @@ async function renderPanel(rawContent: string, copied: boolean): Promise<RenderR
     }
     listview {
       enabled: false;
+    }
+    prompt {
+      text-color: @name-accent;
     }
   `;
 

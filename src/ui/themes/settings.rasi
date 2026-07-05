@@ -9,12 +9,12 @@
 }
 
 element selected.normal {
-    background-color: @bg-alt;
+    background-color: @selection-bg;
 }
 
 element selected.normal element-text {
     border:       0 0 0 2px;
-    border-color: #7F77DD;
+    border-color: @selection-bg;
     padding:      2px 0 2px 8px;
     border-radius: 0;
 }
