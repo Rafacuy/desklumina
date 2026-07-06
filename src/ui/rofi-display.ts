@@ -65,8 +65,8 @@ export function spawnLoaderOverlay(): ReturnType<typeof spawn> {
         border-radius: 0px;
         border: 0px;
         background-color: transparent;
-        x-offset: -24px;
-        y-offset: -12px;
+        x-offset: -15px;
+        y-offset: -15px;
       }
       mainbox {
         orientation: vertical;
@@ -128,8 +128,8 @@ export function spawnLoaderOverlay(): ReturnType<typeof spawn> {
         border: 1px;
         border-color: @border-subtle;
         background-color: @bg;
-        x-offset: -24px;
-        y-offset: -12px;
+        x-offset: -15px;
+        y-offset: -15px;
       }
       mainbox {
         children: [message];

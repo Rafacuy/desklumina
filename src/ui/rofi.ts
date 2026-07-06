@@ -374,7 +374,10 @@ export async function rofiResponsePanel(
   const themeOverride = `
     window {
       width: ${windowWidth}px;
-      anchor: northeast;
+      location: southeast;
+      anchor: southeast;
+      x-offset: -15px;
+      y-offset: -15px;
       border-radius: 20px;
       border: 1px;
       border-color: @border-subtle;

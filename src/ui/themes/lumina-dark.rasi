@@ -68,10 +68,10 @@
 /* ▐█▌██▐█▌▐█▌██▐█▌██. ██ ▐█▌.▐▌▐█▌██▐█▌ */
 /*  ▀▀▀▀▀ ▀▪▀▀▀  ▀█▄▀▪·▀▀▀▀  ▀█▄▀▪ ▀▀▀▀ ▀▪ */
 window {
-    anchor:           northeast;
-    location:         northeast;
-    x-offset:         -7px;
-    y-offset:          28px;
+    anchor:           southeast;
+    location:         southeast;
+    x-offset:         -15px;
+    y-offset:         -15px;
 
     width:            540px;
     
