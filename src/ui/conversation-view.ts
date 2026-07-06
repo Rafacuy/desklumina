@@ -40,7 +40,7 @@ export interface ConversationViewResult {
  *
  * Short messages render in the response-panel-styled window (no reply bar,
  * Copy button + back hint). Long messages are truncted identically
- * to the response panel 
+ * to the response panel
  *
  * the usr can press Tab to view the full text in
  * rofiExpandedResponse.
@@ -48,7 +48,7 @@ export interface ConversationViewResult {
  */
 export async function rofiConversationView(
   chatManager: ChatManager,
-  selectedMessageIndex: number
+  selectedMessageIndex: number,
 ): Promise<ConversationViewResult> {
   const chat = chatManager.getCurrentChat();
   if (!chat) return { action: "back" };
@@ -86,15 +86,18 @@ interface RenderResult {
   copied: boolean;
 }
 
-async function renderPanel(rawContent: string, copied: boolean): Promise<RenderResult> {
+async function renderPanel(
+  rawContent: string,
+  copied: boolean,
+): Promise<RenderResult> {
   const WRAP_WIDTH = 50;
   const MAX_LISTVIEW_LINES = 12;
-  
+
   // Get current colors based on theme mode
   const colors = getConvViewColors();
 
   const firstPass = formatRofiResponse(rawContent, WRAP_WIDTH);
-  
+
   let windowWidth = 600;
   let dynamicWrapWidth = WRAP_WIDTH;
   let allLines = firstPass.lines;
@@ -205,10 +208,10 @@ async function renderPanel(rawContent: string, copied: boolean): Promise<RenderR
     formattedMessage,
     /* isMessagePango */ true,
     /* isMarkupRows */ false,
-    { kbCustom1: "Tab", kbCustom2: COPY_KEY }
+    { kbCustom1: "Tab", kbCustom2: COPY_KEY },
   );
 
-  // Tab (kb-custom-1) 
+  // Tab (kb-custom-1)
   if (result.code === 10 && needsTruncation) {
     return { action: "expand", copied: false };
   }

@@ -73,7 +73,7 @@ window {
     x-offset:         -15px;
     y-offset:         -15px;
 
-    width:            540px;
+    width:            420px;                 
     
     /* Border */
     border:           1px;
@@ -105,20 +105,20 @@ mainbox {
 /* ▐█▌██▐█▌▐█▪·•▐█▄█▌ ▐█▌·    ██▄▪▐█▐█ ▪▐▌▐█•█▌ */
 /* ▀▀▀▀▀ █▪.▀    ▀▀▀  ▀▀▀     ·▀▀▀▀  ▀  ▀ .▀  ▀ */
 inputbar {
-    padding:          16px 22px;
+    padding:          14px 18px;              
     spacing:          10px;
-    children:         [prompt, entry];
+    children:         [icon-lumina, entry];   
 
     border:           0px 0px 1px 0px;
     border-color:     @border-subtle;
     background-color: transparent;
 }
 
-prompt {
-    text-color:       @name-accent;
-    font:             "JetBrainsMono Nerd Font Medium 10";
+icon-lumina {                                
+    filename:         "assets/logo/lumina-logo.png";
+    size:             28px;
     vertical-align:   0.5;
-    padding:          0px 6px 0px 0px;
+    expand:           false;
     background-color: transparent;
 }
 
@@ -131,6 +131,7 @@ entry {
     font:              "JetBrainsMono Nerd Font 10.5";
     cursor-color:      @accent-bloom;
     cursor-width:      1px;
+    expand:            true;                  
 }
 
 
@@ -141,7 +142,7 @@ entry {
 /* ▀▀▀ ·    ▀▀▀    ▀▀ █▪     ▀▀▀  */
 message {
     background-color: transparent;
-    padding:          6px 22px 10px 22px;
+    padding:          5px 10px 5px 10px;
 
     border:           0px;
     border-color:     @border-subtle;
@@ -149,8 +150,8 @@ message {
 
 textbox {
     background-color: transparent;
-    text-color:       @text-secondary;
-    font:             "JetBrainsMono Nerd Font 9";
+    text-color:       @text-muted;            
+    font:             "JetBrainsMono Nerd Font 8";
     vertical-align:   0.5;
 }
 

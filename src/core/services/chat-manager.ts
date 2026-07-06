@@ -1,6 +1,24 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync, renameSync, statSync } from "fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+  readdirSync,
+  unlinkSync,
+  renameSync,
+  statSync,
+} from "fs";
 import { join } from "path";
-import type { AIMessage, AIRequestContext, Chat, ChatMessage, ToolCall, ToolResult, ChatMetadata, ToolExtraData } from "../../types";
+import type {
+  AIMessage,
+  AIRequestContext,
+  Chat,
+  ChatMessage,
+  ToolCall,
+  ToolResult,
+  ChatMetadata,
+  ToolExtraData,
+} from "../../types";
 import { settingsManager } from "./settings-manager";
 import { logger } from "../../logger";
 import { t, cleanAssistantResponse } from "../../utils";
@@ -104,7 +122,9 @@ const EXTRA_FORMATTERS: Record<string, ExtraFormatter> = {
   files: (val) => {
     const files = val as ToolExtraData["files"];
     if (!files || files.length === 0) return "";
-    const lines = files.slice(0, 10).map((f) => `  - ${f.path}${f.type === "directory" ? "/" : ""}`);
+    const lines = files
+      .slice(0, 10)
+      .map((f) => `  - ${f.path}${f.type === "directory" ? "/" : ""}`);
     return `files:\n${lines.join("\n")}`;
   },
   selectedFile: (val) => `selected=${val}`,
@@ -112,9 +132,11 @@ const EXTRA_FORMATTERS: Record<string, ExtraFormatter> = {
     const p = val as ToolExtraData["preview"];
     if (!p) return "";
     if (p.type === "missing") return `preview=${p.path} (missing)`;
-    if (p.type === "directory" && p.entries) return `preview=${p.path}/ [${p.entries.length} entries]`;
+    if (p.type === "directory" && p.entries)
+      return `preview=${p.path}/ [${p.entries.length} entries]`;
     if (p.content) {
-      const truncated = p.content.length > 300 ? p.content.slice(0, 300) + "..." : p.content;
+      const truncated =
+        p.content.length > 300 ? p.content.slice(0, 300) + "..." : p.content;
       return `preview=${p.path}:\n${truncated}`;
     }
     return "";
@@ -125,18 +147,23 @@ const EXTRA_FORMATTERS: Record<string, ExtraFormatter> = {
     const parts: string[] = [];
     if (s.query) parts.push(`query="${s.query}"`);
     if (s.totalMatches !== undefined) parts.push(`total=${s.totalMatches}`);
-    if (s.returnedMatches !== undefined) parts.push(`returned=${s.returnedMatches}`);
+    if (s.returnedMatches !== undefined)
+      parts.push(`returned=${s.returnedMatches}`);
     if (s.provider) parts.push(`provider=${s.provider}`);
-    if (s.warnings && s.warnings.length > 0) parts.push(`warnings=${s.warnings.join("; ")}`);
+    if (s.warnings && s.warnings.length > 0)
+      parts.push(`warnings=${s.warnings.join("; ")}`);
     return parts.length > 0 ? `summary: ${parts.join(", ")}` : "";
   },
-  webSearch: (val) => formatWebSearchContext({ webSearch: val as ToolExtraData["webSearch"] }),
+  webSearch: (val) =>
+    formatWebSearchContext({ webSearch: val as ToolExtraData["webSearch"] }),
 };
 
 function formatToolContext(result: ToolResult): string {
   const status = result.dispatched
     ? "DISPATCHED"
-    : result.success === false ? "FAILED" : "OK";
+    : result.success === false
+      ? "FAILED"
+      : "OK";
   const segments = [
     `[TOOL RESULT] ${result.tool} ${status}`,
     result.normalizedArg ? `args=${result.normalizedArg}` : "",
@@ -165,7 +192,9 @@ function summarizeMessage(message: InternalMessage): string {
       .map((result) => {
         const status = result.dispatched
           ? "dispatched"
-          : result.success === false ? "failed" : "ok";
+          : result.success === false
+            ? "failed"
+            : "ok";
         const tracks = result.extra?.tracks;
         if (tracks && tracks.length > 0) {
           const trackSummaries = tracks
@@ -229,7 +258,7 @@ export class ChatManager {
         .map((f) => ({
           name: f,
           path: join(CHAT_DIR, f),
-          mtime: statSync(join(CHAT_DIR, f)).mtimeMs
+          mtime: statSync(join(CHAT_DIR, f)).mtimeMs,
         }))
         .sort((a, b) => b.mtime - a.mtime);
 
@@ -242,7 +271,10 @@ export class ChatManager {
               logger.info("chat-manager", `Pruned old chat: ${file.name}`);
             }
           } catch (err) {
-            logger.error("chat-manager", `Failed to prune chat ${file.name}: ${err}`);
+            logger.error(
+              "chat-manager",
+              `Failed to prune chat ${file.name}: ${err}`,
+            );
           }
         }
       }
@@ -281,7 +313,11 @@ export class ChatManager {
     return this.currentChat;
   }
 
-  addMessage(content: string, role: "user" | "assistant", toolCalls?: ToolCall[]): void {
+  addMessage(
+    content: string,
+    role: "user" | "assistant",
+    toolCalls?: ToolCall[],
+  ): void {
     if (!this.currentChat) {
       this.currentChat = this.createChat(content);
     }
@@ -306,7 +342,7 @@ export class ChatManager {
   addToolResults(results: ToolResult[]): void {
     if (!this.currentChat || results.length === 0) return;
 
-    const compressedResults = results.map(r => ({
+    const compressedResults = results.map((r) => ({
       tool: r.tool,
       success: r.success,
       result: r.result.slice(0, 500),
@@ -347,12 +383,13 @@ export class ChatManager {
       try {
         const data = readFileSync(file.path, "utf-8");
         const chat = JSON.parse(data) as Chat;
-        
+
         if (chat.id && chat.title) {
-          const lastMsg = chat.messages.length > 0 
-            ? chat.messages[chat.messages.length - 1]?.content || ""
-            : "";
-            
+          const lastMsg =
+            chat.messages.length > 0
+              ? chat.messages[chat.messages.length - 1]?.content || ""
+              : "";
+
           chats.push({
             id: chat.id,
             title: chat.title,
@@ -362,7 +399,10 @@ export class ChatManager {
           });
         }
       } catch (err) {
-        logger.error("chat-manager", `Failed to parse chat ${file.name}: ${err}`);
+        logger.error(
+          "chat-manager",
+          `Failed to parse chat ${file.name}: ${err}`,
+        );
       }
     }
 
@@ -397,7 +437,9 @@ export class ChatManager {
 
     const relevant = this.currentChat.messages
       .filter((message) => message.role !== "system")
-      .filter((message) => message.content && message.content.trim() !== "") as InternalMessage[];
+      .filter(
+        (message) => message.content && message.content.trim() !== "",
+      ) as InternalMessage[];
 
     let totalTokens = 0;
     const recentMessages: AIMessage[] = [];
@@ -408,7 +450,7 @@ export class ChatManager {
       const msg = relevant[i]!;
       const apiMsg = this.toAPIMessage(msg);
       const tokens = tokenManager.estimateTokens(apiMsg.content);
-      const isProtected = (relevant.length - 1 - i) < PROTECTED_RECENT;
+      const isProtected = relevant.length - 1 - i < PROTECTED_RECENT;
 
       if (totalTokens + tokens <= MAX_HISTORY_TOKENS || isProtected) {
         recentMessages.unshift(apiMsg);
@@ -423,7 +465,7 @@ export class ChatManager {
       const summaryLines = olderMessages
         .slice(-5) // Take last 5 from older for summary
         .map(summarizeMessage);
-      
+
       messages.push({
         role: "system",
         content: `[History: ${olderMessages.length} msgs]\n${summaryLines.join("\n")}`,
@@ -450,7 +492,9 @@ export class ChatManager {
     const preview: string[] = [];
     let totalChars = 0;
 
-    const recentMessages = [...this.currentChat.messages].reverse() as InternalMessage[];
+    const recentMessages = [
+      ...this.currentChat.messages,
+    ].reverse() as InternalMessage[];
 
     for (const msg of recentMessages) {
       if (msg.role === "tool") {
@@ -458,7 +502,9 @@ export class ChatManager {
           .map((result) => {
             const mark = result.dispatched
               ? "↗"
-              : result.success === false ? "✕" : "✓";
+              : result.success === false
+                ? "✕"
+                : "✓";
             return `    • ${getToolLabel(result.tool)} ${mark}`;
           })
           .join("\n");
@@ -469,12 +515,16 @@ export class ChatManager {
         continue;
       }
 
-      const prefix = msg.role === "user" ? `󱜙 ${t("common.you")}:` : `󱜙 ${t("common.lumina")}:`;
+      const prefix =
+        msg.role === "user"
+          ? `󱜙 ${t("common.you")}:`
+          : `󱜙 ${t("common.lumina")}:`;
       const content = cleanContent(msg.content);
       if (!content) continue;
 
       const chars = Array.from(content);
-      const truncated = chars.length > 100 ? `${chars.slice(0, 100).join("")}...` : content;
+      const truncated =
+        chars.length > 100 ? `${chars.slice(0, 100).join("")}...` : content;
       const line = `${prefix} ${truncated}`;
 
       if (totalChars + line.length > maxChars) break;
@@ -485,19 +535,24 @@ export class ChatManager {
     return preview.join("\n");
   }
 
-  /** Pango lines for history view. 
+  /** Pango lines for history view.
    *
-   * oldest -> 
-  * newest! 
-  */
+   * oldest ->
+   * newest!
+   */
   getHistoryPangoLines(maxLines: number = 60): string[] {
     return this.getHistoryPangoLinesWithMapping(maxLines).lines;
   }
 
-  getHistoryPangoLinesWithMapping(maxLines: number = 60): { lines: string[]; messageIndices: number[] } {
+  getHistoryPangoLinesWithMapping(maxLines: number = 60): {
+    lines: string[];
+    messageIndices: number[];
+  } {
     const settings = settingsManager.get();
-    if (!settings.features.chatHistory) return { lines: [], messageIndices: [] };
-    if (!this.currentChat || this.currentChat.messages.length === 0) return { lines: [], messageIndices: [] };
+    if (!settings.features.chatHistory)
+      return { lines: [], messageIndices: [] };
+    if (!this.currentChat || this.currentChat.messages.length === 0)
+      return { lines: [], messageIndices: [] };
 
     const colors = getHistoryColors();
     const messages = this.currentChat.messages as InternalMessage[];
@@ -510,23 +565,24 @@ export class ChatManager {
       const msg = messages[i]!;
 
       if (msg.role === "tool") {
-        const toolLines = (msg.toolResults || [])
-          .map((result) => {
-            const mark = result.dispatched
-              ? "↗"
-              : result.success === false ? "✕" : "✓";
-            const label = escapeHtml(getToolLabel(result.tool));
-            const arg = result.normalizedArg
-              ? `(${escapeHtml(result.normalizedArg)})`
-              : "";
-            return `<span foreground="${colors.muted}" style="italic" size="smaller">⚙ ${label} ${arg} ${mark}</span>`;
-          });
+        const toolLines = (msg.toolResults || []).map((result) => {
+          const mark = result.dispatched
+            ? "↗"
+            : result.success === false
+              ? "✕"
+              : "✓";
+          const label = escapeHtml(getToolLabel(result.tool));
+          const arg = result.normalizedArg
+            ? `(${escapeHtml(result.normalizedArg)})`
+            : "";
+          return `<span foreground="${colors.muted}" style="italic" size="smaller">⚙ ${label} ${arg} ${mark}</span>`;
+        });
         lines.push(...toolLines);
         messageIndices.push(...toolLines.map(() => i));
         continue;
       }
 
-      const content = cleanContent(msg.content);
+      const content = cleanContent(msg.content).replace(/\s*[\r\n]+\s*/g, " ");
       if (!content) continue;
 
       const truncated = truncateText(content, HISTORY_LINE_MAX_CHARS);
@@ -535,12 +591,12 @@ export class ChatManager {
       if (msg.role === "user") {
         lines.push(
           `<span weight="bold" foreground="${colors.textPrimary}">${escapeHtml(t("common.you"))}:</span> ` +
-          `<span foreground="${colors.textPrimary}">${safe}</span>`
+            `<span foreground="${colors.textPrimary}">${safe}</span>`,
         );
       } else {
         lines.push(
           `<span weight="bold" foreground="${colors.accent}">${escapeHtml(t("common.lumina"))}:</span> ` +
-          `<span foreground="${colors.textPrimary}">${safe}</span>`
+            `<span foreground="${colors.textPrimary}">${safe}</span>`,
         );
       }
       messageIndices.push(i);

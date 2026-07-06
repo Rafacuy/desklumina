@@ -40,7 +40,7 @@ export async function rofiChatInput(
   initialInput?: string
 ): Promise<{ action: "send" | "history" | "exit"; input?: string }> {
   void chatManager;   //not used here but kept for symmetry (caller expects it)
-  const hints = `${t("common.send")} · Esc ${t("common.exit")} · Tab ${t("ui.history_action")} [${t("common.expand")}]`;
+  const hints = `${t("common.send")} · Esc ${t("common.exit")} · [TAB] ${t("ui.history_action")} [${t("common.expand")}]`;
 
   const result = await rofiMenu(
     "",
