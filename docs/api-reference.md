@@ -9,7 +9,6 @@ This document outlines the internal TypeScript APIs used within DeskLumina.
 - [Result Store API](#result-store-api)
 - [Tool Contracts](#tool-contracts)
 - [Error Classification](#error-classification)
-- [Daemon Socket Protocol](#daemon-socket-protocol)
 
 ## Core API
 
@@ -62,16 +61,3 @@ Maps arbitrary thrown errors into a seven-category taxonomy to populate the Rofi
 | `ratelimit` | Provider rate limit exceeded |
 | `timeout` | Request exceeded the allowed response time |
 | `unknown` | Unclassified error; see raw trace for details |
-
-## Daemon Socket Protocol
-
-The daemon listens on `$XDG_RUNTIME_DIR/desklumina.sock` and communicates via HTTP over Unix domain sockets.[^1]
-
-All command execution endpoints require an `Authorization: Bearer <token>` header, verified against `~/.config/desklumina/.daemon-token`.
-
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| `GET` | `/v1/healthz` | Health check |
-| `POST` | `/v1/command` | Submit a `cmd` string; returns tool result traces and final text output |
-
-[^1]: `src/daemon/daemon.ts`

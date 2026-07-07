@@ -45,19 +45,6 @@
     "toggle": "Ganti",
     "you": "Anda"
   },
-  "daemon": {
-    "already_running": "Daemon sudah berjalan",
-    "not_running": "✗ Daemon tidak berjalan",
-    "running": "✓ Daemon sedang berjalan",
-    "send_usage": "Gunakan 'bun run send <perintah>' untuk mengirim perintah",
-    "send_usage_bin": "Penggunaan: bun run send <perintah>",
-    "socket": "Socket: {path}",
-    "start_command": "Mulai dengan: bun run daemon",
-    "started": "Daemon dimulai pada {path}",
-    "started_success": "✓ Daemon berhasil dimulai",
-    "starting": "🔧 Memulai daemon DeskLumina...",
-    "stopped": "Daemon dihentikan"
-  },
   "error": {
     "fatal_groq": "❌ FATAL: GROQ_API_KEY tidak ditemukan di .env",
     "fatal_model": "❌ FATAL: MODEL_NAME tidak ditemukan di .env",
@@ -254,7 +241,7 @@
       "quantum": "🎲 mencoba kemungkinan kayak kartu",
       "thinking": "🧠 hehe tunggu, dikit lagi ketemu",
       "traces": "🔮 nyari feel-nya dulu sebentar",
-      "wisdom": "🐱 buka-buka memori lama nih" 
+      "wisdom": "🐱 buka-buka memori lama nih"
     },
     "new_chat": "Chat Baru",
     "no_chats_start": "Belum ada chat.\\nMulai percakapan baru!",

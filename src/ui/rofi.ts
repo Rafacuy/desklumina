@@ -12,7 +12,7 @@ import {
 } from "./error-classify";
 import { copyRawErrorToClipboard } from "../utils/system/clipboard-raw";
 import { formatRofiResponse } from "../utils/formatting/table-formatter";
-import { getThemePathWithOverride } from "./theme-cache";
+import { getThemePath } from "./theme-cache";
 import { rofiDisplay, spawnLoaderOverlay } from "./rofi-display";
 import { isTTSPlaying, cancelTTS } from "../ai";
 
@@ -156,7 +156,7 @@ export async function rofiMenu(
     "-dmenu",
     "-i",
     "-p", prompt,
-    "-theme", options?.themePath ?? getThemePathWithOverride(),
+    "-theme", options?.themePath ?? getThemePath(),
     "-kb-mode-next", "",
     "-kb-row-tab", "",
     "-kb-element-next", "",

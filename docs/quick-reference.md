@@ -6,8 +6,6 @@
 | --- | --- | --- |
 | Rofi UI | `bun run start` | Interactive graphical chat |
 | Terminal | `bun run dev` | Persistent shell chat loop |
-| Daemon (start) | `bun run daemon:start` | Run background service |
-| Daemon (send) | `bun run send "..."` | Send request to background daemon |
 | One-off | `bun run start -- --exec "..."` | Execute single request and exit |
 
 ## Rofi Shortcuts
@@ -32,5 +30,3 @@ These shortcuts apply when the main input window or error panel is focused.
 | `src/config/apps.json` | Natural language application aliases mapped to system binaries |
 | `src/ui/themes/lumina.rasi` | Light theme (colors, fonts) |
 | `src/ui/themes/lumina-dark.rasi` | Dark theme variant |
-
-

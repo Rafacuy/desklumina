@@ -7,7 +7,6 @@
 - [UI & Rofi Errors](#ui--rofi-errors)
 - [Tool Execution Issues](#tool-execution-issues)
 - [Configuration Issues](#configuration-issues)
-- [Daemon Issues](#daemon-issues)
 - [Long-Term Memory Issues](#long-term-memory-issues)
 - [Text-to-Speech Issues](#text-to-speech-issues)
 
@@ -19,7 +18,7 @@ No. It runs on top of your existing Linux desktop (GNOME, KDE, Sway) to help you
 
 **Does it support other operating systems?**
 
-DeskLumina relies on Linux-specific tooling like Rofi and Unix domain sockets, so it is strictly Linux-only.
+DeskLumina relies on Linux-specific tooling like Rofi, so it is strictly Linux-only.
 
 **Are my files sent to the cloud?**
 
@@ -68,7 +67,7 @@ If logs are not copied when you press <kbd>Alt</kbd>+<kbd>C</kbd>, verify the ac
 clipcatctl list
 ```
 
-If the command fails, start the `clipcatd` daemon or switch to an alternative clipboard tool.
+If the command fails, start the `clipcatd` clipboard manager or switch to an alternative clipboard tool.
 
 ## Tool Execution Issues
 
@@ -89,19 +88,6 @@ If the command fails, start the `clipcatd` daemon or switch to an alternative cl
 
 _(Interactive sudo prompt support is planned, not yet implemented.)_
 
-### Socket already in use (`EADDRINUSE`)
-
-> [!NOTE]
-> The health checker normally cleans up stale sockets automatically. Only follow the step below if it fails to do so.
-
-If the daemon crashes and leaves a stale socket behind, remove it manually:
-```bash
-rm "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/desklumina.sock"
-```
-Then restart the daemon with `bun run daemon`.
-
-_(If $XDG_RUNTIME_DIR is unset, DeskLumina falls back to /run/user/<uid>.)_
-
 ## Configuration Issues
 
 ### Settings changes not taking effect
@@ -113,7 +99,6 @@ _(If $XDG_RUNTIME_DIR is unset, DeskLumina falls back to /run/user/<uid>.)_
 - Ensure you edited the correct file: `~/.config/desklumina/settings.json`
 - Check that the JSON is valid (no trailing commas, proper quotes)
 - Restart DeskLumina if running in Rofi or terminal mode
-- If using daemon mode, the daemon watches for changes and reloads automatically. If it doesn't, restart the daemon with `bun run daemon:stop && bun run daemon:start`
 
 ### models.json overrides everything
 
@@ -134,69 +119,6 @@ _(If $XDG_RUNTIME_DIR is unset, DeskLumina falls back to /run/user/<uid>.)_
 - Check the JSON syntax—ensure no trailing commas and proper quotes
 - Try the exact alias name without extra words (e.g., "open myscript" not "open my custom script")
 - Aliases apply instantly without restart. If still not working, check the logs for parsing errors.
-
-## Daemon Issues
-
-### Daemon won't start
-
-**What it means**: Running `bun run daemon:start` fails or exits immediately.
-
-**What to do**:
-
-1. Check if another daemon is already running:
-   ```bash
-   bun run daemon:status
-   ```
-
-2. If it reports running, stop it first:
-   ```bash
-   bun run daemon:stop
-   ```
-
-3. Check the socket path permissions:
-   ```bash
-   ls -la "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/desklumina.sock"
-   ```
-
-4. Ensure the runtime directory exists and is writable:
-   ```bash
-   mkdir -p "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-   ```
-
-5. Check the daemon logs for specific error messages.
-
-### Commands hanging or timing out
-
-**What it means**: Sending commands to the daemon works but responses never arrive.
-
-**What to do**:
-
-- Verify the daemon is actually running: `bun run daemon:status`
-- Check if the daemon is processing a previous command (it handles one at a time)
-- Test the health endpoint directly to see if the daemon responds:
-  ```bash
-  curl --unix-socket "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/desklumina.sock" http://localhost/health
-  ```
-- If the daemon is stuck, stop and restart it: `bun run daemon:stop && bun run daemon:start`
-
-### Authorization errors when sending commands
-
-**What it means**: The daemon rejects commands with "Unauthorized" errors.
-
-**What to do**:
-
-- Verify the token file exists and has correct permissions:
-  ```bash
-  ls -la ~/.config/desklumina/.daemon-token
-  ```
-  Should show `-rw-------` (0600 permissions)
-
-- If permissions are wrong, fix them:
-  ```bash
-  chmod 600 ~/.config/desklumina/.daemon-token
-  ```
-
-- Restart the daemon to regenerate the token if needed.
 
 ## Long-Term Memory Issues
 

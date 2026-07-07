@@ -1,7 +1,5 @@
 import { t, tf, getAppVersion, cleanAssistantResponse } from "../utils";
 import { logger } from "../logger";
-import { isDaemonAvailable } from "./client";
-import { probeDaemonPid, fireFastPathSignal } from "./signal";
 import type { ToolCallbackPayload } from "../types";
 import { CancellationError, ChatRequestError } from "../types";
 
@@ -12,55 +10,11 @@ function appendCallbackText(target: string, callback?: ToolCallbackPayload): str
   return target + callback.text;
 }
 
-async function sendMode(args: string[]): Promise<void> {
-  const command = args.slice(1).join(" ");
-  if (!command) {
-    console.error(t("daemon.send_usage_bin"));
-    process.exit(1);
-  }
-
-  const { DaemonClient } = await import("../daemon");
-  const client = new DaemonClient();
-  try {
-    const response = await client.sendCommand(command);
-    console.log(response);
-  } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
-    console.error(tf("error.with_message", { message: err.message }));
-    process.exit(1);
-  }
-}
-
-async function daemonStatusMode(): Promise<void> {
-  const { DaemonClient } = await import("../daemon");
-  const client = new DaemonClient();
-  if (await client.isDaemonRunning()) {
-    console.log(t("daemon.running"));
-    console.log(tf("daemon.socket", { path: client.getSocketPath() }));
-  } else {
-    console.log(t("daemon.not_running"));
-    console.log(t("daemon.start_command"));
-  }
-}
-
 async function execMode(args: string[]): Promise<void> {
   const message = args.slice(1).join(" ");
   if (!message) {
     console.error(t("app.usage_exec"));
     process.exit(1);
-  }
-
-  const daemonUp = await isDaemonAvailable();
-  if (daemonUp) {
-    const { DaemonClient } = await import("../daemon");
-    const client = new DaemonClient();
-    try {
-      const response = await client.sendCommand(message);
-      console.log(response);
-      return;
-    } catch (error) {
-      logger.warn("launcher", `Daemon exec failed, falling back to in-process: ${error}`);
-    }
   }
 
   const { Lumina, ChatManager } = await import("../core");
@@ -162,28 +116,12 @@ async function versionMode(): Promise<void> {
 }
 
 async function rofiMode(): Promise<void> {
-  const daemonPid = probeDaemonPid();
-  if (daemonPid !== null) {
-    fireFastPathSignal(daemonPid);
-  }
-
   const { settingsManager } = await import("../core/services/settings-manager");
-  const { setThemeMode, setThemePathOverride } = await import("../ui/theme-cache");
+  const { setThemeMode } = await import("../ui/theme-cache");
 
   setThemeMode(settingsManager.getDarkMode() ? "dark" : "light");
 
-  const daemonUp = await isDaemonAvailable();
-  if (daemonUp) {
-    const { DaemonClient } = await import("../daemon");
-    const client = new DaemonClient();
-    const themePath = await client.getThemePath();
-    if (themePath) {
-      setThemePathOverride(themePath);
-    }
-  } else {
-    logger.info("launcher", "daemon.absent");
-    await Bun.sleep(FALLBACK_DELAY_MS);
-  }
+  await Bun.sleep(FALLBACK_DELAY_MS);
 
   const { Lumina, ChatManager } = await import("../core");
   const { rofiChatLoop } = await import("../ui");
@@ -209,8 +147,6 @@ async function rofiMode(): Promise<void> {
             initialResponse += chunk;
           }
         }
-      // onError + re-throw lets us wrap the original error in ChatRequestError
-      // so the chat loop can route it to the error panel.
       }, () => {});
 
       const cleanInitialResponse = cleanAssistantResponse(initialResponse);
@@ -223,9 +159,7 @@ async function rofiMode(): Promise<void> {
 
       return finalOutput;
     } catch (error) {
-      // User cancellation is handled upstream; don't wrap it.
       if (error instanceof CancellationError) throw error;
-      // Preserve the original error so the panel can classify and copy it.
       throw new ChatRequestError(error);
     }
   });
@@ -235,10 +169,6 @@ export async function launcherMain(args: string[]): Promise<void> {
   const mode = args[0];
 
   switch (mode) {
-    case "--send":
-      return sendMode(args);
-    case "--daemon-status":
-      return daemonStatusMode();
     case "--chat":
       const { terminalChatMode } = await import("./terminal");
       return terminalChatMode();

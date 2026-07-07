@@ -1,5 +1,5 @@
 import { spawn } from "bun";
-import { getThemePathWithOverride } from "./theme-cache";
+import { getThemePath } from "./theme-cache";
 import { escapeHtml } from "../utils/formatting/format";
 import { markdownToPango } from "../utils/formatting/pango";
 import { t } from "../utils/localization/i18n";
@@ -20,7 +20,7 @@ export async function rofiDisplay(message: string): Promise<void> {
   const proc = spawn([
     "rofi", "-e", formattedMessage,
     "-markup",
-    "-theme", getThemePathWithOverride(),
+    "-theme", getThemePath(),
     "-theme-str", `
       window {
         width: 500px;
@@ -157,7 +157,7 @@ export function spawnLoaderOverlay(): ReturnType<typeof spawn> {
 
   const proc = spawn([
     "rofi", "-dmenu",
-    "-theme", getThemePathWithOverride(),
+    "-theme", getThemePath(),
     "-theme-str", loaderTheme,
     "-mesg", escapeHtml(randomLoader()),
   ], { stdin: "pipe", stdout: "pipe" });

@@ -45,19 +45,6 @@
     "toggle": "切り替え",
     "you": "あなた"
   },
-  "daemon": {
-    "already_running": "デーモンは既に実行中です",
-    "not_running": "✗ デーモンは実行されていません",
-    "running": "✓ デーモンは実行中です",
-    "send_usage": "'bun run send <コマンド>' でコマンドを送信します",
-    "send_usage_bin": "使用法: bun run send <コマンド>",
-    "socket": "ソケット: {path}",
-    "start_command": "開始コマンド: bun run daemon",
-    "started": "デーモンを {path} で開始しました",
-    "started_success": "✓ デーモンが正常に開始されました",
-    "starting": "🔧 DeskLumina デーモンを起動しています...",
-    "stopped": "デーモンを停止しました"
-  },
   "error": {
     "fatal_groq": "❌ 致命的: .env に GROQ_API_KEY が見つかりません",
     "fatal_model": "❌ 致命的: .env に MODEL_NAME が見つかりません",
@@ -255,7 +242,7 @@
       "thinking": "🧠 えへへ、もうちょいで分かるよ",
       "traces": "🔮 雰囲気つかんでるとこ",
       "wisdom": "🐱 昔の記憶引っ張り出してる"
-    }, 
+    },
     "new_chat": "新規チャット",
     "no_chats_start": "チャット履歴がありません。\\n新しい会話を始めましょう！",
     "panel": {

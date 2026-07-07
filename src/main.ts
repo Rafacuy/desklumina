@@ -1,14 +1,8 @@
 #!/usr/bin/env bun
 
 const args = Bun.argv.slice(2);
-const mode = args[0];
 
 async function main() {
-  if (mode === "--daemon") {
-    const { daemonMain } = await import("./daemon/main");
-    return daemonMain();
-  }
-
   const { launcherMain } = await import("./launcher/main");
   return launcherMain(args);
 }

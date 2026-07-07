@@ -23,17 +23,6 @@ let cachedStateDark: CacheState | null = null;
 
 let currentThemeMode: "light" | "dark" = "light";
 
-/**
- * Conservative Rasi minifier
- *
- *Rules applied:
- *1. Remove block comments 
- *2. Remove line comments 
- *3. Collapse runs of whitespace (outside quoted strings) into a single space
- *4. Trim leading/trailing whitespace.
- *
- * Quoted strings are preserved verbatim, including any whitespace inside them.
- */
 function minifyRasi(src: string): string {
   const out: string[] = [];
   let i = 0;
@@ -41,21 +30,18 @@ function minifyRasi(src: string): string {
   while (i < src.length) {
     const ch = src.charAt(i);
 
-    //block comment
     if (ch === "/" && src.charAt(i + 1) === "*") {
       const end = src.indexOf("*/", i + 2);
       i = end === -1 ? src.length : end + 2;
       continue;
     }
 
-    // Line comment
     if (ch === "/" && src.charAt(i + 1) === "/") {
       const end = src.indexOf("\n", i + 2);
       i = end === -1 ? src.length : end + 1;
       continue;
     }
 
-    // Quoted string
     if (ch === '"') {
       let j = i + 1;
       while (j < src.length) {
@@ -74,16 +60,13 @@ function minifyRasi(src: string): string {
       continue;
     }
 
-    // Newline preservation (block boundary)
     if (ch === "\n") {
       out.push("\n");
       i++;
-      // Skip consecutive newlines
       while (i < src.length && /\s/.test(src.charAt(i))) i++;
       continue;
     }
 
-    // Horizontal whitespace collapse
     if (/[ \t]/.test(ch)) {
       let j = i + 1;
       while (j < src.length && /[ \t]/.test(src.charAt(j))) j++;
@@ -92,12 +75,10 @@ function minifyRasi(src: string): string {
       continue;
     }
 
-    // Regular character
     out.push(ch);
     i++;
   }
 
-  // Trim each line and remove empty ones
   return out
     .join("")
     .split("\n")
@@ -135,11 +116,6 @@ function buildDarkCache(): void {
   buildCache(THEME_SOURCE_DARK, CACHE_PATH_DARK, cachedStateDark);
 }
 
-/**
- * Check whether the cache is stale by comparing source file mtime/size,
- * This is safe even if the file is edited rapidly because mtime granularity
- * is millisecond-level on Linux filesystems
- */
 function isLightStale(): boolean {
   if (!existsSync(CACHE_PATH_LIGHT)) return true;
   if (!cachedStateLight) return true;
@@ -164,19 +140,10 @@ function isDarkStale(): boolean {
   }
 }
 
-/**
- * Set the current theme mode (light/dark)
- */
 export function setThemeMode(mode: "light" | "dark"): void {
   currentThemeMode = mode;
 }
 
-/**
- * Return the path to use for Rofi -theme argument.
- *
- * Automatically minifies the source theme into /tmp on first call and
- *refreshes it whenever the source file changes
- */
 export function getThemePath(): string {
   if (currentThemeMode === "dark") {
     if (isDarkStale()) {
@@ -191,32 +158,6 @@ export function getThemePath(): string {
   }
 }
 
-let themePathOverride: string | null = null;
-
-export function setThemePathOverride(path: string | null): void {
-  themePathOverride = path;
-}
-
-export function getThemePathWithOverride(): string {
-  // If dark mode is enabled, always use dark theme (overrides daemon theme)
-  if (currentThemeMode === "dark") {
-    if (isDarkStale()) {
-      buildDarkCache();
-    }
-    return CACHE_PATH_DARK;
-  }
-  
-  // Otherwise, use daemon theme override if available, or default theme
-  if (themePathOverride && existsSync(themePathOverride)) {
-    return themePathOverride;
-  }
-  return getThemePath();
-}
-
-/**
- * Force an immediate rebuild of the cached theme.
- * Useful after programmatic edits or for benchmarkin
- */
 export function refreshThemeCache(): void {
   buildLightCache();
   buildDarkCache();

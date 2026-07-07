@@ -55,10 +55,10 @@ describe("LtmStore", () => {
     const store = new LtmStore(":memory:");
     store.initialize();
 
-    store.insertEpisodic("The user configured a custom Groq model for the daemon.");
+    store.insertEpisodic("The user configured a custom Groq model.");
     store.insertEpisodic("The user asked about table formatting.");
 
-    const results = store.searchEpisodic("Groq daemon", 5);
+    const results = store.searchEpisodic("Groq model", 5);
 
     expect(results).toHaveLength(1);
     expect(results[0].value).toContain("Groq");
@@ -164,7 +164,7 @@ describe("LtmStore", () => {
 
     store.upsertFact("name", "The user's name is Rapa.");
     store.upsertPattern("linux", "The user asks about Linux.");
-    store.insertEpisodic("The user configured a daemon.");
+    store.insertEpisodic("The user configured a custom tool.");
 
     store.clearLayer("fact");
     expect(store.getAllFacts()).toHaveLength(0);

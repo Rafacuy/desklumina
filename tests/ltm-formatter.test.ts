@@ -53,7 +53,7 @@ describe("LTM formatter", () => {
   test("token budget truncation drops lowest priority entries first", () => {
     const fact = entry("The user prefers concise answers.");
     const pattern = entry("The user frequently asks about Linux system administration.", "pattern");
-    const episodic = entry("The user previously configured a long custom daemon workflow.", "episodic");
+    const episodic = entry("The user previously configured a long custom workflow.", "episodic");
     const budget = tokenManager.estimateTokens(formatMemoryBlock({
       facts: [fact],
       patterns: [pattern],
@@ -81,7 +81,7 @@ describe("LTM formatter", () => {
         entry("The user works on Linux desktop automation."),
       ],
       patterns: [entry("The user often asks for implementation plans before changes.", "pattern")],
-      episodic: [entry("The user recently asked about a daemon cache issue.", "episodic")],
+      episodic: [entry("The user recently asked about a cache issue.", "episodic")],
       isEmpty: false,
     };
 

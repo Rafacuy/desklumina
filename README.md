@@ -105,7 +105,7 @@ You only need **one** key to get going. The rest of this README shows you exactl
 <summary><strong>Got Rofi? That's the screen you'll actually be staring at [MANDATORY]</strong></summary>
 <br>
 
-Let's be clear about what Rofi actually is here: it's not a dependency you can shrug off, it's the entire UI. Every prompt, every panel, every menu you'll ever see is Rofi rendering on top of your keystroke. No Rofi, no DeskLumina, just a daemon talking to itself in the dark.
+Let's be clear about what Rofi actually is here: it's not a dependency you can shrug off, it's the entire UI. Every prompt, every panel, every menu you'll ever see is Rofi rendering on top of your keystroke. No Rofi, no DeskLumina.
 
 Needs **Rofi 1.7+** at minimum, older builds technically launch but render like garbage. Latest stable is **2.0.0** (Wayland support now ships built-in, no separate fork needed anymore). Check what you've got:
 
@@ -272,7 +272,7 @@ cd clipcat
 cargo install --path clipcatctl
 ```
  
-**Tip:** don't need the daemon or the `clipcat-menu` picker, just the CLI DeskLumina talks to? `cargo install --path clipcatctl` alone is enough, skip the other two binaries.
+**Tip:** don't need the `clipcat-menu` picker, just the CLI DeskLumina talks to? `cargo install --path clipcatctl` alone is enough, skip the other two binaries.
 
 </details>
 </details>

@@ -12,10 +12,6 @@ bin
 coverage
 *.lcov
 
-# daemon
-daemon.sock
-*.sock
-
 # --- Logs & Data ---
 # logs
 logs
@@ -42,8 +38,7 @@ settings.json
 # bun cache
 .bun
 
-# daemon cache
-.daemon-token
+
 
 # eslint cache
 .eslintcache
@@ -101,7 +96,6 @@ Desktop.ini
 *.mjs
 *.cjs
 *.d.ts
-desklumina-daemon
 desklumina-launcher
 !src/**/*.d.ts
 

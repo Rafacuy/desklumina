@@ -1,4 +1,4 @@
-# Usage & Daemon Guide
+# Usage Guide
 
 DeskLumina offers multiple ways to interact, from a floating UI to a persistent background service.
 
@@ -8,12 +8,6 @@ DeskLumina offers multiple ways to interact, from a floating UI to a persistent 
 - [The Agent Loop (ReAct)](#the-agent-loop-react)
 - [Background Execution](#background-execution)
 - [Terminal Mode](#terminal-mode)
-- [Daemon Mode](#daemon-mode)
-  - [Running the Daemon](#running-the-daemon)
-  - [Daemon Behavior](#daemon-behavior)
-  - [Health and Diagnostics](#health-and-diagnostics)
-  - [Systemd Integration](#systemd-integration)
-  - [Daemon Security](#daemon-security)
 
 ## Interactive Mode (Rofi)
 
@@ -71,94 +65,3 @@ Inside the terminal loop:
 | `new` | Clear the current context |
 | `list` | View saved chat sessions |
 | `load <number>` | Restore a previous session |
-
-## Daemon Mode
-
-Daemon mode runs DeskLumina as a persistent background process. It binds to a Unix socket[^3] and waits for commands.
-
-Daemon mode eliminates the startup overhead of spinning up the Bun runtime and parsing configurations for every single request. When the daemon starts, it performs a one-time warmup of configuration caches, themes, and the long-term memory store, then keeps everything in memory for subsequent requests.
-
-[^3]: `src/daemon/daemon.ts` — socket path: `$XDG_RUNTIME_DIR/desklumina.sock`
-
-### Running the Daemon
-
-1. Start the daemon in the background:
-
-   ```bash
-   bun run daemon:start
-   ```
-
-2. Verify it is running:
-
-   ```bash
-   bun run daemon:status
-   ```
-
-   Success looks like: `Daemon is running (PID …)`. If the command returns nothing or an error, see [Troubleshooting](./troubleshooting.md#socket-already-in-use-eaddrinuse).
-
-3. Send a command to the running daemon:
-
-   ```bash
-   bun run send "open telegram"
-   ```
-
-   The daemon processes the request and returns the final text output directly to the terminal.
-
-You now have a persistent daemon that accepts commands without per-request startup cost. To have it start on login, continue to [Systemd Integration](#systemd-integration).
-
-### Daemon Behavior
-
-The daemon processes one command at a time. When a request arrives, it:
-
-1. Validates the authorization token
-2. Checks the command length (maximum 8192 characters)
-3. Executes the request through the agent loop
-4. Returns a JSON response with the assistant's reply, any tool results, and metadata
-
-The daemon watches configuration files for changes and reloads caches automatically when you modify settings, themes, or app aliases. You can also trigger a manual cache warmup by sending `SIGUSR1` to the daemon process.
-
-### Health and Diagnostics
-
-The daemon exposes two HTTP endpoints on the Unix socket for monitoring and debugging:
-
-- **Health check**: Send a request to `/health` or `/v1/healthz` to verify the daemon is alive. Returns the process ID and uptime in seconds.
-- **Diagnostics**: Request `/v1/diag` to get cache status and configuration information for troubleshooting.
-
-These endpoints are useful for monitoring scripts or automated health checks.
-
-### Systemd Integration
-
-1. Confirm the path to your `bun` executable:
-
-   ```bash
-   which bun
-   ```
-
-   Expected output: something like `/home/user/.bun/bin/bun`.
-
-2. Open `systemd/desklumina-daemon.service` and verify the `ExecStart` line matches the path from step 1.
-
-3. Install and enable the service:
-
-   ```bash
-   cp systemd/desklumina-daemon.service ~/.config/systemd/user/
-   systemctl --user daemon-reload
-   systemctl --user enable --now desklumina-daemon.service
-   ```
-
-4. Confirm it is active:
-
-   ```bash
-   systemctl --user status desklumina-daemon.service
-   ```
-
-   The output should show `Active: active (running)`.
-
-The daemon now starts automatically at login. All subsequent commands use `bun run send "…"` without any further setup.
-
-### Daemon Security
-
-> [!IMPORTANT]
-> Any process that can read `~/.config/desklumina/.daemon-token` can send commands to the daemon. Keep this file's permissions at `0600` (the default) and do not share it.
-
-On startup, the daemon generates a session token at `~/.config/desklumina/.daemon-token` with `0600` permissions. Any client sending commands via the Unix socket must read this token and pass it as a `Bearer` authorization header.
