@@ -33,4 +33,32 @@ describe("System Prompt Caching", () => {
     expect(context).toContain("Volume:");
     expect(context).toContain("Active window:");
   });
+
+  test("getSystemContext uses non-login shell probes", async () => {
+    _resetPromptCache();
+    const encoder = new TextEncoder();
+    const stream = (value: string) => new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(value));
+        controller.close();
+      },
+    });
+    const spawnSpy = spyOn(Bun, "spawn").mockImplementation(() => ({
+      stdout: stream("Unavailable"),
+      stderr: stream(""),
+      exited: Promise.resolve(0),
+    }) as any);
+
+    try {
+      await getSystemContext();
+
+      for (const call of spawnSpy.mock.calls) {
+        const args = call[0] as string[];
+        expect(args[0]).toBe("bash");
+        expect(args[1]).toBe("-c");
+      }
+    } finally {
+      spawnSpy.mockRestore();
+    }
+  });
 });

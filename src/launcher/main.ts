@@ -117,10 +117,9 @@ async function versionMode(): Promise<void> {
 
 async function rofiMode(): Promise<void> {
   const { settingsManager } = await import("../core/services/settings-manager");
+
   const { setThemeMode } = await import("../ui/theme-cache");
-
   setThemeMode(settingsManager.getDarkMode() ? "dark" : "light");
-
   await Bun.sleep(FALLBACK_DELAY_MS);
 
   const { Lumina, ChatManager } = await import("../core");

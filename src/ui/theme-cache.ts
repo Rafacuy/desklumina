@@ -1,164 +1,114 @@
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "fs";
-import { dirname, resolve } from "path";
+import { mkdir, readFile, stat, utimes, writeFile } from "fs/promises";
+import { resolve } from "path";
 
 const THEME_SOURCE_LIGHT = resolve(
   Bun.env.HOME ?? "/tmp",
   ".config/desklumina/src/ui/themes/lumina.rasi"
 );
+
 const THEME_SOURCE_DARK = resolve(
   Bun.env.HOME ?? "/tmp",
   ".config/desklumina/src/ui/themes/lumina-dark.rasi"
 );
+
+const ICON_ABSOLUTE_PATH = resolve(
+  Bun.env.HOME ?? "/tmp",
+  ".config/desklumina/assets/logo/lumina-logo.png"
+);
+
 const CACHE_DIR = resolve("/tmp", "desklumina-cache");
 const CACHE_PATH_LIGHT = resolve(CACHE_DIR, "lumina.min.rasi");
 const CACHE_PATH_DARK = resolve(CACHE_DIR, "lumina-dark.min.rasi");
 
-interface CacheState {
-  mtime: number;
-  size: number;
-}
-
-let cachedStateLight: CacheState | null = null;
-let cachedStateDark: CacheState | null = null;
-
 let currentThemeMode: "light" | "dark" = "light";
 
-function minifyRasi(src: string): string {
-  const out: string[] = [];
-  let i = 0;
-
-  while (i < src.length) {
-    const ch = src.charAt(i);
-
-    if (ch === "/" && src.charAt(i + 1) === "*") {
-      const end = src.indexOf("*/", i + 2);
-      i = end === -1 ? src.length : end + 2;
-      continue;
-    }
-
-    if (ch === "/" && src.charAt(i + 1) === "/") {
-      const end = src.indexOf("\n", i + 2);
-      i = end === -1 ? src.length : end + 1;
-      continue;
-    }
-
-    if (ch === '"') {
-      let j = i + 1;
-      while (j < src.length) {
-        const cj = src.charAt(j);
-        if (cj === "\\") {
-          j += 2;
-        } else if (cj === '"') {
-          j++;
-          break;
-        } else {
-          j++;
-        }
-      }
-      out.push(src.slice(i, j));
-      i = j;
-      continue;
-    }
-
-    if (ch === "\n") {
-      out.push("\n");
-      i++;
-      while (i < src.length && /\s/.test(src.charAt(i))) i++;
-      continue;
-    }
-
-    if (/[ \t]/.test(ch)) {
-      let j = i + 1;
-      while (j < src.length && /[ \t]/.test(src.charAt(j))) j++;
-      out.push(" ");
-      i = j;
-      continue;
-    }
-
-    out.push(ch);
-    i++;
+async function pathExists(target: string): Promise<boolean> {
+  try {
+    await stat(target);
+    return true;
+  } catch {
+    return false;
   }
-
-  return out
-    .join("")
-    .split("\n")
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0)
-    .join("\n");
 }
 
-function buildCache(sourcePath: string, cachePath: string, cacheState: CacheState | null): void {
-  if (!existsSync(sourcePath)) {
+async function buildCache(sourcePath: string, cachePath: string): Promise<void> {
+  if (!(await pathExists(sourcePath))) {
     throw new Error(`Theme source not found: ${sourcePath}`);
   }
 
-  const raw = readFileSync(sourcePath, "utf-8");
-  const minified = minifyRasi(raw);
+  const raw = await readFile(sourcePath, "utf-8");
+  const resolved = raw.replace(
+    '"assets/logo/lumina-logo.png"',
+    `"${ICON_ABSOLUTE_PATH}"`
+  );
 
-  if (!existsSync(CACHE_DIR)) {
-    mkdirSync(CACHE_DIR, { recursive: true });
+  if (!(await pathExists(CACHE_DIR))) {
+    await mkdir(CACHE_DIR, { recursive: true });
   }
 
-  writeFileSync(cachePath, minified, "utf-8");
+  await writeFile(cachePath, resolved, "utf-8");
 
-  const stats = statSync(sourcePath);
-  if (cacheState) {
-    cacheState.mtime = stats.mtimeMs;
-    cacheState.size = stats.size;
-  }
+   // set the cache file's mtime to match the source's (not "now"). the on-disk
+   // cache is the only thing we can trust for staleness checks bc desklumina is
+   // a one-shot deal, every hotkey press wipes in-mem state so we can't tell
+   // "oh we built this already". file mtimes survive the restart, that's the only
+   // check that actually works across presses
+  const sourceStats = await stat(sourcePath);
+  await utimes(cachePath, sourceStats.atime, sourceStats.mtime);
 }
 
-function buildLightCache(): void {
-  buildCache(THEME_SOURCE_LIGHT, CACHE_PATH_LIGHT, cachedStateLight);
+async function buildLightCache(): Promise<void> {
+  await buildCache(THEME_SOURCE_LIGHT, CACHE_PATH_LIGHT);
 }
 
-function buildDarkCache(): void {
-  buildCache(THEME_SOURCE_DARK, CACHE_PATH_DARK, cachedStateDark);
+async function buildDarkCache(): Promise<void> {
+  await buildCache(THEME_SOURCE_DARK, CACHE_PATH_DARK);
 }
 
-function isLightStale(): boolean {
-  if (!existsSync(CACHE_PATH_LIGHT)) return true;
-  if (!cachedStateLight) return true;
+async function isCacheStale(sourcePath: string, cachePath: string): Promise<boolean> {
+  if (!(await pathExists(cachePath))) return true;
 
   try {
-    const stats = statSync(THEME_SOURCE_LIGHT);
-    return stats.mtimeMs !== cachedStateLight.mtime || stats.size !== cachedStateLight.size;
+    const [sourceStats, cacheStats] = await Promise.all([
+      stat(sourcePath),
+      stat(cachePath),
+    ]);
+    // Stale only if the source was modified after the cache was built.
+    // this works across restart since it just looks at file timestamps,
+    // not any in-mem state that got dropped on relaunch
+    return sourceStats.mtimeMs > cacheStats.mtimeMs;
   } catch {
     return true;
   }
 }
 
-function isDarkStale(): boolean {
-  if (!existsSync(CACHE_PATH_DARK)) return true;
-  if (!cachedStateDark) return true;
+async function isLightStale(): Promise<boolean> {
+  return isCacheStale(THEME_SOURCE_LIGHT, CACHE_PATH_LIGHT);
+}
 
-  try {
-    const stats = statSync(THEME_SOURCE_DARK);
-    return stats.mtimeMs !== cachedStateDark.mtime || stats.size !== cachedStateDark.size;
-  } catch {
-    return true;
-  }
+async function isDarkStale(): Promise<boolean> {
+  return isCacheStale(THEME_SOURCE_DARK, CACHE_PATH_DARK);
 }
 
 export function setThemeMode(mode: "light" | "dark"): void {
   currentThemeMode = mode;
 }
 
-export function getThemePath(): string {
+export async function getThemePath(): Promise<string> {
   if (currentThemeMode === "dark") {
-    if (isDarkStale()) {
-      buildDarkCache();
+    if (await isDarkStale()) {
+      await buildDarkCache();
     }
     return CACHE_PATH_DARK;
   } else {
-    if (isLightStale()) {
-      buildLightCache();
+    if (await isLightStale()) {
+      await buildLightCache();
     }
     return CACHE_PATH_LIGHT;
   }
 }
 
-export function refreshThemeCache(): void {
-  buildLightCache();
-  buildDarkCache();
+export async function refreshThemeCache(): Promise<void> {
+  await buildLightCache();
+  await buildDarkCache();
 }

@@ -78,6 +78,25 @@ describe("LtmStore", () => {
     store.close();
   });
 
+  test("rebuilds FTS index only when the virtual table is first created", () => {
+    const path = tempDbPath();
+    const store = new LtmStore(path);
+    store.initialize();
+    store.insertEpisodic("First episodic memory.");
+    store.insertEpisodic("Second episodic memory.");
+
+    store.initialize();
+    store.initialize();
+
+    const results = store.searchEpisodic("First", 5);
+    expect(results).toHaveLength(1);
+    expect(results[0].value).toBe("First episodic memory.");
+
+    const combined = store.searchEpisodic("memory", 5);
+    expect(combined).toHaveLength(2);
+    store.close();
+  });
+
   test("applies safe migration for legacy databases missing embedding column", () => {
     const path = tempDbPath();
     const db = new Database(path, { strict: true });

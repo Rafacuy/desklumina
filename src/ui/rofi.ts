@@ -156,7 +156,7 @@ export async function rofiMenu(
     "-dmenu",
     "-i",
     "-p", prompt,
-    "-theme", options?.themePath ?? getThemePath(),
+    "-theme", options?.themePath ?? (await getThemePath()),
     "-kb-mode-next", "",
     "-kb-row-tab", "",
     "-kb-element-next", "",
@@ -658,7 +658,7 @@ async function handleSendMessage(
     const userMessageIndex = chatManager.getCurrentChat()?.messages.length || 0;
     let loadingProc: ReturnType<typeof spawn> | null = null;
     try {
-      loadingProc = spawnLoaderOverlay();
+      loadingProc = await spawnLoaderOverlay();
 
       const response = await onMessage(currentInput);
 
@@ -718,7 +718,7 @@ async function handleSendMessage(
             }
             const retryInput = currentInput;
             try {
-              loadingProc = spawnLoaderOverlay();
+              loadingProc = await spawnLoaderOverlay();
 
               const retryResponse = await onMessage(retryInput);
 

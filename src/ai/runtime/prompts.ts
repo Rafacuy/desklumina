@@ -7,7 +7,7 @@ import { buildLtmContext } from "../../ltm";
 
 async function runProbe(command: string): Promise<string | null> {
   try {
-    const proc = Bun.spawn(["bash", "-lc", command], {
+    const proc = Bun.spawn(["bash", "-c", command], {
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -129,21 +129,29 @@ If you cannot complete the task and further attempts would not help, end with [[
 If you need to call tools, emit them now without any terminal marker — the loop will continue.
 Do not emit [[DONE]] if you have just emitted tool calls in the same response.`;
 
-function generateFormatAnchors(): string {
-  const anchors = TOOL_CONTRACTS.filter((c) => c.formatAnchors && c.formatAnchors.length > 0)
-    .map((c) => {
-      const toolName = c.name.charAt(0).toUpperCase() + c.name.slice(1);
-      const examples = c.formatAnchors?.map((a) => `\`\`\`json\n${a}\n\`\`\``).join("\n\n");
-      return `${toolName}:\n${examples}`;
-    })
-    .join("\n\n");
+function buildContractSections(contracts: readonly ToolContract[]): { docs: string[]; anchors: string[] } {
+  const docs: string[] = [];
+  const anchors: string[] = [];
 
-  return `FORMAT ANCHORS:\n\n${anchors}`;
+  for (const contract of contracts) {
+    docs.push(formatToolContract(contract));
+
+    if (contract.formatAnchors && contract.formatAnchors.length > 0) {
+      const toolName = contract.name.charAt(0).toUpperCase() + contract.name.slice(1);
+      const examples = contract.formatAnchors
+        .map((anchor) => `\`\`\`json\n${anchor}\n\`\`\``)
+        .join("\n\n");
+      anchors.push(`${toolName}:\n${examples}`);
+    }
+  }
+
+  return { docs, anchors };
 }
 
 export async function buildSystemPrompt(query: string = ""): Promise<string> {
-  const toolContracts = TOOL_CONTRACTS.map(formatToolContract).join("\n\n---\n\n");
-  const formatExamples = generateFormatAnchors();
+  const { docs, anchors } = buildContractSections(TOOL_CONTRACTS);
+  const toolContracts = docs.join("\n\n---\n\n");
+  const formatExamples = `FORMAT ANCHORS:\n\n${anchors.join("\n\n")}`;
 
   const lang = getLang();
   const langName = getLangName(lang);

@@ -52,6 +52,9 @@ export class LtmStore {
 
   initialize(): void {
     const db = this.getDb();
+    const ftsExisted = !!db.query<{ name: string }, []>(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='memories_fts'"
+    ).get();
     db.run(`
       CREATE TABLE IF NOT EXISTS memories (
         id TEXT PRIMARY KEY,
@@ -101,7 +104,9 @@ export class LtmStore {
     `);
 
     this.ensureEmbeddingColumn();
-    this.rebuildFtsIndex();
+    if (!ftsExisted) {
+      this.rebuildFtsIndex();
+    }
   }
 
   close(): void {
@@ -309,12 +314,8 @@ export class LtmStore {
 
   private rebuildFtsIndex(): void {
     try {
-      const db = this.getDb();
-      const result = db.query<{ name: string }, []>("SELECT name FROM sqlite_master WHERE type='table' AND name='memories_fts'").get();
-      if (result) {
-        db.run("INSERT INTO memories_fts(memories_fts) VALUES('rebuild')");
-        logger.info("ltm:store", "Rebuilt FTS index with trigram tokenizer");
-      }
+      this.getDb().run("INSERT INTO memories_fts(memories_fts) VALUES('rebuild')");
+      logger.info("ltm:store", "Rebuilt FTS index with trigram tokenizer");
     } catch (error) {
       logger.debug("ltm:store", `FTS rebuild skipped: ${String(error)}`);
     }

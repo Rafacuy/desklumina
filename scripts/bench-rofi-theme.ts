@@ -33,15 +33,15 @@ function formatMs(ms: number): string {
   return `${ms.toFixed(2)} ms`;
 }
 
-function main() {
+async function main() {
   console.log("╔══════════════════════════════════════════════════════════════╗");
   console.log("║              DeskLumina Rofi Theme Benchmark                 ║");
   console.log("╚══════════════════════════════════════════════════════════════╝\n");
 
   // 1. File sizes
   const origStats = statSync(ORIGINAL_THEME);
-  refreshThemeCache();
-  const cachedPath = getThemePath();
+  await refreshThemeCache();
+  const cachedPath = await getThemePath();
   const cachedStats = statSync(cachedPath);
 
   console.log("📁 THEME FILE SIZES");

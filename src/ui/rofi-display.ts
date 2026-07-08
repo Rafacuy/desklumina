@@ -20,7 +20,7 @@ export async function rofiDisplay(message: string): Promise<void> {
   const proc = spawn([
     "rofi", "-e", formattedMessage,
     "-markup",
-    "-theme", getThemePath(),
+    "-theme", await getThemePath(),
     "-theme-str", `
       window {
         width: 500px;
@@ -54,7 +54,7 @@ export async function rofiDisplay(message: string): Promise<void> {
   await proc.exited;
 }   
 
-export function spawnLoaderOverlay(): ReturnType<typeof spawn> {
+export async function spawnLoaderOverlay(): Promise<ReturnType<typeof spawn>> {
   const loaderImage = randomLoaderImage();
   const loaderTheme = loaderImage
     ? `
@@ -157,7 +157,7 @@ export function spawnLoaderOverlay(): ReturnType<typeof spawn> {
 
   const proc = spawn([
     "rofi", "-dmenu",
-    "-theme", getThemePath(),
+    "-theme", await getThemePath(),
     "-theme-str", loaderTheme,
     "-mesg", escapeHtml(randomLoader()),
   ], { stdin: "pipe", stdout: "pipe" });
