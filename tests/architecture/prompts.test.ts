@@ -61,4 +61,23 @@ describe("Prompt Architecture", () => {
     );
     expect(prompt).toContain('{"tool":"app","args":"firefox"}');
   });
+
+  test("includes time context unless disabled", async () => {
+    const previous = Bun.env.DESKLUMINA_TIME_AWARENESS;
+    try {
+      delete Bun.env.DESKLUMINA_TIME_AWARENESS;
+      const enabledPrompt = await buildSystemPrompt();
+      expect(enabledPrompt.match(/^Local time: \d{2}:\d{2} \(.+\)$/gm)?.length).toBe(1);
+
+      Bun.env.DESKLUMINA_TIME_AWARENESS = "false";
+      const disabledPrompt = await buildSystemPrompt();
+      expect(disabledPrompt).not.toMatch(/^Local time: \d{2}:\d{2} \(.+\)$/m);
+    } finally {
+      if (previous === undefined) {
+        delete Bun.env.DESKLUMINA_TIME_AWARENESS;
+      } else {
+        Bun.env.DESKLUMINA_TIME_AWARENESS = previous;
+      }
+    }
+  });
 });

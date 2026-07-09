@@ -4,6 +4,7 @@ import { settingsManager } from "../../core/services/settings-manager";
 import { getPersona } from "./personas";
 import { getLang, getLangName } from "../../utils";
 import { buildLtmContext } from "../../ltm";
+import { getTimeContextLine } from "../../utils/time-context";
 
 async function runProbe(command: string): Promise<string | null> {
   try {
@@ -178,6 +179,11 @@ export async function buildSystemPrompt(query: string = ""): Promise<string> {
     getSystemContext(),
   ]);
 
+  const liveSystemContext = [systemContext];
+  if (Bun.env.DESKLUMINA_TIME_AWARENESS !== "false") {
+    liveSystemContext.push(getTimeContextLine());
+  }
+
   return [
     identityWithPersona,
     languageDirective,
@@ -186,6 +192,6 @@ export async function buildSystemPrompt(query: string = ""): Promise<string> {
     RULES_AND_ESCALATION,
     AGENT_PROTOCOL,
     formatExamples,
-    `LIVE SYSTEM CONTEXT:\n${systemContext}`,
+    `LIVE SYSTEM CONTEXT:\n${liveSystemContext.join("\n")}`,
   ].filter(Boolean).join("\n\n");
 }
