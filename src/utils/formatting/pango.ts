@@ -1,5 +1,20 @@
 import { escapeHtml } from "./format";
 
+function stripTags(s: string): string {
+  let out = "";
+  let insideTag = false;
+  for (const ch of s) {
+    if (ch === "<") {
+      insideTag = true;
+    } else if (ch === ">") {
+      insideTag = false;
+    } else if (!insideTag) {
+      out += ch;
+    }
+  }
+  return out;
+}
+
 export function markdownToPango(text: string): string {
   if (!text) {
     return "";
@@ -138,7 +153,7 @@ export function wrapPangoText(text: string, width: number): string[] {
     }
     
     if (currentWidth + tokenWidth > width) {
-      if (currentLine.replace(/<[^>]+>/g, "").trim() || currentWidth > 0) {
+      if (stripTags(currentLine).trim() || currentWidth > 0) {
         currentLine += closeAllTags();
         result.push(currentLine.trimEnd());
         currentLine = openAllTags();
@@ -173,7 +188,7 @@ export function wrapPangoText(text: string, width: number): string[] {
     }
   }
   
-  if (currentLine.replace(/<[^>]+>/g, "").trim() || currentWidth > 0) {
+  if (stripTags(currentLine).trim() || currentWidth > 0) {
     currentLine += closeAllTags();
     result.push(currentLine.trimEnd());
   } else if (result.length === 0) {

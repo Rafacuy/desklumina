@@ -321,7 +321,7 @@ const fileHandlers: Record<string, (ctx: FileOpContext) => Promise<ToolExecution
     }
     const path = args[0]!;
     const mode = args[1]!;
-    if (!/^[0-7]{3,4}$/.test(mode) && !/^[ugoa]*[+-=][rwxXst]*$/.test(mode)) {
+    if (!/^[0-7]{3,4}$/.test(mode) && !/^[ugoa]*[+=-][rwxXst]*$/.test(mode)) { 
       return buildResult("chmod", t("tool.result.invalid_request"), false, {
         stderr: "Invalid mode format",
         exitCode: 2,

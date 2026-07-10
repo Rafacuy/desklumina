@@ -1,7 +1,7 @@
 import { markdownToPango, wrapPangoText } from "./pango";
 
 const tableRowRegex = /^\s*\|(.*)\|\s*$/;
-const separatorRegex = /^\s*\|(?:\s*:?-+:?\s*\|\s*)+\s*$/;
+const separatorRegex = /^\s*\|(?:\s*:?-+:?\s*\|)+\s*$/;
 
 export function isTableRow(line: string): boolean {
   return tableRowRegex.test(line);

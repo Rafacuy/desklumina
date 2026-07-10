@@ -251,8 +251,11 @@ export async function rofiMenu(
   
   let finalTheme = themeOverride;
   if (placeholder) {
-    //escape quotes in placeholder to prevent RASI parser breakage
-    const safePlaceholder = placeholder.replace(/"/g, '\\"');
+    //escape backslashes first to prevent RASI parser breakage
+    const safePlaceholder = placeholder
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"'); 
+
     finalTheme += ` entry { placeholder: "${safePlaceholder}"; }`;
   }
 

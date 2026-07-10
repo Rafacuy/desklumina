@@ -13,14 +13,14 @@ describe("sectionHeader", () => {
 
   test("balances dashes around the label", () => {
     const rendered = sectionHeader("TEST", 42);
-    const stripped = rendered.replace(/<[^>]+>/g, "");
+    const stripped = rendered.replace(/[<>]/g, "");
     // The spec formula yields panelWidth - 2 visible characters.
     expect(Array.from(stripped).length).toBe(40);
   });
 
   test("uses code-point aware length for non-ASCII labels", () => {
     const rendered = sectionHeader("システム", 42);
-    const stripped = rendered.replace(/<[^>]+>/g, "");
+    const stripped = rendered.replace(/[<>]/g, "");
     expect(Array.from(stripped).length).toBe(40);
   });
 });

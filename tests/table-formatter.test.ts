@@ -39,7 +39,13 @@ describe("table-formatter utilities", () => {
 });
 
 function stripMarkup(s: string): string {
-  return s.replace(/<[^>]+>/g, "").trim();
+  let current = s.trim();
+  let previous = current;
+  do {
+    previous = current;
+    current = current.replace(/<[^>]+>/g, "");
+  } while (current !== previous);
+  return current.trim();
 }
 
 describe("formatRofiResponse", () => {
@@ -167,7 +173,7 @@ describe("formatRofiResponse", () => {
     expect(result.hasTable).toBe(false);
     expect(result.lines.length).toBeGreaterThan(1);
     for (const line of result.lines) {
-      const plain = line.replace(/<[^>]+>/g, "");
+      const plain = line.replace(/[<>]/g, ""); 
       expect(Array.from(plain).length).toBeLessThanOrEqual(33);
     }
   });

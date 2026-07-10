@@ -83,7 +83,31 @@ export function normalizeText(text: string): string {
 }
 
 export function stripHtmlTags(text: string): string {
-  return text.replace(/<[^>]+>/g, " ");
+  let out = "";
+  let insideTag = false;
+  let emittedSpace = false;
+  let pending = "";
+  for (const ch of text) {
+    if (ch === "<") {
+      insideTag = true;
+      emittedSpace = false;
+      pending = "";
+    } else if (ch === ">") {
+      insideTag = false;
+      if (!emittedSpace) {
+        out += " ";
+        emittedSpace = true;
+      }
+    } else if (insideTag) {
+      pending += ch;
+    } else {
+      out += ch;
+    }
+  }
+  if (insideTag) {
+    out += pending;
+  }
+  return out;
 }
 
 export function normalizeDate(value: unknown): string | undefined {
