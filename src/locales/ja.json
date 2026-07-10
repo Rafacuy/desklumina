@@ -250,6 +250,10 @@
       "stop_tts": "クリックして音声を停止",
       "tts_reading": "読み上げ中…"
     },
+    "banner": {
+      "bg_failed_one": "バックグラウンドタスクが失敗しました:",
+      "bg_failed_many": "件のバックグラウンドタスクが失敗しました"
+    },
     "recent_messages": "最近のメッセージ",
     "reply_placeholder": "返信...",
     "search_chat": "チャットを検索...",
@@ -298,6 +302,9 @@
       }
     },
     "type_message": "メッセージを入力...",
-    "type_reply": "返信を入力..."
+    "type_reply": "返信を入力...",
+    "toast": {
+      "provider_fallback": "{provider} に切り替えました"
+    }
   }
 }

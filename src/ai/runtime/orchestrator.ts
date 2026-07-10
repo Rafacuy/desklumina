@@ -7,6 +7,13 @@ import { providerRegistry, modelRegistry, type ResolvedModel } from "../registry
 import { runMiddlewarePipeline, createTokenCounterMiddleware, createLoggerMiddleware, createCapabilityGuardMiddleware, providerTokenCounter } from "../middleware";
 import type { ProviderId, AIMessage } from "../types";
 
+export type OnProviderFallback = (fromProvider: string, toProvider: string) => void;
+const fallbackListeners: OnProviderFallback[] = [];
+
+export function onProviderFallback(listener: OnProviderFallback): void {
+  fallbackListeners.push(listener);
+}
+
 export class NoModelsConfiguredError extends Error {
   constructor() {
     super("No models available to fulfill the request. Check your configuration and API keys.");
@@ -149,6 +156,11 @@ export async function* streamAI(messages: readonly AIMessage[]): AsyncGenerator<
           requestId: turnRequestId,
           detail: "model unavailable, trying next",
         });
+        if (nextModel) {
+          const currentProvider = providerRegistry.require(providerId as ProviderId);
+          const nextProvider = providerRegistry.require(nextModel.providerId as ProviderId);
+          fallbackListeners.forEach(l => l(currentProvider.name, nextProvider.name));
+        }
         lastError = error instanceof Error ? error : new Error(String(error));
         continue;
       }
@@ -171,6 +183,11 @@ export async function* streamAI(messages: readonly AIMessage[]): AsyncGenerator<
           requestId: turnRequestId,
           detail: `provider failed (status ${statusCode}), trying next`,
         });
+        if (nextModel) {
+          const currentProvider = providerRegistry.require(providerId as ProviderId);
+          const nextProvider = providerRegistry.require(nextModel.providerId as ProviderId);
+          fallbackListeners.forEach(l => l(currentProvider.name, nextProvider.name));
+        }
         lastError = error instanceof Error ? error : new Error(String(error));
         continue;
       }

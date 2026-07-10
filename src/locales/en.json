@@ -250,6 +250,10 @@
       "stop_tts": "Click to stop voice",
       "tts_reading": "Reading aloud…"
     },
+    "banner": {
+      "bg_failed_one": "Background task failed:",
+      "bg_failed_many": "background tasks failed"
+    },
     "recent_messages": "Recent Messages",
     "reply_placeholder": "Reply...",
     "search_chat": "Search chat...",
@@ -298,6 +302,9 @@
       }
     },
     "type_message": "Type your message...",
-    "type_reply": "Type a reply..."
+    "type_reply": "Type a reply...",
+    "toast": {
+      "provider_fallback": "Switched to {provider}"
+    }
   }
 }

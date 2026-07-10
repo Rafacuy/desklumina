@@ -1,12 +1,19 @@
 import { spawn } from "bun";
+import { randomUUID } from "crypto";
 import { getThemePath } from "./theme-cache";
 import { escapeHtml } from "../utils/formatting/format";
 import { markdownToPango } from "../utils/formatting/pango";
-import { t } from "../utils/localization/i18n";
+import { t, tf } from "../utils/localization/i18n";
 import { randomLoader, randomLoaderImage } from "./loader";
 
 function escapeRasiString(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+// Unique pid path per spawn so concurrent rofi processes (e.g. loader overlay)
+// fallback toast firing mid-request) never contend over the same lock/socket path.
+function uniquePidPath(prefix: string): string {
+  return `/tmp/desklumina-${prefix}-${randomUUID()}.pid`;
 }
 
 export async function rofiDisplay(message: string): Promise<void> {
@@ -156,7 +163,7 @@ export async function spawnLoaderOverlay(): Promise<ReturnType<typeof spawn>> {
     `;
 
   const proc = spawn([
-    "rofi", "-dmenu",
+    "rofi", "-dmenu", "-pid", uniquePidPath("loader"),
     "-theme", await getThemePath(),
     "-theme-str", loaderTheme,
     "-mesg", escapeHtml(randomLoader()),
@@ -164,3 +171,42 @@ export async function spawnLoaderOverlay(): Promise<ReturnType<typeof spawn>> {
   proc.stdin.end();
   return proc;
 }
+
+export async function spawnFallbackToast(providerName: string): Promise<void> {
+  const proc = spawn([
+    "rofi", "-dmenu", "-pid", uniquePidPath("fallback-toast"),
+    "-theme", await getThemePath(),
+    "-theme-str", `
+      window {
+        location: southeast;
+        anchor: southeast;
+        width: 360px;
+        height: 52px;
+        border-radius: 20px;
+        border: 1px;
+        border-color: @border-subtle;
+        background-color: @bg;
+        x-offset: -15px;
+        y-offset: -15px;
+      }
+      mainbox { children: [message]; padding: 0px; spacing: 0px; }
+      inputbar { enabled: false; }
+      listview { enabled: false; }
+      message { padding: 14px 20px; background-color: transparent; }
+      textbox {
+        text-color: @accent-color;
+        font: "JetBrainsMono Nerd Font Medium 10";
+        horizontal-align: 0.5;
+        vertical-align: 0.5;
+        wrap: false;
+      }
+    `,
+    "-mesg", escapeHtml(tf("ui.toast.provider_fallback", { provider: providerName })),
+  ], { stdin: "pipe", stdout: "pipe" });
+  proc.stdin.end();
+
+  setTimeout(() => {
+    try { proc.kill(); } catch {}
+  }, 2500);
+}
+

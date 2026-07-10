@@ -39,6 +39,23 @@ If your primary provider fails (rate limit hit or a 500 error), DeskLumina autom
 
 For Long-Term Memory (LTM), you can define a dedicated embedding model by setting `DESKLUMINA_EMBED_MODEL=provider:model` (e.g. `openai:text-embedding-3-small`). If left empty, the system degrades gracefully to lexical search.
 
+### Context Injection
+
+These variables control what live metadata DeskLumina injects into the system prompt so the model is aware of the current environment.
+
+<table>
+<tr>
+<th>Variable</th>
+<th>Values</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><code>DESKLUMINA_TIME_AWARENESS</code></td>
+<td><code>true</code> / <code>false</code></td>
+<td>When enabled (default), injects the current local date and time into the system prompt as metadata lines, e.g. <code>Local time: 23:51 (late night)</code> and <code>Local date: Wednesday, July 8, 2026 (today)</code>. This lets Lumina correctly resolve time-relative requests like "find the PDF I downloaded last week" or "what's on my calendar tomorrow". Set to <code>false</code> to omit both lines.</td>
+</tr>
+</table>
+
 ## Advanced Routing (models.json)
 
 If `.env` strings are too limiting, you can define model routing in `~/.config/desklumina/models.json`.[^1]

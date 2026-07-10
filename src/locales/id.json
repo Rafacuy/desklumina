@@ -250,6 +250,10 @@
       "stop_tts": "Klik untuk menghentikan suara",
       "tts_reading": "Membacakan…"
     },
+    "banner": {
+      "bg_failed_one": "Tugas latar belakang gagal:",
+      "bg_failed_many": "tugas latar belakang gagal"
+    },
     "recent_messages": "Pesan Terakhir",
     "reply_placeholder": "Balas...",
     "search_chat": "Cari chat...",
@@ -298,6 +302,9 @@
       }
     },
     "type_message": "Ketik pesan Anda...",
-    "type_reply": "Ketik balasan..."
+    "type_reply": "Ketik balasan...",
+    "toast": {
+      "provider_fallback": "Beralih ke {provider}"
+    }
   }
 }

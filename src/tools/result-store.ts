@@ -39,6 +39,10 @@ class ResultStore {
     return ops;
   }
 
+  peekCompleted(): CompletedOperation[] {
+    return Array.from(this.completed.values());
+  }
+
   getPending(): PendingOperation[] {
     return Array.from(this.pending.values());
   }

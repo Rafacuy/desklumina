@@ -1,6 +1,6 @@
 {
   "name": "desklumina",
-  "version": "1.24.2",
+  "version": "1.25.5",
   "scripts": {
     "// DEV (source, transpile on-the-fly)": "",
     "start": "bun run src/main-launcher.ts",

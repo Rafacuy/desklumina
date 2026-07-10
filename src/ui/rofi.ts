@@ -13,8 +13,11 @@ import {
 import { copyRawErrorToClipboard } from "../utils/system/clipboard-raw";
 import { formatRofiResponse } from "../utils/formatting/table-formatter";
 import { getThemePath } from "./theme-cache";
-import { rofiDisplay, spawnLoaderOverlay } from "./rofi-display";
+import { rofiDisplay, spawnLoaderOverlay, spawnFallbackToast } from "./rofi-display";
 import { isTTSPlaying, cancelTTS } from "../ai";
+import { onProviderFallback } from "../ai/runtime/orchestrator";
+import { resultStore } from "../tools/result-store";
+import { settingsManager } from "../core/services/settings-manager";
 
 const STREAM_BATCH_MS = 50;
 const MAX_LISTVIEW_LINES = 12;
@@ -23,8 +26,19 @@ const MUTED_COLOR = "#A79F96";
 const TTS_CANCEL_COLOR = "#B3402B";
 const TTS_BUTTON_GLYPH = "■";
 
+const SUCCESS_COLOR_DARK = "#A9D6B0";
+const SUCCESS_COLOR_LIGHT = "#4A8A5A";
+function getSuccessColor(): string {
+  return settingsManager.getDarkMode() ? SUCCESS_COLOR_DARK : SUCCESS_COLOR_LIGHT;
+}
+
 let activeMenuProc: ReturnType<typeof spawn> | null = null;
 let responsePanelAutoDismissed = false;
+let lastSelectedChatIndex: number | undefined = undefined;
+
+onProviderFallback((fromProvider, toProvider) => {
+  spawnFallbackToast(toProvider).catch(err => logger.error("ui", "Failed to spawn fallback toast: " + err));
+});
 
 // static theme fragments - avoid re-allocating each spawn
 const STATIC_LISTVIEW_DISABLED = "listview { enabled: false; } mainbox { children: [inputbar, message]; }";
@@ -32,6 +46,17 @@ const STATIC_INPUTBAR_ONLY = "listview { enabled: false; } mainbox { children: [
 
 function escapeRasiString(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+// sanitizes text for use as a Rofi dmenu hidden meta field. 
+// strips NUL/unit-separator bytes and collapses newline 
+// so a single meta value can never be split across rows or corrupt the \0/\x1f field structure
+function sanitizeMetaField(value: string): string {
+  return value
+    .replace(/\0/g, "")
+    .replace(/\x1f/g, "")
+    .replace(/\n+/g, " ")
+    .trim();
 }
 
 export async function rofiChatInput(
@@ -42,13 +67,24 @@ export async function rofiChatInput(
   void chatManager;   //not used here but kept for symmetry (caller expects it)
   const hints = `${t("common.send")} · Esc ${t("common.exit")} · [TAB] ${t("ui.history_action")} [${t("common.expand")}]`;
 
+  const failedOps = resultStore.peekCompleted().filter(op => op.status === "failure");
+  let banner: string;
+  if (failedOps.length === 0) {
+    banner = "";
+  } else if (failedOps.length === 1) {
+    const op = failedOps[0]!;
+    banner = "⚠ " + t("ui.banner.bg_failed_one") + " " + op.tool + "(" + op.arg + ")";
+  } else {
+    banner = "⚠ " + failedOps.length + " " + t("ui.banner.bg_failed_many");
+  }
+
   const result = await rofiMenu(
     "",
     prompt,
     STATIC_LISTVIEW_DISABLED,
     t("ui.type_message"),
     hints,
-    "",
+    banner,
     false,
     false,
     { filter: initialInput }
@@ -84,39 +120,55 @@ export async function rofiSelectChat(chatManager: ChatManager): Promise<string |
       ? previewChars.slice(0, 30).join("") + "…"
       : previewChars.join("");
       
-    return `󰭹 ${chat.title.padEnd(20)} │ 󰃭 ${date} │ 󰅒 ${chat.messageCount} │ ${preview}`;
+    const visibleRow = `󰭹 ${chat.title.padEnd(20)} │ 󰃭 ${date} │ 󰅒 ${chat.messageCount} │ ${preview}`;
+    const metaText = sanitizeMetaField(lastMsg);
+
+    // no hidden meta needed if there's nothing beyond what's already visible.
+    return metaText
+      ? `${visibleRow}\0meta\x1f${metaText}`
+      : visibleRow;
   });
   
-  const allItems = [
-    ...chatItems,
-    `📝 ${t("ui.new_chat")}`,
-    `✕ ${t("common.cancel")}`
-  ];
+  const allItems = chatItems;
 
-  const headerHint = `󰗋 ${t("ui.select_chat")}  │  󰌑 ${t("common.select")} │ 󱊷 ${t("common.cancel")}`;
+  const headerHint =
+    `󰌑 ${t("ui.select_chat")} │ ` +
+    `Alt+N ${t("ui.new_chat")} │ 󱊷 ${t("common.cancel")}`;
+
+  const preselect =
+    lastSelectedChatIndex !== undefined && lastSelectedChatIndex < chatItems.length
+      ? lastSelectedChatIndex
+      : undefined;
 
   const result = await rofiMenu(
     allItems.join("\n"), 
     t("ui.select_chat"), 
     "listview { lines: 12; }",
     t("ui.search_chat"),
-    headerHint
+    headerHint,
+    "",
+    false,
+    false,
+    { kbCustom1: "Alt+n", selectedRow: preselect }
   );
 
-  if (!result.output || result.code !== 0 || result.output === `✕ ${t("common.cancel")}`) {
+  if (result.code === 10) {
+    return "__new__";
+  }
+
+  if (!result.output || result.code !== 0) {
     return null;
   }
 
   const selected = result.output;
 
-  if (selected === `📝 ${t("ui.new_chat")}`) {
-    return "__new__";
-  }
-
   const chatTitle = selected.split(" │ ")[0]?.replace("󰭹 ", "").trim();
-  const chat = chats.find((c) => c.title === chatTitle);
+  const chatIndex = chats.findIndex((c) => c.title === chatTitle);
+  const chat = chatIndex !== -1 ? chats[chatIndex] : undefined;
   
   if (!chat) return null;
+
+  lastSelectedChatIndex = chatIndex;
   return chat.id;
 }
 
@@ -313,8 +365,9 @@ export async function rofiExpandedResponse(fullMessage: string): Promise<void> {
 
 export async function rofiResponsePanel(
   initialMessage: string,
+  copied: boolean = false,
   onToolUpdate?: (id: string, status: string, detail?: string[]) => void
-): Promise<{ action: "reply" | "expand" | "cancel_tts" | "tts_complete" | "exit"; input?: string }> {
+): Promise<{ action: "reply" | "expand" | "cancel_tts" | "tts_complete" | "copy" | "exit"; input?: string; copied?: boolean }> {
   responsePanelAutoDismissed = false;
   if (onToolUpdate) {
     onToolUpdate("", "", []);
@@ -351,7 +404,6 @@ export async function rofiResponsePanel(
   const ttsActive = isTTSPlaying();
   const ttsButtonTheme = ttsActive
     ? `* { accent-tts: ${TTS_CANCEL_COLOR}; }
-       configuration { kb-custom-2: ""; }
        inputbar {
          children: [prompt, entry, button];
        }
@@ -368,8 +420,21 @@ export async function rofiResponsePanel(
        }`
     : "";
 
+  const successColor = getSuccessColor();
+  const copyFeedback = copied
+    ? ` <span foreground="${successColor}" size="small" weight="bold">✓ ${escapeHtml(t("ui.conversationViewer.copied"))}</span>`
+    : "";
+  const copyHint = !ttsActive
+    ? `<span foreground="${MUTED_COLOR}" size="small">󰆏 ${escapeHtml(t("ui.conversationViewer.copy_hint"))}</span>${copyFeedback}`
+    : "";
+
   const ttsHint = ttsActive ? ` <span foreground="${MUTED_COLOR}" size="small">󰕾 ${escapeHtml(t("ui.panel.tts_reading"))}</span>` : "";
-  const formattedMessage = `<b>󱜙 ${escapeHtml(t("common.lumina"))}</b>${ttsHint}\n\n${displayLines.join('\n')}${hintText ? '\n' + hintText : ''}`;
+  const formattedMessage = [
+    `<b>󱜙 ${escapeHtml(t("common.lumina"))}</b>${ttsHint}`,
+    ``,
+    `${displayLines.join('\n')}${hintText ? '\n' + hintText : ''}`,
+    ...(copyHint ? [``, copyHint] : []),
+  ].join('\n');
 
   const themeOverride = `
     window {
@@ -438,12 +503,19 @@ export async function rofiResponsePanel(
     t("ui.type_reply"),
     "",
     formattedMessage,
-    true
+    true,
+    false,
+    { kbCustom2: "Alt+c" }
   );
 
   if (result.code === 11) {
-    await cancelTTS();
-    return { action: "cancel_tts" };
+    if (ttsActive) {
+      await cancelTTS();
+      return { action: "cancel_tts" };
+    }
+
+    const ok = await copyRawErrorToClipboard(cleanMessage);
+    return { action: "copy", copied: ok };
   }
 
   if (responsePanelAutoDismissed) {
@@ -668,13 +740,17 @@ async function handleSendMessage(
       if (response && response !== "Done.") {
         let showResponse = true;
         let fullResponse = response;
+        let copied = false;
 
         while (showResponse) {
-          const panelResult = await rofiResponsePanel(fullResponse);
+          const panelResult = await rofiResponsePanel(fullResponse, copied);
 
           if (panelResult.action === "expand") {
             await rofiExpandedResponse(fullResponse);
           } else if (panelResult.action === "cancel_tts" || panelResult.action === "tts_complete") {
+            showResponse = true;
+          } else if (panelResult.action === "copy") {
+            copied = panelResult.copied ?? false;
             showResponse = true;
           } else if (panelResult.action === "reply" && panelResult.input) {
             currentInput = panelResult.input;
@@ -730,11 +806,15 @@ async function handleSendMessage(
               if (retryResponse && retryResponse !== "Done.") {
                 let showResponse = true;
                 let fullResponse = retryResponse;
+                let copied = false;
                 while (showResponse) {
-                  const rp = await rofiResponsePanel(fullResponse);
+                  const rp = await rofiResponsePanel(fullResponse, copied);
                   if (rp.action === "expand") {
                     await rofiExpandedResponse(fullResponse);
                   } else if (rp.action === "cancel_tts" || rp.action === "tts_complete") {
+                    showResponse = true;
+                  } else if (rp.action === "copy") {
+                    copied = rp.copied ?? false;
                     showResponse = true;
                   } else if (rp.action === "reply" && rp.input) {
                     currentInput = rp.input;

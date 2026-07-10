@@ -29,3 +29,28 @@ export function getTimeContextLine(date: Date = new Date()): string {
   const bracket = getTimeBracket(date.getHours());
   return `Local time: ${hh}:${mm} (${bracket})`;
 }
+
+const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+function relativeDayLabel(date: Date): string {
+  const today = new Date();
+  const startOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const diffDays = Math.round((startOf(date) - startOf(today)) / 86400000);
+  if (diffDays === 0) return "today";
+  if (diffDays === 1) return "tomorrow";
+  if (diffDays === -1) return "yesterday";
+  if (diffDays > 1) return `in ${diffDays} days`;
+  return `${-diffDays} days ago`;
+}
+
+/**
+ * Returns a single-line date metadata string to inject into the system prompt,
+ * helping the model resolve relative phrases like "last week" or "tomorrow".
+ * Example: "Local date: Wednesday, July 8, 2026 (today)"
+ */
+export function getDateContextLine(date: Date = new Date()): string {
+  const weekday = WEEKDAYS[date.getDay()];
+  const month = MONTHS[date.getMonth()];
+  return `Local date: ${weekday}, ${month} ${date.getDate()}, ${date.getFullYear()} (${relativeDayLabel(date)})`;
+}
