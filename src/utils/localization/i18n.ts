@@ -1,6 +1,13 @@
 import id from "../../locales/id.json";
 import en from "../../locales/en.json";
 import ja from "../../locales/ja.json";
+import es from "../../locales/es.json";
+import fr from "../../locales/fr.json";
+import ko from "../../locales/ko.json";
+import zh from "../../locales/zh.json";
+import ru from "../../locales/ru.json";
+import de from "../../locales/de.json";
+import pt from "../../locales/pt.json";
 
 type LocaleTree = Record<string, unknown>;
 
@@ -8,6 +15,13 @@ const locales: Record<string, LocaleTree> = {
   id: id as LocaleTree,
   en: en as LocaleTree,
   ja: ja as LocaleTree,
+  es: es as LocaleTree,
+  fr: fr as LocaleTree,
+  ko: ko as LocaleTree,
+  zh: zh as LocaleTree,
+  ru: ru as LocaleTree,
+  de: de as LocaleTree,
+  pt: pt as LocaleTree,
 };
 
 let currentLang = "id";

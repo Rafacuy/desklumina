@@ -46,8 +46,6 @@
     "you": "You"
   },
   "error": {
-    "fatal_groq": "❌ FATAL: GROQ_API_KEY not found in .env",
-    "fatal_model": "❌ FATAL: MODEL_NAME not found in .env",
     "with_message": "Error: {message}",
     "network": {
       "title": "Could not connect",

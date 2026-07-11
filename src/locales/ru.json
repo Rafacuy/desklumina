@@ -1,0 +1,308 @@
+{
+  "app": {
+    "goodbye": "Пока! 👋",
+    "invalid_chat_number": "Неверный номер чата.\n",
+    "load_chat_usage": "\nИспользуйте 'load ' для переключения чатов.\n",
+    "new_chat_started": "Начат новый чат.\n",
+    "no_chats": "Пока нет чатов.\n",
+    "started": "Lumina запущен ",
+    "terminal_chat_help": "Введите 'exit' для выхода, 'new' для нового чата, 'list' для списка чатов\n",
+    "terminal_chat_mode": "💫 Режим терминального чата Lumina ",
+    "usage_exec": "Использование: bun run start -- --exec ",
+    "version": "Lumina v{version}"
+  },
+  "common": {
+    "actions_count": "действий",
+    "actions_title": "Действия",
+    "back": "Назад",
+    "cancel": "Отмена",
+    "close": "Закрыть",
+    "completed_count": "завершено",
+    "confirm": "Подтвердить",
+    "dispatched_count": "отправлено",
+    "enter": "Enter",
+    "error": "Ошибка",
+    "service_unavailable": "Сервис временно недоступен",
+    "esc": "Esc",
+    "exit": "Выход",
+    "expand": "Развернуть",
+    "hide": "Скрыть",
+    "lumina": "Lumina",
+    "message": "Сообщение",
+    "more": "ещё",
+    "off": "ВЫКЛ",
+    "on": "ВКЛ",
+    "play": "Воспроизвести",
+    "proceed": "Продолжить",
+    "results": "Результаты",
+    "retrying": "Повторная попытка",
+    "attempt": "(попытка {count})",
+    "save_exit": "Сохранить и выйти",
+    "search": "Поиск",
+    "default": "По умолчанию",
+    "select": "Выбрать",
+    "send": "Отправить",
+    "toggle": "Переключить",
+    "you": "Вы"
+  },
+  "error": {
+    "with_message": "Ошибка: {message}",
+    "network": {
+      "title": "Не удалось подключиться",
+      "suggestion": "Проверьте подключение к интернету"
+    },
+    "provider": {
+      "title": "Провайдер недоступен",
+      "suggestion": "Попробуйте переключиться на другого провайдера"
+    },
+    "model": {
+      "title": "Модель недоступна",
+      "suggestion": "Возможно, выбранная модель была удалена"
+    },
+    "auth": {
+      "title": "Ошибка аутентификации",
+      "suggestion": "Проверьте API-ключ в конфигурации"
+    },
+    "ratelimit": {
+      "title": "Достигнут лимит запросов",
+      "suggestion": "Подождите немного перед повторной попыткой"
+    },
+    "timeout": {
+      "title": "Превышено время ожидания",
+      "suggestion": "Провайдер слишком долго отвечал"
+    },
+    "unknown": {
+      "title": "Что-то пошло не так",
+      "suggestion": "Скопируйте ошибку и проверьте логи"
+    },
+    "keyhint": {
+      "retry": "Повторить",
+      "copy": "Копировать ошибку"
+    }
+  },
+  "format": {
+    "days_ago": "{count} дн. назад",
+    "hours_ago": "{count} ч. назад",
+    "just_now": "только что",
+    "minutes_ago": "{count} мин. назад"
+  },
+  "history": {
+    "tool_action": "Действие",
+    "tool_result": "Готово"
+  },
+  "math": {
+    "result_label": "Результат",
+    "expression_label": "Выражение",
+    "loading": "Вычисляю...",
+    "error": {
+      "parse": "Не удалось разобрать выражение: {expression}",
+      "division_by_zero": "Деление на ноль",
+      "overflow": "Результат слишком велик для представления",
+      "empty_expression": "Выражение пустое",
+      "unsupported": "Операция не поддерживается: {hint}",
+      "timeout": "Превышено время вычисления",
+      "input_too_long": "Выражение превышает максимальную длину в {max} символов",
+      "forbidden_pattern": "Выражение содержит недопустимый шаблон"
+    },
+    "unit_result": "{value} {unit}"
+  },
+  "signal": {
+    "soft_fail": "Не смог доделать этот запрос.",
+    "soft_fail_reason": "Возникла проблема, пока работал над этим: {reason}"
+  },
+  "security": {
+    "approved": "Опасная команда одобрена пользователем",
+    "cancelled": "Команда отменена пользователем",
+    "dangerous_command_title": "Подтверждение опасной команды",
+    "install_rofi_hint": "Пожалуйста, установите его для использования подтверждений безопасности",
+    "rofi_not_installed": "rofi не установлен"
+  },
+  "settings": {
+    "hint": {
+      "open": "↵ Открыть",
+      "toggle": "↵ Переключить",
+      "close": "esc Закрыть"
+    }
+  },
+  "tool": {
+    "action_complete": "Действие выполнено",
+    "actions_completed": "Действия выполнены",
+    "app_opened": "Приложение открыто",
+    "clipboard": "Операция с буфером обмена",
+    "clipboard_updated": "Буфер обмена обновлён",
+    "command_executed": "Команда выполнена",
+    "controlling_media": "Управляю медиа",
+    "executing_actions": "Выполняю действия",
+    "execution_results": "Результаты выполнения инструмента",
+    "file_op_complete": "Файловая операция завершена",
+    "managing_files": "Управляю файлами",
+    "managing_windows": "Управляю окнами",
+    "media_controlled": "Медиа под контролем",
+    "music_controlled": "Музыка под контролем",
+    "music": {
+      "querying_tracks": "Запрашиваю текущие треки",
+      "current_tracks": "Текущие треки",
+      "backend": "Бэкенд",
+      "player": "Плеер",
+      "status": "Статус",
+      "title": "Название",
+      "artist": "Исполнитель",
+      "album": "Альбом",
+      "elapsed": "Прошло",
+      "duration": "Длительность",
+      "active_primary": "Активный основной"
+    },
+    "music_system": "Операция музыкальной системы",
+    "notification_sent": "Уведомление отправлено",
+    "opening_app": "Открываю приложение",
+    "playing_media": "Воспроизвожу медиа",
+    "result": {
+      "clipboard_cleared": "✓ Буфер обмена очищен",
+      "clipboard_empty": "Буфер обмена пуст",
+      "clipboard_set": "✓ Буфер обмена установлен",
+      "command_failed": "❌ Команда не выполнена",
+      "copied": "✓ Скопировано в \"{path}\"",
+      "current_queue": "Текущая очередь:",
+      "deleted": "✓ \"{path}\" удалён",
+      "dispatched": "↗ Команда отправлена (работает в фоне)",
+      "dispatched_hint": "Работает в фоне — результат придёт в следующем ответе",
+      "done": "✓ Готово",
+      "failed": "❌ Ошибка",
+      "file_written": "✓ Файл \"{path}\" записан",
+      "folder_created": "✓ Папка \"{path}\" создана",
+      "history_empty": "История поиска пуста",
+      "history_entries": "Записей в истории: {count}",
+      "invalid_request": "Неверный запрос файла",
+      "invalid_urgency": "❌ Неверный уровень срочности. Используйте low, normal или critical.",
+      "launched": "{alias} запущен",
+      "library_empty": "Музыкальная библиотека пуста.",
+      "moved": "✓ Перемещено в \"{path}\"",
+      "no_history": "Нет истории",
+      "no_matches": "Поиск завершён: совпадений нет",
+      "no_playlists": "Плейлисты не найдены.",
+      "no_song": "Ничего не играет",
+      "not_found": "⚠️ Инструмент '{tool}' не найден",
+      "notification_sent": "✓ Уведомление отправлено",
+      "now_playing": "Сейчас играет:",
+      "playing": "✓ Играет: {name}",
+      "playing_playlist": "✓ Играет плейлист: {name}",
+      "playing_track": "✓ Играет трек",
+      "preview": "Предпросмотр: {path}",
+      "preview_ready": "Предпросмотр готов",
+      "preview_unavailable": "Предпросмотр недоступен",
+      "search_complete": "Поиск завершён: {count} совпадений",
+      "search_failed": "Поиск не удался: {reason}",
+      "no_results": "Результатов не найдено",
+      "selected": "Выбрано: {path}",
+      "tracks_found": "Найдено {count} трек(ов):",
+      "unknown_alias": "❌ Неизвестный псевдоним приложения: {alias}"
+    },
+    "running_terminal": "Выполняю команду терминала",
+    "web_search": "Поиск в интернете",
+    "web_searching": "Ищу в интернете",
+    "search_playlists": "Ищу плейлисты...",
+    "search_tracks": "Ищу треки...",
+    "select_music": "Выбрать музыку",
+    "select_playlist": "Выбрать плейлист",
+    "sending_notification": "Отправляю уведомление",
+    "window_managed": "Окно под управлением"
+  },
+  "tts": {
+    "enabled_trigger": "TTS включён, запускаю озвучку текста",
+    "failed": "Ошибка TTS",
+    "mpv_failed_fallback": "mpv не сработал, пробую paplay...",
+    "paplay_complete": "Воспроизведение paplay завершено",
+    "playback_complete": "Воспроизведение аудио завершено",
+    "playing_mpv": "Воспроизвожу аудио через mpv...",
+    "streaming": "Стримлю аудио из Edge TTS...",
+    "text_too_short": "Текст слишком короткий или пустой, пропускаю TTS"
+  },
+  "ui": {
+    "empty_chat": "Пустой чат",
+    "empty_history": "Пока нет сообщений",
+    "conversation": "Диалог",
+    "conversationViewer": {
+      "title": "Диалог",
+      "copy": "Копировать сообщение",
+      "copy_hint": "Alt+C для копирования",
+      "copied": "Скопировано"
+    },
+    "history_action": "История",
+    "full_response": "Полный ответ",
+    "loader": {
+      "brain": "💫 секунду, думаю",
+      "cosmos": "🌌 на одной волне со вселенной",
+      "galaxy": "🌀 витал в облаках, щас",
+      "intelligence": "☕ пью чай, варю ответ",
+      "muscles": "🦾 качаю мозговые мышцы",
+      "neurons": "🚀 искры творят магию",
+      "quantum": "🎲 тасую варианты как колоду",
+      "thinking": "🧠 хе-хе, погоди, почти готово",
+      "traces": "🔮 ловлю вайб, секунду",
+      "wisdom": "🐱 сдуваю пыль со старого воспоминания"
+    },
+    "new_chat": "Новый чат",
+    "no_chats_start": "Пока нет чатов.\nНачни новый диалог!",
+    "panel": {
+      "truncated": "(… обрезано · [TAB] Развернуть)",
+      "stop_tts": "Нажми, чтобы остановить голос",
+      "tts_reading": "Читаю вслух…"
+    },
+    "banner": {
+      "bg_failed_one": "Фоновая задача не выполнена: ",
+      "bg_failed_many": " фоновых задач не выполнено"
+    },
+    "recent_messages": "Недавние сообщения",
+    "reply_placeholder": "Ответить...",
+    "search_chat": "Искать чат...",
+    "select_chat": "Выбрать чат",
+    "send_message": "Отправить сообщение",
+    "settings": {
+      "no_voices_for_language": "Нет доступных голосов для вашего языка",
+      "section": {
+        "ai": "AI-ассистент",
+        "history": "История",
+        "system": "Система",
+        "customization": "Настройка"
+      },
+      "change_tts_voice": "Изменить голос TTS",
+      "chat_history": "История чатов",
+      "confirmation": "Подтверждение",
+      "language": "Язык",
+      "search": "Поиск настроек...",
+      "select_language": "Выбрать язык",
+      "select_voice": "Выбрать голос",
+      "title": "Настройки",
+      "tool_display": "Отображение инструментов",
+      "tts": "Озвучка текста",
+      "web_search": "Поиск в интернете",
+      "web_search_provider": "Провайдер по умолчанию",
+      "web_search_fallback": "Включить резервный",
+      "web_search_safe_search": "Безопасный поиск",
+      "dark_mode": "Тёмная тема",
+      "natural_voices": "Естественные голоса",
+      "natural_voices_settings": "Настройки естественных голосов",
+      "latency_masking": "Маскировка задержки",
+      "disfluency": "Небеглость",
+      "volume": "Громкость",
+      "tts_speed": "Скорость TTS",
+      "tts_speed_settings": "Настройки скорости TTS",
+      "type_to_search": "Введите для поиска...",
+      "persona": "Персона",
+      "select_persona": "Выбрать персону",
+      "personas": {
+        "default": "Нейтральный детерминированный ассистент.",
+        "tsundere": "Холодный, но иногда заботливый.",
+        "catgirl": "Игривая кошачья речь.",
+        "deredere": "Очень ласковый и поддерживающий.",
+        "kuudere": "Спокойный, логичный и лаконичный.",
+        "dandere": "Тихий, застенчивый и вежливый."
+      }
+    },
+    "type_message": "Введите сообщение...",
+    "type_reply": "Введите ответ...",
+    "toast": {
+      "provider_fallback": "Переключено на {provider}"
+    }
+  }
+}

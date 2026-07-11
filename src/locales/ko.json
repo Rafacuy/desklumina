@@ -1,0 +1,308 @@
+{
+  "app": {
+    "goodbye": "안녕! 👋",
+    "invalid_chat_number": "유효하지 않은 채팅 번호입니다.\n",
+    "load_chat_usage": "\n채팅을 전환하려면 'load '를 사용하세요.\n",
+    "new_chat_started": "새 채팅이 시작되었습니다.\n",
+    "no_chats": "아직 채팅이 없습니다.\n",
+    "started": "Lumina 시작됨 ",
+    "terminal_chat_help": "종료하려면 'exit', 새 채팅은 'new', 채팅 목록은 'list'\n",
+    "terminal_chat_mode": "💫 Lumina 터미널 채팅 모드 ",
+    "usage_exec": "사용법: bun run start -- --exec ",
+    "version": "Lumina v{version}"
+  },
+  "common": {
+    "actions_count": "개 작업",
+    "actions_title": "작업",
+    "back": "뒤로",
+    "cancel": "취소",
+    "close": "닫기",
+    "completed_count": "완료됨",
+    "confirm": "확인",
+    "dispatched_count": "전송됨",
+    "enter": "Enter",
+    "error": "오류",
+    "service_unavailable": "서비스 일시 사용 불가",
+    "esc": "Esc",
+    "exit": "종료",
+    "expand": "펼치기",
+    "hide": "숨기기",
+    "lumina": "Lumina",
+    "message": "메시지",
+    "more": "더보기",
+    "off": "끔",
+    "on": "켬",
+    "play": "재생",
+    "proceed": "진행",
+    "results": "결과",
+    "retrying": "재시도 중",
+    "attempt": "({count}번째 시도)",
+    "save_exit": "저장 & 종료",
+    "search": "검색",
+    "default": "기본값",
+    "select": "선택",
+    "send": "전송",
+    "toggle": "토글",
+    "you": "나"
+  },
+  "error": {
+    "with_message": "오류: {message}",
+    "network": {
+      "title": "연결할 수 없습니다",
+      "suggestion": "인터넷 연결을 확인하세요"
+    },
+    "provider": {
+      "title": "제공자를 사용할 수 없습니다",
+      "suggestion": "다른 제공자로 전환해 보세요"
+    },
+    "model": {
+      "title": "모델을 사용할 수 없습니다",
+      "suggestion": "선택한 모델이 제거되었을 수 있습니다"
+    },
+    "auth": {
+      "title": "인증 실패",
+      "suggestion": "설정에서 API 키를 확인하세요"
+    },
+    "ratelimit": {
+      "title": "속도 제한에 도달했습니다",
+      "suggestion": "잠시 후 다시 시도하세요"
+    },
+    "timeout": {
+      "title": "요청 시간이 초과되었습니다",
+      "suggestion": "제공자 응답 시간이 너무 오래 걸렸습니다"
+    },
+    "unknown": {
+      "title": "문제가 발생했습니다",
+      "suggestion": "오류를 복사하고 로그를 확인하세요"
+    },
+    "keyhint": {
+      "retry": "재시도",
+      "copy": "오류 복사"
+    }
+  },
+  "format": {
+    "days_ago": "{count}일 전",
+    "hours_ago": "{count}시간 전",
+    "just_now": "방금",
+    "minutes_ago": "{count}분 전"
+  },
+  "history": {
+    "tool_action": "작업",
+    "tool_result": "완료"
+  },
+  "math": {
+    "result_label": "결과",
+    "expression_label": "수식",
+    "loading": "계산 중...",
+    "error": {
+      "parse": "수식을 파싱할 수 없습니다: {expression}",
+      "division_by_zero": "0으로 나누기",
+      "overflow": "결과가 너무 커서 표현할 수 없습니다",
+      "empty_expression": "수식이 비어 있습니다",
+      "unsupported": "지원하지 않는 연산입니다: {hint}",
+      "timeout": "평가 시간이 초과되었습니다",
+      "input_too_long": "수식이 최대 길이 {max}자를 초과합니다",
+      "forbidden_pattern": "수식에 허용되지 않는 패턴이 포함되어 있습니다"
+    },
+    "unit_result": "{value} {unit}"
+  },
+  "signal": {
+    "soft_fail": "해당 요청을 완료할 수 없었어요.",
+    "soft_fail_reason": "작업 중에 문제가 발생했어요: {reason}"
+  },
+  "security": {
+    "approved": "위험한 명령이 사용자에 의해 승인되었습니다",
+    "cancelled": "명령이 사용자에 의해 취소되었습니다",
+    "dangerous_command_title": "위험한 명령 확인",
+    "install_rofi_hint": "보안 확인을 사용하려면 설치하세요",
+    "rofi_not_installed": "rofi가 설치되지 않았습니다"
+  },
+  "settings": {
+    "hint": {
+      "open": "↵ 열기",
+      "toggle": "↵ 토글",
+      "close": "esc 닫기"
+    }
+  },
+  "tool": {
+    "action_complete": "작업 완료",
+    "actions_completed": "작업이 완료되었습니다",
+    "app_opened": "애플리케이션이 열렸습니다",
+    "clipboard": "클립보드 작업",
+    "clipboard_updated": "클립보드가 업데이트되었습니다",
+    "command_executed": "명령이 실행되었습니다",
+    "controlling_media": "미디어 제어 중",
+    "executing_actions": "작업 실행 중",
+    "execution_results": "도구 실행 결과",
+    "file_op_complete": "파일 작업 완료",
+    "managing_files": "파일 관리 중",
+    "managing_windows": "창 관리 중",
+    "media_controlled": "미디어가 제어되었습니다",
+    "music_controlled": "음악이 제어되었습니다",
+    "music": {
+      "querying_tracks": "현재 트랙 조회 중",
+      "current_tracks": "현재 트랙",
+      "backend": "백엔드",
+      "player": "플레이어",
+      "status": "상태",
+      "title": "제목",
+      "artist": "아티스트",
+      "album": "앨범",
+      "elapsed": "경과",
+      "duration": "길이",
+      "active_primary": "활성 기본"
+    },
+    "music_system": "음악 시스템 작업",
+    "notification_sent": "알림이 전송되었습니다",
+    "opening_app": "애플리케이션 여는 중",
+    "playing_media": "미디어 재생 중",
+    "result": {
+      "clipboard_cleared": "✓ 클립보드가 비워졌습니다",
+      "clipboard_empty": "클립보드가 비어 있습니다",
+      "clipboard_set": "✓ 클립보드가 설정되었습니다",
+      "command_failed": "❌ 명령 실패",
+      "copied": "✓ \"{path}\"(으)로 복사됨",
+      "current_queue": "현재 대기열:",
+      "deleted": "✓ \"{path}\" 삭제됨",
+      "dispatched": "↗ 명령이 전송되었습니다 (백그라운드에서 실행 중)",
+      "dispatched_hint": "백그라운드에서 실행 중 — 다음 응답에서 결과를 받아볼 수 있어요",
+      "done": "✓ 완료",
+      "failed": "❌ 실패",
+      "file_written": "✓ 파일 \"{path}\"이(가) 작성되었습니다",
+      "folder_created": "✓ 폴더 \"{path}\"이(가) 생성되었습니다",
+      "history_empty": "검색 기록이 비어 있습니다",
+      "history_entries": "기록 항목: {count}개",
+      "invalid_request": "유효하지 않은 파일 요청",
+      "invalid_urgency": "❌ 유효하지 않은 긴급도입니다. low, normal, critical 중 하나를 사용하세요.",
+      "launched": "{alias}이(가) 실행되었습니다",
+      "library_empty": "음악 라이브러리가 비어 있습니다.",
+      "moved": "✓ \"{path}\"(으)로 이동됨",
+      "no_history": "기록 없음",
+      "no_matches": "검색 완료: 일치 항목 없음",
+      "no_playlists": "재생목록을 찾을 수 없습니다.",
+      "no_song": "재생 중인 노래가 없습니다",
+      "not_found": "⚠️ 도구 '{tool}'을(를) 찾을 수 없습니다",
+      "notification_sent": "✓ 알림이 전송되었습니다",
+      "now_playing": "지금 재생 중:",
+      "playing": "✓ 재생 중: {name}",
+      "playing_playlist": "✓ 재생목록 재생 중: {name}",
+      "playing_track": "✓ 트랙 재생 중",
+      "preview": "미리보기: {path}",
+      "preview_ready": "미리보기 준비됨",
+      "preview_unavailable": "미리보기를 사용할 수 없음",
+      "search_complete": "검색 완료: {count}개 일치",
+      "search_failed": "검색 실패: {reason}",
+      "no_results": "결과를 찾을 수 없습니다",
+      "selected": "선택됨: {path}",
+      "tracks_found": "{count}개 트랙 발견:",
+      "unknown_alias": "❌ 알 수 없는 애플리케이션 별칭: {alias}"
+    },
+    "running_terminal": "터미널 명령 실행 중",
+    "web_search": "웹 검색",
+    "web_searching": "웹 검색 중",
+    "search_playlists": "재생목록 검색...",
+    "search_tracks": "트랙 검색...",
+    "select_music": "음악 선택",
+    "select_playlist": "재생목록 선택",
+    "sending_notification": "알림 전송 중",
+    "window_managed": "창이 관리되었습니다"
+  },
+  "tts": {
+    "enabled_trigger": "TTS가 활성화되어 텍스트 음성 변환을 트리거합니다",
+    "failed": "TTS 실패",
+    "mpv_failed_fallback": "mpv 실패, paplay 폴백 시도 중...",
+    "paplay_complete": "paplay 재생 완료",
+    "playback_complete": "오디오 재생 완료",
+    "playing_mpv": "mpv로 오디오 재생 중...",
+    "streaming": "Edge TTS에서 오디오 스트리밍 중...",
+    "text_too_short": "텍스트가 너무 짧거나 비어 있어 TTS를 건너뜁니다"
+  },
+  "ui": {
+    "empty_chat": "빈 채팅",
+    "empty_history": "아직 메시지가 없습니다",
+    "conversation": "대화",
+    "conversationViewer": {
+      "title": "대화",
+      "copy": "메시지 복사",
+      "copy_hint": "Alt+C로 복사",
+      "copied": "복사됨"
+    },
+    "history_action": "기록",
+    "full_response": "전체 응답",
+    "loader": {
+      "brain": "💫 잠깐만, 생각 중이야",
+      "cosmos": "🌌 지금 우주랑 교감 중",
+      "galaxy": "🌀 구름 속에 빠져있어, 잠깐만",
+      "intelligence": "☕ 차 마시면서 답변 준비 중",
+      "muscles": "🦾 정신 근육 운동 중",
+      "neurons": "🚀 작은 불꽃들이 마법 부리는 중",
+      "quantum": "🎲 카드처럼 가능성 섞는 중",
+      "thinking": "🧠 헤헤 잠깐만, 거의 다 됐어",
+      "traces": "🔮 빠르게 바이브 조정 중",
+      "wisdom": "🐱 오래된 기억 뒤지는 중"
+    },
+    "new_chat": "새 채팅",
+    "no_chats_start": "아직 채팅이 없습니다.\n새 대화를 시작해 보세요!",
+    "panel": {
+      "truncated": "(… 잘림 · [TAB] 펼치기)",
+      "stop_tts": "음성 중지하려면 클릭",
+      "tts_reading": "읽는 중…"
+    },
+    "banner": {
+      "bg_failed_one": "백그라운드 작업 실패:",
+      "bg_failed_many": "개의 백그라운드 작업이 실패했습니다"
+    },
+    "recent_messages": "최근 메시지",
+    "reply_placeholder": "답글...",
+    "search_chat": "채팅 검색...",
+    "select_chat": "채팅 선택",
+    "send_message": "메시지 전송",
+    "settings": {
+      "no_voices_for_language": "해당 언어에 사용할 수 있는 음성이 없습니다",
+      "section": {
+        "ai": "AI 어시스턴트",
+        "history": "기록",
+        "system": "시스템",
+        "customization": "사용자 정의"
+      },
+      "change_tts_voice": "TTS 음성 변경",
+      "chat_history": "채팅 기록",
+      "confirmation": "확인",
+      "language": "언어",
+      "search": "설정 검색...",
+      "select_language": "언어 선택",
+      "select_voice": "음성 선택",
+      "title": "설정",
+      "tool_display": "도구 표시",
+      "tts": "텍스트 음성 변환",
+      "web_search": "웹 검색",
+      "web_search_provider": "기본 제공자",
+      "web_search_fallback": "폴백 활성화",
+      "web_search_safe_search": "안전 검색",
+      "dark_mode": "다크 모드",
+      "natural_voices": "자연스러운 음성",
+      "natural_voices_settings": "자연스러운 음성 설정",
+      "latency_masking": "지연 마스킹",
+      "disfluency": "유창성",
+      "volume": "볼륨",
+      "tts_speed": "TTS 속도",
+      "tts_speed_settings": "TTS 속도 설정",
+      "type_to_search": "검색하려면 입력...",
+      "persona": "페르소나",
+      "select_persona": "페르소나 선택",
+      "personas": {
+        "default": "중립적이고 결정론적인 어시스턴트.",
+        "tsundere": "차가운 척하지만 가끔 다정함.",
+        "catgirl": "장난기 많은 고양이 같은 말투.",
+        "deredere": "매우 다정하고 지지해주는.",
+        "kuudere": "차분하고 논리적이며 간결함.",
+        "dandere": "조용하고 수줍음 많고 예의 바름."
+      }
+    },
+    "type_message": "메시지를 입력하세요...",
+    "type_reply": "답글을 입력하세요...",
+    "toast": {
+      "provider_fallback": "{provider}(으)로 전환됨"
+    }
+  }
+}

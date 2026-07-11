@@ -1,0 +1,308 @@
+{
+  "app": {
+    "goodbye": "Tchau! 👋",
+    "invalid_chat_number": "Número de chat inválido.\n",
+    "load_chat_usage": "\nUse 'load ' para alternar chats.\n",
+    "new_chat_started": "Novo chat iniciado.\n",
+    "no_chats": "Nenhum chat ainda.\n",
+    "started": "Lumina iniciado ",
+    "terminal_chat_help": "Digite 'exit' para sair, 'new' para novo chat, 'list' para ver os chats\n",
+    "terminal_chat_mode": "💫 Modo de Chat Terminal do Lumina ",
+    "usage_exec": "Uso: bun run start -- --exec ",
+    "version": "Lumina v{version}"
+  },
+  "common": {
+    "actions_count": "ações",
+    "actions_title": "Ações",
+    "back": "Voltar",
+    "cancel": "Cancelar",
+    "close": "Fechar",
+    "completed_count": "concluídas",
+    "confirm": "Confirmar",
+    "dispatched_count": "enviadas",
+    "enter": "Enter",
+    "error": "Erro",
+    "service_unavailable": "Serviço Indisponível no Momento",
+    "esc": "Esc",
+    "exit": "Sair",
+    "expand": "Expandir",
+    "hide": "Ocultar",
+    "lumina": "Lumina",
+    "message": "Mensagem",
+    "more": "mais",
+    "off": "OFF",
+    "on": "ON",
+    "play": "Reproduzir",
+    "proceed": "Prosseguir",
+    "results": "Resultados",
+    "retrying": "Tentando novamente",
+    "attempt": "(tentativa {count})",
+    "save_exit": "Salvar & Sair",
+    "search": "Buscar",
+    "default": "Padrão",
+    "select": "Selecionar",
+    "send": "Enviar",
+    "toggle": "Alternar",
+    "you": "Você"
+  },
+  "error": {
+    "with_message": "Erro: {message}",
+    "network": {
+      "title": "Não foi possível conectar",
+      "suggestion": "Verifique sua conexão com a internet"
+    },
+    "provider": {
+      "title": "Provedor indisponível",
+      "suggestion": "Tente trocar para outro provedor"
+    },
+    "model": {
+      "title": "Modelo indisponível",
+      "suggestion": "O modelo selecionado pode ter sido removido"
+    },
+    "auth": {
+      "title": "Falha na autenticação",
+      "suggestion": "Verifique sua chave de API na configuração"
+    },
+    "ratelimit": {
+      "title": "Limite de taxa atingido",
+      "suggestion": "Aguarde um momento antes de tentar novamente"
+    },
+    "timeout": {
+      "title": "Tempo da requisição esgotado",
+      "suggestion": "O provedor demorou muito para responder"
+    },
+    "unknown": {
+      "title": "Algo deu errado",
+      "suggestion": "Copie o erro e verifique os logs"
+    },
+    "keyhint": {
+      "retry": "Tentar novamente",
+      "copy": "Copiar erro"
+    }
+  },
+  "format": {
+    "days_ago": "{count} dias atrás",
+    "hours_ago": "{count} horas atrás",
+    "just_now": "agora mesmo",
+    "minutes_ago": "{count} minutos atrás"
+  },
+  "history": {
+    "tool_action": "Ação",
+    "tool_result": "Concluído"
+  },
+  "math": {
+    "result_label": "Resultado",
+    "expression_label": "Expressão",
+    "loading": "Calculando...",
+    "error": {
+      "parse": "Não foi possível interpretar a expressão: {expression}",
+      "division_by_zero": "Divisão por zero",
+      "overflow": "O resultado é grande demais para ser representado",
+      "empty_expression": "A expressão está vazia",
+      "unsupported": "Operação não suportada: {hint}",
+      "timeout": "Tempo de avaliação esgotado",
+      "input_too_long": "A expressão excede o tamanho máximo de {max} caracteres",
+      "forbidden_pattern": "A expressão contém um padrão não permitido"
+    },
+    "unit_result": "{value} {unit}"
+  },
+  "signal": {
+    "soft_fail": "Não consegui concluir essa solicitação.",
+    "soft_fail_reason": "Tive um problema enquanto trabalhava nisso: {reason}"
+  },
+  "security": {
+    "approved": "Comando perigoso aprovado pelo usuário",
+    "cancelled": "Comando cancelado pelo usuário",
+    "dangerous_command_title": "Confirmação de Comando Perigoso",
+    "install_rofi_hint": "Por favor, instale-o para usar as confirmações de segurança",
+    "rofi_not_installed": "rofi não está instalado"
+  },
+  "settings": {
+    "hint": {
+      "open": "↵ Abrir",
+      "toggle": "↵ Alternar",
+      "close": "esc Fechar"
+    }
+  },
+  "tool": {
+    "action_complete": "Ação concluída",
+    "actions_completed": "Ações concluídas",
+    "app_opened": "Aplicativo aberto",
+    "clipboard": "Operação na área de transferência",
+    "clipboard_updated": "Área de transferência atualizada",
+    "command_executed": "Comando executado",
+    "controlling_media": "Controlando mídia",
+    "executing_actions": "Executando ações",
+    "execution_results": "Resultados da execução da ferramenta",
+    "file_op_complete": "Operação de arquivo concluída",
+    "managing_files": "Gerenciando arquivos",
+    "managing_windows": "Gerenciando janelas",
+    "media_controlled": "Mídia controlada",
+    "music_controlled": "Música controlada",
+    "music": {
+      "querying_tracks": "Consultando faixas atuais",
+      "current_tracks": "Faixas Atuais",
+      "backend": "Backend",
+      "player": "Player",
+      "status": "Status",
+      "title": "Título",
+      "artist": "Artista",
+      "album": "Álbum",
+      "elapsed": "Decorrido",
+      "duration": "Duração",
+      "active_primary": "Primário Ativo"
+    },
+    "music_system": "Operação do sistema de música",
+    "notification_sent": "Notificação enviada",
+    "opening_app": "Abrindo aplicativo",
+    "playing_media": "Reproduzindo mídia",
+    "result": {
+      "clipboard_cleared": "✓ Área de transferência limpa",
+      "clipboard_empty": "A área de transferência está vazia",
+      "clipboard_set": "✓ Área de transferência definida",
+      "command_failed": "❌ Comando falhou",
+      "copied": "✓ Copiado para \"{path}\"",
+      "current_queue": "Fila Atual:",
+      "deleted": "✓ \"{path}\" excluído",
+      "dispatched": "↗ Comando enviado (executando em segundo plano)",
+      "dispatched_hint": "Executando em segundo plano — o resultado chega na sua próxima resposta",
+      "done": "✓ Concluído",
+      "failed": "❌ Falhou",
+      "file_written": "✓ Arquivo \"{path}\" gravado",
+      "folder_created": "✓ Pasta \"{path}\" criada",
+      "history_empty": "O histórico de busca está vazio",
+      "history_entries": "Entradas no histórico: {count}",
+      "invalid_request": "Requisição de arquivo inválida",
+      "invalid_urgency": "❌ Urgência inválida. Use low, normal ou critical.",
+      "launched": "{alias} iniciado",
+      "library_empty": "A biblioteca de músicas está vazia.",
+      "moved": "✓ Movido para \"{path}\"",
+      "no_history": "Sem histórico",
+      "no_matches": "Busca concluída: nenhuma correspondência",
+      "no_playlists": "Nenhuma playlist encontrada.",
+      "no_song": "Nenhuma música tocando",
+      "not_found": "⚠️ Ferramenta '{tool}' não encontrada",
+      "notification_sent": "✓ Notificação enviada",
+      "now_playing": "Tocando Agora:",
+      "playing": "✓ Tocando: {name}",
+      "playing_playlist": "✓ Reproduzindo playlist: {name}",
+      "playing_track": "✓ Reproduzindo faixa",
+      "preview": "Prévia: {path}",
+      "preview_ready": "Prévia pronta",
+      "preview_unavailable": "Prévia indisponível",
+      "search_complete": "Busca concluída: {count} correspondências",
+      "search_failed": "Busca falhou: {reason}",
+      "no_results": "Nenhum resultado encontrado",
+      "selected": "Selecionado: {path}",
+      "tracks_found": "{count} faixa(s) encontrada(s):",
+      "unknown_alias": "❌ Alias de aplicativo desconhecido: {alias}"
+    },
+    "running_terminal": "Executando comando no terminal",
+    "web_search": "Busca na web",
+    "web_searching": "Buscando na web",
+    "search_playlists": "Buscar playlists...",
+    "search_tracks": "Buscar faixas...",
+    "select_music": "Selecionar Música",
+    "select_playlist": "Selecionar Playlist",
+    "sending_notification": "Enviando notificação",
+    "window_managed": "Janela gerenciada"
+  },
+  "tts": {
+    "enabled_trigger": "TTS ativado, acionando texto para fala",
+    "failed": "TTS falhou",
+    "mpv_failed_fallback": "mpv falhou, tentando fallback para paplay...",
+    "paplay_complete": "Reprodução paplay concluída",
+    "playback_complete": "Reprodução de áudio concluída",
+    "playing_mpv": "Reproduzindo áudio com mpv...",
+    "streaming": "Transmitindo áudio do Edge TTS...",
+    "text_too_short": "Texto muito curto ou vazio, pulando TTS"
+  },
+  "ui": {
+    "empty_chat": "Chat vazio",
+    "empty_history": "Nenhuma mensagem ainda",
+    "conversation": "Conversa",
+    "conversationViewer": {
+      "title": "Conversa",
+      "copy": "Copiar mensagem",
+      "copy_hint": "Alt+C para copiar",
+      "copied": "Copiado"
+    },
+    "history_action": "Histórico",
+    "full_response": "Resposta Completa",
+    "loader": {
+      "brain": "💫 me dá um segundo, tô pensando aqui",
+      "cosmos": "🌌 conectando com o universo agora",
+      "galaxy": "🌀 perdido nas nuvens, um segundinho",
+      "intelligence": "☕ tomando um chá, preparando a resposta",
+      "muscles": "🦾 fazendo o treino mental",
+      "neurons": "🚀 faíscas fazendo a mágica delas",
+      "quantum": "🎲 embaralhando possibilidades como um baralho",
+      "thinking": "🧠 hehe peraí, quase lá",
+      "traces": "🔮 sintonizando nas vibes rapidinho",
+      "wisdom": "🐱 tirando poeira de uma memória antiga"
+    },
+    "new_chat": "Novo Chat",
+    "no_chats_start": "Nenhum chat ainda.\nComece uma nova conversa!",
+    "panel": {
+      "truncated": "(… truncado · [TAB] Expandir)",
+      "stop_tts": "Clique para parar a voz",
+      "tts_reading": "Lendo em voz alta…"
+    },
+    "banner": {
+      "bg_failed_one": "Tarefa em segundo plano falhou:",
+      "bg_failed_many": "tarefas em segundo plano falharam"
+    },
+    "recent_messages": "Mensagens Recentes",
+    "reply_placeholder": "Responder...",
+    "search_chat": "Buscar chat...",
+    "select_chat": "Selecionar Chat",
+    "send_message": "Enviar mensagem",
+    "settings": {
+      "no_voices_for_language": "Nenhuma voz disponível para o seu idioma",
+      "section": {
+        "ai": "Assistente de IA",
+        "history": "Histórico",
+        "system": "Sistema",
+        "customization": "Personalização"
+      },
+      "change_tts_voice": "Alterar Voz do TTS",
+      "chat_history": "Histórico de Chat",
+      "confirmation": "Confirmação",
+      "language": "Idioma",
+      "search": "Buscar configurações...",
+      "select_language": "Selecionar Idioma",
+      "select_voice": "Selecionar Voz",
+      "title": "Configurações",
+      "tool_display": "Exibição de Ferramentas",
+      "tts": "Texto para Fala",
+      "web_search": "Busca na Web",
+      "web_search_provider": "Provedor Padrão",
+      "web_search_fallback": "Ativar Fallback",
+      "web_search_safe_search": "Busca Segura",
+      "dark_mode": "Modo Escuro",
+      "natural_voices": "Vozes Naturais",
+      "natural_voices_settings": "Configurações de Vozes Naturais",
+      "latency_masking": "Mascaramento de Latência",
+      "disfluency": "Disfluência",
+      "volume": "Volume",
+      "tts_speed": "Velocidade do TTS",
+      "tts_speed_settings": "Configurações de Velocidade do TTS",
+      "type_to_search": "Digite para buscar...",
+      "persona": "Persona",
+      "select_persona": "Selecionar Persona",
+      "personas": {
+        "default": "Assistente neutro e determinístico.",
+        "tsundere": "Frio, mas ocasionalmente carinhoso.",
+        "catgirl": "Fala brincalhona, estilo felino.",
+        "deredere": "Muito afetuoso e prestativo.",
+        "kuudere": "Calmo, lógico e conciso.",
+        "dandere": "Quieto, tímido e educado."
+      }
+    },
+    "type_message": "Digite sua mensagem...",
+    "type_reply": "Digite uma resposta...",
+    "toast": {
+      "provider_fallback": "Trocado para {provider}"
+    }
+  }
+}

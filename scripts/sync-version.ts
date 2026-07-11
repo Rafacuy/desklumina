@@ -16,10 +16,14 @@ async function main() {
   }
 
   const readme = await Bun.file(readmeUrl).text();
-  const next = readme.replace(
-    /(https:\/\/img\.shields\.io\/badge\/Version-)([^-]+)(-blue\?style=for-the-badge)/g,
-    `$1${version}$3`,
-  );
+  const badgePattern = /(https:\/\/img\.shields\.io\/badge\/Version-)([^-]+)(-[0-9A-Fa-f]{6}\?style=for-the-badge)/g;
+
+  if (!badgePattern.test(readme)) {
+    console.error("No version badge found in README.md (pattern mismatch). Check the badge format.");
+    process.exit(1);
+  }
+
+  const next = readme.replace(new RegExp(badgePattern.source, "g"), `$1${version}$3`);
 
   if (next !== readme) {
     await Bun.write(readmeUrl, next);
@@ -34,4 +38,3 @@ main().catch((err) => {
   console.error(e.message);
   process.exit(1);
 });
-

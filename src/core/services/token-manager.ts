@@ -32,39 +32,64 @@ export class TokenManager {
   }
 
   /**
-   * Estimate tokens from text with multilingual awareness.
-   * Prioritizes correctness for CJK and mixed-script content.
+   * Rough token math. Good enough for routing + TPM guardrails, not billing.
    */
   estimateTokens(text: string | null | undefined): number {
     if (!text) return 0;
     
     let tokens = 0;
     
-    // 1. CJK characters: 1.2 tokens per char (conservative for Llama 3)
-    const cjkMatches = text.match(/[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af]/g);
-    if (cjkMatches) tokens += cjkMatches.length * 1.2;
+    //Han is dense. Most BPEs sit near one token per char, so pad it a bit.
+    const hanMatches = text.match(/[\u4e00-\u9fff]+/g);
+    if (hanMatches) tokens += hanMatches.join('').length * 1.2;
 
-    // 2. Latin words: 0.25 tokens per char (1 token per 4 chars)
-    const latinMatches = text.match(/[a-zA-Z]+/g);
+    // Kana is boring in a good way: about one token per char.
+    const kanaMatches = text.match(/[\u3040-\u30ff]+/g);
+    if (kanaMatches) tokens += kanaMatches.join('').length * 1.0;
+
+    // Hangul blocks pack a lot into one glyph; english-heavy BPEs split it up.
+    const hangulMatches = text.match(/[\uac00-\ud7af]+/g);
+    if (hangulMatches) tokens += hangulMatches.join('').length * 1.4;
+
+    // Long Latin words are usually compounds or identifiers. price those higher
+    // instead of pretending we can detect "German" from Unicode ranges.
+    const LATIN_COMPOUND_LENGTH_THRESHOLD = 12; // chars; long unbroken words are compound-like
+    const LATIN_BASE_MULTIPLIER = 0.25;
+    const LATIN_COMPOUND_MULTIPLIER = 0.4;
+    const latinMatches = text.match(/[a-zA-ZÀ-ÖØ-öø-ʯ]+/g);
     if (latinMatches) {
-      tokens += latinMatches.join('').length * 0.25;
+      for (const word of latinMatches) {
+        const multiplier = word.length > LATIN_COMPOUND_LENGTH_THRESHOLD
+          ? LATIN_COMPOUND_MULTIPLIER
+          : LATIN_BASE_MULTIPLIER;
+        tokens += word.length * multiplier;
+      }
     }
 
-    // 3. Numbers and punctuation: 0.5 tokens per char (1 token per 2 chars)
+    //Cyrillic fragments harder in english-heavy vocabularies.
+    const cyrillicMatches = text.match(/[\u0400-\u04FF]+/g);
+    if (cyrillicMatches) {
+      tokens += cyrillicMatches.join('').length * 0.45;
+    }
+
+    // 4. Numbers and punctuation: 0.5 tokens per char (1 token per 2 chars)
     const denseMatches = text.match(/[0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/g);
     if (denseMatches) {
       tokens += denseMatches.join('').length * 0.5;
     }
     
-    // 4. Whitespace: 0.25 tokens per char
+    // 5. Whitespace: 0.25 tokens per char
     const spaceMatches = text.match(/\s+/g);
     if (spaceMatches) {
       tokens += spaceMatches.join('').length * 0.25;
     }
 
-    // 5. Emojis and other Unicode: 2.0 tokens per character
-    const totalCounted = (cjkMatches?.length || 0) + 
+    // 6. Emojis and other Unicode: 2.0 tokens per character
+    const totalCounted = (hanMatches?.join('').length || 0) +
+                         (kanaMatches?.join('').length || 0) +
+                         (hangulMatches?.join('').length || 0) +
                          (latinMatches?.join('').length || 0) + 
+                         (cyrillicMatches?.join('').length || 0) +
                          (denseMatches?.join('').length || 0) + 
                          (spaceMatches?.join('').length || 0);
     

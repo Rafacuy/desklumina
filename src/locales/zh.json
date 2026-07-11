@@ -1,0 +1,308 @@
+{
+  "app": {
+    "goodbye": "再见！👋",
+    "invalid_chat_number": "无效的聊天编号。\n",
+    "load_chat_usage": "\n使用 'load ' 来切换聊天。\n",
+    "new_chat_started": "已开始新聊天。\n",
+    "no_chats": "还没有聊天。\n",
+    "started": "Lumina 已启动 ",
+    "terminal_chat_help": "输入 'exit' 退出，'new' 新建聊天，'list' 查看聊天列表\n",
+    "terminal_chat_mode": "💫 Lumina 终端聊天模式 ",
+    "usage_exec": "用法：bun run start -- --exec ",
+    "version": "Lumina v{version}"
+  },
+  "common": {
+    "actions_count": "个操作",
+    "actions_title": "操作",
+    "back": "返回",
+    "cancel": "取消",
+    "close": "关闭",
+    "completed_count": "已完成",
+    "confirm": "确认",
+    "dispatched_count": "已派发",
+    "enter": "回车",
+    "error": "错误",
+    "service_unavailable": "服务暂时不可用",
+    "esc": "Esc",
+    "exit": "退出",
+    "expand": "展开",
+    "hide": "隐藏",
+    "lumina": "Lumina",
+    "message": "消息",
+    "more": "更多",
+    "off": "关闭",
+    "on": "开启",
+    "play": "播放",
+    "proceed": "继续",
+    "results": "结果",
+    "retrying": "重试中",
+    "attempt": "（第 {count} 次尝试）",
+    "save_exit": "保存并退出",
+    "search": "搜索",
+    "default": "默认",
+    "select": "选择",
+    "send": "发送",
+    "toggle": "切换",
+    "you": "你"
+  },
+  "error": {
+    "with_message": "错误：{message}",
+    "network": {
+      "title": "无法连接",
+      "suggestion": "请检查您的网络连接"
+    },
+    "provider": {
+      "title": "服务提供者不可用",
+      "suggestion": "尝试切换到其他服务提供者"
+    },
+    "model": {
+      "title": "模型不可用",
+      "suggestion": "所选模型可能已被移除"
+    },
+    "auth": {
+      "title": "认证失败",
+      "suggestion": "请检查配置中的 API 密钥"
+    },
+    "ratelimit": {
+      "title": "已达到速率限制",
+      "suggestion": "请稍等片刻再重试"
+    },
+    "timeout": {
+      "title": "请求超时",
+      "suggestion": "服务提供者响应时间过长"
+    },
+    "unknown": {
+      "title": "出错了",
+      "suggestion": "请复制错误信息并查看日志"
+    },
+    "keyhint": {
+      "retry": "重试",
+      "copy": "复制错误"
+    }
+  },
+  "format": {
+    "days_ago": "{count} 天前",
+    "hours_ago": "{count} 小时前",
+    "just_now": "刚刚",
+    "minutes_ago": "{count} 分钟前"
+  },
+  "history": {
+    "tool_action": "操作",
+    "tool_result": "完成"
+  },
+  "math": {
+    "result_label": "结果",
+    "expression_label": "表达式",
+    "loading": "计算中...",
+    "error": {
+      "parse": "无法解析表达式：{expression}",
+      "division_by_zero": "除数为零",
+      "overflow": "结果过大无法表示",
+      "empty_expression": "表达式为空",
+      "unsupported": "不支持的操作：{hint}",
+      "timeout": "计算超时",
+      "input_too_long": "表达式超过最大长度 {max} 个字符",
+      "forbidden_pattern": "表达式包含不允许的模式"
+    },
+    "unit_result": "{value} {unit}"
+  },
+  "signal": {
+    "soft_fail": "我无法完成该请求。",
+    "soft_fail_reason": "处理时遇到问题：{reason}"
+  },
+  "security": {
+    "approved": "用户已批准危险命令",
+    "cancelled": "用户已取消命令",
+    "dangerous_command_title": "危险命令确认",
+    "install_rofi_hint": "请安装它以使用安全确认功能",
+    "rofi_not_installed": "未安装 rofi"
+  },
+  "settings": {
+    "hint": {
+      "open": "↵ 打开",
+      "toggle": "↵ 切换",
+      "close": "esc 关闭"
+    }
+  },
+  "tool": {
+    "action_complete": "操作完成",
+    "actions_completed": "操作已完成",
+    "app_opened": "应用已打开",
+    "clipboard": "剪贴板操作",
+    "clipboard_updated": "剪贴板已更新",
+    "command_executed": "命令已执行",
+    "controlling_media": "正在控制媒体",
+    "executing_actions": "正在执行操作",
+    "execution_results": "工具执行结果",
+    "file_op_complete": "文件操作完成",
+    "managing_files": "正在管理文件",
+    "managing_windows": "正在管理窗口",
+    "media_controlled": "媒体已控制",
+    "music_controlled": "音乐已控制",
+    "music": {
+      "querying_tracks": "正在查询当前曲目",
+      "current_tracks": "当前曲目",
+      "backend": "后端",
+      "player": "播放器",
+      "status": "状态",
+      "title": "标题",
+      "artist": "艺术家",
+      "album": "专辑",
+      "elapsed": "已播放",
+      "duration": "时长",
+      "active_primary": "活动主设备"
+    },
+    "music_system": "音乐系统操作",
+    "notification_sent": "通知已发送",
+    "opening_app": "正在打开应用",
+    "playing_media": "正在播放媒体",
+    "result": {
+      "clipboard_cleared": "✓ 剪贴板已清空",
+      "clipboard_empty": "剪贴板为空",
+      "clipboard_set": "✓ 剪贴板已设置",
+      "command_failed": "❌ 命令失败",
+      "copied": "✓ 已复制到 \"{path}\"",
+      "current_queue": "当前队列：",
+      "deleted": "✓ \"{path}\" 已删除",
+      "dispatched": "↗ 命令已派发（后台运行中）",
+      "dispatched_hint": "在后台运行中 — 结果将在下一次响应时送达",
+      "done": "✓ 完成",
+      "failed": "❌ 失败",
+      "file_written": "✓ 文件 \"{path}\" 已写入",
+      "folder_created": "✓ 文件夹 \"{path}\" 已创建",
+      "history_empty": "搜索历史为空",
+      "history_entries": "历史记录条目：{count}",
+      "invalid_request": "无效的文件请求",
+      "invalid_urgency": "❌ 无效的紧急程度。请使用 low、normal 或 critical。",
+      "launched": "{alias} 已启动",
+      "library_empty": "音乐库为空。",
+      "moved": "✓ 已移动到 \"{path}\"",
+      "no_history": "无历史记录",
+      "no_matches": "搜索完成：无匹配项",
+      "no_playlists": "未找到播放列表。",
+      "no_song": "没有正在播放的歌曲",
+      "not_found": "⚠️ 工具 '{tool}' 未找到",
+      "notification_sent": "✓ 通知已发送",
+      "now_playing": "正在播放：",
+      "playing": "✓ 正在播放：{name}",
+      "playing_playlist": "✓ 正在播放播放列表：{name}",
+      "playing_track": "✓ 正在播放曲目",
+      "preview": "预览：{path}",
+      "preview_ready": "预览已就绪",
+      "preview_unavailable": "预览不可用",
+      "search_complete": "搜索完成：{count} 个匹配项",
+      "search_failed": "搜索失败：{reason}",
+      "no_results": "未找到结果",
+      "selected": "已选择：{path}",
+      "tracks_found": "找到 {count} 首曲目：",
+      "unknown_alias": "❌ 未知的应用别名：{alias}"
+    },
+    "running_terminal": "正在运行终端命令",
+    "web_search": "网络搜索",
+    "web_searching": "正在搜索网络",
+    "search_playlists": "搜索播放列表...",
+    "search_tracks": "搜索曲目...",
+    "select_music": "选择音乐",
+    "select_playlist": "选择播放列表",
+    "sending_notification": "正在发送通知",
+    "window_managed": "窗口已管理"
+  },
+  "tts": {
+    "enabled_trigger": "TTS 已启用，正在触发文字转语音",
+    "failed": "TTS 失败",
+    "mpv_failed_fallback": "mpv 失败，尝试使用 paplay 回退...",
+    "paplay_complete": "paplay 播放完成",
+    "playback_complete": "音频播放完成",
+    "playing_mpv": "正在使用 mpv 播放音频...",
+    "streaming": "正在从 Edge TTS 流式传输音频...",
+    "text_too_short": "文本过短或为空，跳过 TTS"
+  },
+  "ui": {
+    "empty_chat": "空聊天",
+    "empty_history": "还没有消息",
+    "conversation": "对话",
+    "conversationViewer": {
+      "title": "对话",
+      "copy": "复制消息",
+      "copy_hint": "Alt+C 复制",
+      "copied": "已复制"
+    },
+    "history_action": "历史",
+    "full_response": "完整回复",
+    "loader": {
+      "brain": "💫 稍等一下，我在思考",
+      "cosmos": "🌌 正在感受宇宙，稍等",
+      "galaxy": "🌀 迷失在云端，马上好",
+      "intelligence": "☕ 喝口茶，正在准备答案",
+      "muscles": "🦾 正在脑力健身",
+      "neurons": "🚀 小火花正在施展魔法",
+      "quantum": "🎲 正在像洗牌一样整理可能性",
+      "thinking": "🧠 嘿嘿稍等，快好了",
+      "traces": "🔮 正在快速调频",
+      "wisdom": "🐱 正在翻找旧记忆"
+    },
+    "new_chat": "新聊天",
+    "no_chats_start": "还没有聊天。\n开始一段新对话吧！",
+    "panel": {
+      "truncated": "（… 已截断 · [TAB] 展开）",
+      "stop_tts": "点击停止语音",
+      "tts_reading": "正在朗读…"
+    },
+    "banner": {
+      "bg_failed_one": "后台任务失败：",
+      "bg_failed_many": "个后台任务失败"
+    },
+    "recent_messages": "最近消息",
+    "reply_placeholder": "回复...",
+    "search_chat": "搜索聊天...",
+    "select_chat": "选择聊天",
+    "send_message": "发送消息",
+    "settings": {
+      "no_voices_for_language": "您的语言没有可用的语音",
+      "section": {
+        "ai": "AI 助手",
+        "history": "历史",
+        "system": "系统",
+        "customization": "自定义"
+      },
+      "change_tts_voice": "更改 TTS 语音",
+      "chat_history": "聊天历史",
+      "confirmation": "确认",
+      "language": "语言",
+      "search": "搜索设置...",
+      "select_language": "选择语言",
+      "select_voice": "选择语音",
+      "title": "设置",
+      "tool_display": "工具显示",
+      "tts": "文字转语音",
+      "web_search": "网络搜索",
+      "web_search_provider": "默认服务提供者",
+      "web_search_fallback": "启用回退",
+      "web_search_safe_search": "安全搜索",
+      "dark_mode": "深色模式",
+      "natural_voices": "自然语音",
+      "natural_voices_settings": "自然语音设置",
+      "latency_masking": "延迟屏蔽",
+      "disfluency": "不流畅度",
+      "volume": "音量",
+      "tts_speed": "TTS 速度",
+      "tts_speed_settings": "TTS 速度设置",
+      "type_to_search": "输入以搜索...",
+      "persona": "人格",
+      "select_persona": "选择人格",
+      "personas": {
+        "default": "中立确定性助手。",
+        "tsundere": "冷淡但偶尔关心。",
+        "catgirl": "俏皮的猫咪语气。",
+        "deredere": "非常亲切和支持。",
+        "kuudere": "冷静、逻辑性强、简洁。",
+        "dandere": "安静、害羞、有礼貌。"
+      }
+    },
+    "type_message": "输入你的消息...",
+    "type_reply": "输入回复...",
+    "toast": {
+      "provider_fallback": "已切换到 {provider}"
+    }
+  }
+}

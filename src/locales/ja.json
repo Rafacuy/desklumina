@@ -46,8 +46,6 @@
     "you": "あなた"
   },
   "error": {
-    "fatal_groq": "❌ 致命的: .env に GROQ_API_KEY が見つかりません",
-    "fatal_model": "❌ 致命的: .env に MODEL_NAME が見つかりません",
     "with_message": "エラー: {message}",
     "network": {
       "title": "接続できません",

@@ -6,6 +6,7 @@
 - [Creating a New Tool](#creating-a-new-tool)
 - [Testing](#testing)
 - [Adding a New AI Provider](#adding-a-new-ai-provider)
+- [Adding a New Language](#adding-a-new-language)
 - [Pull Requests](#pull-requests)
 
 ## Environment Setup
@@ -80,6 +81,15 @@ The `tests/architecture/` folder contains critical tests that assert prompt stru
 [^5]: `src/ai/providers/streaming-base.ts`
 [^6]: `src/ai/registry/provider-registry.ts`
 [^7]: `src/ai/config/models-config.ts`
+
+## Adding a New Language
+
+1. Create `src/locales/<code>.json` (copy `en.json`, translate values, keep all keys).
+2. Run `bun run scripts/register-locale.ts` and answer: Display Name, TTS voice key(s, comma-separated, optional), Default voice key (required if voices given), Prompt Context (required). It also wires the default voice into `src/ai/tts.ts`.
+3. Verify with `bun run lint`.
+
+> [!IMPORTANT]
+> Non-Latin scripts (Cyrillic, Arabic, Thai, …) need `TokenManager.estimateTokens` in `src/core/services/token-manager.ts` updated first — it only covers CJK + Latin.
 
 ## Pull Requests
 

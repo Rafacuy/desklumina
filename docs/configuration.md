@@ -102,7 +102,7 @@ User preferences reside in `~/.config/desklumina/settings.json`. You can modify 
 </tr>
 <tr>
 <td><code>language</code></td>
-<td><code>"en"</code>, <code>"id"</code>, <code>"ja"</code></td>
+<td>One of the codes in <a href="#supported-languages">Supported languages</a>.</td>
 <td>UI display language. Switching this also updates the default TTS voice to match the selected language.</td>
 </tr>
 <tr>
@@ -111,6 +111,24 @@ User preferences reside in `~/.config/desklumina/settings.json`. You can modify 
 <td>Assistant conversational tone. Personas inject different behavior patterns into the system prompt without changing underlying capabilities.</td>
 </tr>
 </table>
+
+#### Supported languages
+
+<table>
+<tr><th>Code</th><th>Language</th></tr>
+<tr><td><code>en</code></td><td>🇬🇧 English</td></tr>
+<tr><td><code>id</code></td><td>🇮🇩 Indonesian</td></tr>
+<tr><td><code>ja</code></td><td>🇯🇵 Japanese</td></tr>
+<tr><td><code>es</code></td><td>🇪🇸 Spanish</td></tr>
+<tr><td><code>fr</code></td><td>🇫🇷 French</td></tr>
+<tr><td><code>pt</code></td><td>🇧🇷 Portuguese (Brazil)</td></tr>
+<tr><td><code>de</code></td><td>🇩🇪 German</td></tr>
+<tr><td><code>ru</code></td><td>🇷🇺 Russian</td></tr>
+<tr><td><code>zh</code></td><td>🇨🇳 Chinese (Simplified)</td></tr>
+<tr><td><code>ko</code></td><td>🇰🇷 Korean</td></tr>
+</table>
+
+Switching language also sets the default TTS voice. New languages are wired in by `scripts/register-locale.ts` (see [Development](./development.md#adding-a-new-language)).
 
 ### Feature Flags
 

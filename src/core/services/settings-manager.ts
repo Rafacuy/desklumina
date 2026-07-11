@@ -172,7 +172,7 @@ export class SettingsManager {
     this.scheduleFlush();
   }
 
-  setLanguage(lang: "id" | "en" | "ja") {
+  setLanguage(lang: "id" | "en" | "ja" | "es" | "fr" | "ko" | "zh" | "ru" | "de" | "pt") {
     this.settings.language = lang;
     setLang(lang);
 
@@ -182,6 +182,20 @@ export class SettingsManager {
       this.settings.tts.voiceId = "en-US-AvaNeural";
     } else if (lang === "ja") {
       this.settings.tts.voiceId = "ja-JP-NanamiNeural";
+    } else if (lang === "pt") {
+      this.settings.tts.voiceId = "pt-BR-FranciscaNeural";
+    } else if (lang === "de") {
+      this.settings.tts.voiceId = "de-DE-AmalaNeural";
+    } else if (lang === "ru") {
+      this.settings.tts.voiceId = "ru-RU-SvetlanaNeural";
+    } else if (lang === "zh") {
+      this.settings.tts.voiceId = "zh-CN-XiaoxiaoNeural";
+    } else if (lang === "ko") {
+      this.settings.tts.voiceId = "ko-KR-SunHiNeural";
+    } else if (lang === "fr") {
+      this.settings.tts.voiceId = "fr-FR-DeniseNeural";
+    } else if (lang === "es") {
+      this.settings.tts.voiceId = "es-ES-ElviraNeural";
     }
 
     this.scheduleFlush();

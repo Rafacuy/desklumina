@@ -19,6 +19,13 @@ function getSettingsThemePath(): string {
 const PROVIDERS: Settings["webSearch"]["defaultProvider"][] = ["auto", "tavily", "serper", "serpapi", "searxng"];
 
 const LANG_NAMES: Record<string, string> = {
+  pt: "Português (Brasil)",
+  de: "Deutsch",
+  ru: "Русский",
+  zh: "Chinese (Simplified)",
+  ko: "한국어",
+  fr: "Français",
+  es: "Español",
   id: "Bahasa Indonesia",
   en: "English",
   ja: "日本語",
@@ -349,6 +356,13 @@ async function promptLanguagePanel(): Promise<void> {
     ["id", "Bahasa Indonesia"],
     ["en", "English"],
     ["ja", "日本語"],
+    ["pt", "Português (Brasil)"],
+    ["de", "Deutsch"],
+    ["ru", "Русский"],
+    ["zh", "Chinese (Simplified)"],
+    ["ko", "한국어"],
+    ["fr", "Français"],
+    ["es", "Español"],
   ];
   const options = langs.map(([code, name]) =>
     `${currentLang === code ? "󰄬 " : "   "}${name} (${code})`
@@ -367,6 +381,13 @@ async function promptLanguagePanel(): Promise<void> {
     if (result.output.includes("(id)")) settingsManager.setLanguage("id");
     else if (result.output.includes("(en)")) settingsManager.setLanguage("en");
     else if (result.output.includes("(ja)")) settingsManager.setLanguage("ja");
+    else if (result.output.includes("(pt)")) settingsManager.setLanguage("pt");
+    else if (result.output.includes("(de)")) settingsManager.setLanguage("de");
+    else if (result.output.includes("(ru)")) settingsManager.setLanguage("ru");
+    else if (result.output.includes("(zh)")) settingsManager.setLanguage("zh");
+    else if (result.output.includes("(ko)")) settingsManager.setLanguage("ko");
+    else if (result.output.includes("(fr)")) settingsManager.setLanguage("fr");
+    else if (result.output.includes("(es)")) settingsManager.setLanguage("es");
   }
 }
 
@@ -396,6 +417,55 @@ async function promptTTSVoicePanel(): Promise<void> {
     voiceOptions = [
       "ja-JP-NanamiNeural - Nanami (Female)",
       "ja-JP-KeitaNeural - Keita (Male)",
+    ].map(markActive);
+  } else if (currentLang === "pt") {
+    voiceOptions = [
+      "pt-BR-AntonioNeural - Antonio",
+      "pt-BR-FranciscaNeural - Francisca",
+      "pt-BR-ThalitaNeural - Thalita",
+    ].map(markActive);
+  } else if (currentLang === "de") {
+    voiceOptions = [
+      "de-DE-AmalaNeural - Amala",
+      "de-DE-KatjaNeural - Katja",
+      "de-DE-SeraphinaMultilingualNeural - SeraphinaMultilingual",
+      "de-DE-KillianNeural - Killian",
+      "de-DE-ConradNeural - Conrad",
+      "de-DE-FlorianMultilingualNeural - FlorianMultilingual",
+    ].map(markActive);
+  } else if (currentLang === "ru") {
+    voiceOptions = [
+      "ru-RU-SvetlanaNeural - Svetlana",
+      "ru-RU-DmitryNeural - Dmitry",
+    ].map(markActive);
+  } else if (currentLang === "zh") {
+    voiceOptions = [
+      "zh-CN-XiaoxiaoNeural - Xiaoxiao",
+      "zh-CN-XiaoyiNeural - Xiaoyi",
+      "zh-CN-liaoning-XiaobeiNeural - Xiaobei",
+      "zh-CN-shaanxi-XiaoniNeural - Xiaoni",
+      "zh-CN-YunjianNeural - Yunjian",
+      "zh-CN-YunxiNeural - Yunxi",
+      "zh-CN-YunxiaNeural - Yunxia",
+    ].map(markActive);
+  } else if (currentLang === "ko") {
+    voiceOptions = [
+      "ko-KR-SunHiNeural - SunHi",
+      "ko-KR-HyunsuNeural - Hyunsu",
+      "ko-KR-InJoonNeural - InJoon",
+    ].map(markActive);
+  } else if (currentLang === "fr") {
+    voiceOptions = [
+      "fr-FR-HenriNeural - Henri",
+      "fr-FR-VivienneMultilingualNeural - VivienneMultilingual",
+      "fr-FR-DeniseNeural - Denise",
+    ].map(markActive);
+  } else if (currentLang === "es") {
+    voiceOptions = [
+      "es-ES-ElviraNeural - Elvira",
+      "es-ES-AlvaroNeural - Alvaro",
+      "es-MX-DaliaNeural - Dalia",
+      "es-MX-JorgeNeural - Jorge",
     ].map(markActive);
   } else {
     voiceOptions.push(`  ${t("ui.settings.no_voices_for_language")}`);

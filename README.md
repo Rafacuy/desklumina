@@ -7,7 +7,7 @@
 <br>
 
 <p>
-<img src="https://img.shields.io/badge/Version-1.22.3-38BDF8?style=for-the-badge" alt="Version">
+<img src="https://img.shields.io/badge/Version-1.26.4-38BDF8?style=for-the-badge" alt="Version">
 <img src="https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge" alt="License">
 <img src="https://img.shields.io/badge/Runtime-Bun-000000?style=for-the-badge&logo=bun&logoColor=white" alt="Runtime">
 </p>
@@ -554,6 +554,9 @@ Prefer a darker palette? DeskLumina ships a dark mode too:
 
 > [!WARNING]
 > A safety layer sits between DeskLumina and your shell. Anything destructive, `rm -rf` and its relatives, gets intercepted and asks for confirmation first. Nothing dangerous runs silently.
+
+> [!NOTE]
+> DeskLumina ships UI and TTS for multiple languages. The supported list is kept in one place: [Configuration → Supported languages](./docs/configuration.md#supported-languages).
 
 <div align="center">
 <img src="https://capsule-render.vercel.app/api?type=rect&color=timeGradient&height=4" width="100%" alt="">

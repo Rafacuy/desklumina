@@ -86,7 +86,7 @@ export interface UICustomization {
 }
 
 export interface Settings {
-  language: "id" | "en" | "ja";
+  language: "id" | "en" | "ja" | "es" | "fr" | "ko" | "zh" | "ru" | "de" | "pt";
   persona: string;
   features: FeatureFlags;
   webSearch: {

@@ -46,8 +46,6 @@
     "you": "Anda"
   },
   "error": {
-    "fatal_groq": "❌ FATAL: GROQ_API_KEY tidak ditemukan di .env",
-    "fatal_model": "❌ FATAL: MODEL_NAME tidak ditemukan di .env",
     "with_message": "Kesalahan: {message}",
     "network": {
       "title": "Tidak dapat terhubung",

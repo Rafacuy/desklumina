@@ -23,9 +23,16 @@ const MIN_CHUNK_SIZE = 40;
 const MAX_CHUNK_SIZE = 220;
 const BASE_CHUNK_SIZE = 120;
 
-// Voice map for default voices. New languages are a one-line addition and
-// unsupported locales fall back to English instead of Indonesian.
+// keep default voices here so adding a locale doesn't turn into a hunt.
+// unknown locale? English, because at least it speaks.
 const DEFAULT_VOICE_MAP: Record<string, string> = {
+  pt: "pt-BR-FranciscaNeural",
+  de: "de-DE-AmalaNeural",
+  ru: "ru-RU-SvetlanaNeural",
+  zh: "zh-CN-XiaoxiaoNeural",
+  ko: "ko-KR-SunHiNeural",
+  fr: "fr-FR-DeniseNeural",
+  es: "es-ES-ElviraNeural",
   ja: "ja-JP-NanamiNeural",
   en: "en-US-AvaNeural",
   id: "id-ID-GadisNeural",
@@ -45,26 +52,44 @@ class AdaptiveChunker {
   }
 
   private findNaturalBreak(text: string, targetPos: number): number {
-    const searchWindow = 30;
-    const start = Math.max(0, targetPos - searchWindow);
-    const end = Math.min(text.length, targetPos + searchWindow);
-    const segment = text.slice(start, end);
+    //tiny windows are how you get German compounds chopped in half.
+    // widen slowly so normal text stays cheap, weird long words still get a shot.
+    const windowSteps = [30, 60, 120];
 
-    const strongBreaks = [". ", "! ", "? ", "。 ", "！ ", "？ ", "。", "！", "？"];
-    for (const brk of strongBreaks) {
-      const pos = segment.lastIndexOf(brk, targetPos - start);
-      if (pos !== -1) return start + pos + brk.length;
+    for (const searchWindow of windowSteps) {
+      const start = Math.max(0, targetPos - searchWindow);
+      const end = Math.min(text.length, targetPos + searchWindow);
+      const segment = text.slice(start, end);
+      const localTarget = targetPos - start;
+
+      const strongBreaks = [". ", "! ", "? ", "。 ", "！ ", "？ ", "。", "！", "？"];
+      for (const brk of strongBreaks) {
+        const pos = segment.lastIndexOf(brk, localTarget);
+        if (pos !== -1) return start + pos + brk.length;
+      }
+
+      const weakBreaks = [", ", "; ", ": ", " - ", "、 ", "、"];
+      for (const brk of weakBreaks) {
+        const pos = segment.lastIndexOf(brk, localTarget);
+        if (pos !== -1) return start + pos + brk.length;
+      }
+
+      // nearby space after the target still beats butchering a word.
+      const spaceBefore = segment.lastIndexOf(" ", localTarget);
+      const spaceAfter = segment.indexOf(" ", localTarget);
+
+      if (spaceBefore !== -1 || spaceAfter !== -1) {
+        const distBefore = spaceBefore !== -1 ? localTarget - spaceBefore : Infinity;
+        const distAfter = spaceAfter !== -1 ? spaceAfter - localTarget : Infinity;
+        return distBefore <= distAfter
+          ? start + spaceBefore + 1
+          : start + spaceAfter + 1;
+      }
+
+      // still nothing? cast a wider net.
     }
 
-    const weakBreaks = [", ", "; ", ": ", " - ", "、 ", "、"];
-    for (const brk of weakBreaks) {
-      const pos = segment.lastIndexOf(brk, targetPos - start);
-      if (pos !== -1) return start + pos + brk.length;
-    }
-
-    const spacePos = segment.lastIndexOf(" ", targetPos - start);
-    if (spacePos !== -1) return start + spacePos + 1;
-
+    // URLs and monster tokens can still beat us. just cut.
     return targetPos;
   }
 
