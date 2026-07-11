@@ -7,7 +7,7 @@
 <br>
 
 <p>
-<img src="https://img.shields.io/badge/Version-1.26.4-38BDF8?style=for-the-badge" alt="Version">
+<img src="https://img.shields.io/badge/Version-1.26.7-38BDF8?style=for-the-badge" alt="Version">
 <img src="https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge" alt="License">
 <img src="https://img.shields.io/badge/Runtime-Bun-000000?style=for-the-badge&logo=bun&logoColor=white" alt="Runtime">
 </p>

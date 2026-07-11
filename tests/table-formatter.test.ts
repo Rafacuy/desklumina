@@ -67,10 +67,10 @@ describe("formatRofiResponse", () => {
     const result = formatRofiResponse(input, 50);
     
     expect(result.hasTable).toBe(true);
-    expect(result.maxTableWidth).toBe(17);
+    expect(result.maxTableWidth).toBe(18);
 
-    expect(result.lines[1]).toContain("├───┼───┤");
-    expect(result.lines[0]).toContain('<span face="monospace">');
+    expect(result.lines[1]).toContain("├───────┼────────┤");
+    expect(result.lines[0]).toContain('<span face="Iosevka,monospace">');
     expect(result.lines[0]).toContain('Plan');
     expect(result.lines[0]).toContain('Status');
     expect(result.lines[2]).toContain('Earth');
@@ -125,12 +125,16 @@ describe("formatRofiResponse", () => {
     const result = formatRofiResponse(input, 50);
     
     expect(result.hasTable).toBe(true);
+    // Col widths: "惑星"=4, "人口"=4, "地球 🌍"=7 (space counts), "80億"=4.
+    // 2 cols => 2+1 + (4+2)+(7+2) = 18.
+    expect(result.maxTableWidth).toBe(18);
     expect(result.lines[2]).toContain("地球");
     expect(result.lines[2]).toContain("🌍");
     expect(result.lines[2]).toContain("80億");
+    expect(result.lines[0]).toContain('face="Iosevka,monospace"');
   });
 
-  test("does not wrap wide table lines but wraps paragraphs", () => {
+  test("wraps wide table cells independently from paragraphs", () => {
     const veryLongWord = "A".repeat(80);
     const input = `This is a long description that should wrap naturally because it is a normal text paragraph.\n\n| Col 1 | ${veryLongWord} |`;
     
@@ -140,8 +144,9 @@ describe("formatRofiResponse", () => {
     expect(paraLines.length).toBeGreaterThan(1);
     
     const tableLines = result.lines.filter(l => l.includes("face="));
-    expect(tableLines.length).toBe(1);
-    expect(tableLines[0]).toContain(veryLongWord);
+    expect(tableLines.length).toBe(2);
+    expect(tableLines[0]).toContain("A".repeat(40));
+    expect(tableLines[1]).toContain("A".repeat(40));
   });
 
   test("handles multiline paragraphs and large AI responses", () => {
@@ -164,7 +169,7 @@ describe("formatRofiResponse", () => {
     
     expect(result.hasTable).toBe(true);
     expect(result.lines[0]).toContain("Header");
-    expect(result.lines[1]).toContain("├───┤");
+    expect(result.lines[1]).toContain("├────────┤");
   });
 
   test("wraps long paragraphs correctly", () => {
@@ -183,7 +188,7 @@ describe("formatRofiResponse", () => {
     const result = formatRofiResponse(input, 50);
     let dataCount = 0;
     for (const line of result.lines) {
-      if (line.includes('face="monospace"') && !line.includes("│──")) {
+      if (line.includes('face="Iosevka,monospace"') && !line.includes("│──")) {
         dataCount++;
         expect(line).not.toContain("wrap_mode");
         expect(line.match(/\u00A0/g) || []).length;

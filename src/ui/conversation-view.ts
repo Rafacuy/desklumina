@@ -3,8 +3,8 @@ import { t } from "../utils/localization/i18n";
 import { escapeHtml } from "../utils/formatting/format";
 import { copyRawErrorToClipboard } from "../utils/system/clipboard-raw";
 import { logger } from "../logger";
-import { rofiMenu, rofiExpandedResponse } from "./rofi";
-import { formatRofiResponse } from "../utils/formatting/table-formatter";
+import { rofiMenu, rofiExpandedResponse, RESPONSE_PANEL_PADDING_PX } from "./rofi";
+import { formatRofiResponse, TABLE_MONO_ADVANCE_PX } from "../utils/formatting/table-formatter";
 import { cleanAssistantResponse } from "../utils";
 import { settingsManager } from "../core/services/settings-manager";
 
@@ -103,9 +103,9 @@ async function renderPanel(
   let allLines = firstPass.lines;
 
   if (firstPass.hasTable) {
-    const neededWidth = Math.floor(firstPass.maxTableWidth * 8.5) + 100;
+    const neededWidth = Math.floor(firstPass.maxTableWidth * TABLE_MONO_ADVANCE_PX) + RESPONSE_PANEL_PADDING_PX;
     windowWidth = Math.min(1100, Math.max(600, neededWidth));
-    dynamicWrapWidth = Math.floor((windowWidth - 100) / 10);
+    dynamicWrapWidth = Math.floor((windowWidth - RESPONSE_PANEL_PADDING_PX) / 10);
     allLines = formatRofiResponse(rawContent, dynamicWrapWidth).lines;
   }
 

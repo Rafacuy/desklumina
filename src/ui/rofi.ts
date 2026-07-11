@@ -11,7 +11,7 @@ import {
   CATEGORY_I18N_KEYS,
 } from "./error-classify";
 import { copyRawErrorToClipboard } from "../utils/system/clipboard-raw";
-import { formatRofiResponse } from "../utils/formatting/table-formatter";
+import { formatRofiResponse, TABLE_MONO_ADVANCE_PX } from "../utils/formatting/table-formatter";
 import { getThemePath } from "./theme-cache";
 import { rofiDisplay, spawnLoaderOverlay, spawnFallbackToast } from "./rofi-display";
 import { isTTSPlaying, cancelTTS } from "../ai";
@@ -292,6 +292,13 @@ export function dismissResponsePanel(): void {
   }
 }
 
+// Table cell width math relies on the formatter forcing table rows to
+// TABLE_FONT_FAMILY (see table-formatter.ts). The advance below was measured
+// for that family at 10pt on this screen's DPI; bump it if your setup differs.
+export const TABLE_WINDOW_PADDING_PX = 130;
+export const RESPONSE_PANEL_PADDING_PX = 100;
+const MAX_EXPANDED_VISIBLE_LINES = 28;
+
 export async function rofiExpandedResponse(fullMessage: string): Promise<void> {
   const WRAP_WIDTH = 62;
   const cleanMessage = fullMessage
@@ -305,18 +312,17 @@ export async function rofiExpandedResponse(fullMessage: string): Promise<void> {
   let pangoLines = firstPass.lines;
 
   if (firstPass.hasTable) {
-    const neededWidth = Math.floor(firstPass.maxTableWidth * 8.5) + 130;
+    const neededWidth = Math.floor(firstPass.maxTableWidth * TABLE_MONO_ADVANCE_PX) + TABLE_WINDOW_PADDING_PX;
     windowWidth = Math.min(1200, Math.max(750, neededWidth));
-    dynamicWrapWidth = Math.floor((windowWidth - 130) / 10);
+    dynamicWrapWidth = Math.floor((windowWidth - TABLE_WINDOW_PADDING_PX) / 10);
     pangoLines = formatRofiResponse(cleanMessage, dynamicWrapWidth).lines;
   }
 
-  const windowHeight = Math.min(800, Math.round(pangoLines.length * 22 + 80));
+  const visibleLines = Math.min(pangoLines.length, MAX_EXPANDED_VISIBLE_LINES);
 
   const themeOverride = `
     window {
       width: ${windowWidth}px;
-      height: ${windowHeight}px;
       border-radius: 20px;
       border: 1px;
       border-color: @border-subtle;
@@ -327,6 +333,7 @@ export async function rofiExpandedResponse(fullMessage: string): Promise<void> {
       padding: 30px;
     }
     listview {
+      lines: ${visibleLines};
       scrollbar: true;
       fixed-height: true;
       expand: true;
@@ -387,11 +394,15 @@ export async function rofiResponsePanel(
   let allLines = firstPass.lines;
 
   if (firstPass.hasTable) {
-    const neededWidth = Math.floor(firstPass.maxTableWidth * 8.5) + 100;
+    // maxTableWidth is already real-ish cell width; pixels are the only sketchy part.
+    const neededWidth = Math.floor(firstPass.maxTableWidth * TABLE_MONO_ADVANCE_PX) + RESPONSE_PANEL_PADDING_PX;
     windowWidth = Math.min(1100, Math.max(600, neededWidth));
-    dynamicWrapWidth = Math.floor((windowWidth - 100) / 10);
+    dynamicWrapWidth = Math.floor((windowWidth - RESPONSE_PANEL_PADDING_PX) / 10);
     allLines = formatRofiResponse(cleanMessage, dynamicWrapWidth).lines;
   }
+
+  // No height math here, on purpose. The message widget can size itself from
+  // actual rendered text; forcing pixels here was the path to janky panels.
 
   const needsTruncation = allLines.length > MAX_LISTVIEW_LINES;
 

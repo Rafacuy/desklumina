@@ -1,19 +1,5 @@
 import { escapeHtml } from "./format";
-
-function stripTags(s: string): string {
-  let out = "";
-  let insideTag = false;
-  for (const ch of s) {
-    if (ch === "<") {
-      insideTag = true;
-    } else if (ch === ">") {
-      insideTag = false;
-    } else if (!insideTag) {
-      out += ch;
-    }
-  }
-  return out;
-}
+import { stripTags, codePointWidth } from "./text-width";
 
 export function markdownToPango(text: string): string {
   if (!text) {
@@ -91,7 +77,14 @@ export function wrapPangoText(text: string, width: number): string[] {
   
   const openTags: string[] = [];
   
-  const tokenRegex = /(<\/?[a-zA-Z0-9]+[^>]*>|&[a-z]+;|&#[0-9]+;|&#x[0-9a-fA-F]+;|[\u4e00-\u9faf\u3040-\u309f\u30a0-\u30ff\u3000-\u303f]|[^\s\u4e00-\u9faf\u3040-\u309f\u30a0-\u30ff\u3000-\u303f<>&]+|[ \t]+|\n|\r)/g;
+  // CJK/Hangul often skip spaces, so give each wide glyph its own wrap point.
+  // Keep this in sync with WIDE_RANGES, yeah, annoying but safer than guessing.
+  const WIDE_CHAR_CLASS =
+    "\\u1100-\\u115f\\u2e80-\\u303e\\u3041-\\u33ff\\u3400-\\u4dbf\\u4e00-\\u9fff\\ua000-\\ua4cf\\uac00-\\ud7a3\\uf900-\\ufaff\\ufe30-\\ufe4f\\uff00-\\uff60\\uffe0-\\uffe6";
+  const tokenRegex = new RegExp(
+    `(<\\/?[a-zA-Z0-9]+[^>]*>|&[a-z]+;|&#[0-9]+;|&#x[0-9a-fA-F]+;|[${WIDE_CHAR_CLASS}]|[^\\s${WIDE_CHAR_CLASS}<>&]+|[ \\t]+|\\n|\\r)`,
+    "g"
+  );
   
   const tokens = text.match(tokenRegex) || [];
   
@@ -148,8 +141,10 @@ export function wrapPangoText(text: string, width: number): string[] {
     if (token.startsWith("&") && token.endsWith(";")) {
       tokenWidth = 1;
     } else {
-      tokenWidth = Array.from(token).reduce((sum, char) => 
-        sum + (/[^\x00-\xff]/.test(char) ? 2 : 1), 0);
+      tokenWidth = Array.from(token).reduce(
+        (sum, char) => sum + codePointWidth(char.codePointAt(0) ?? 0),
+        0
+      );
     }
     
     if (currentWidth + tokenWidth > width) {
@@ -163,7 +158,7 @@ export function wrapPangoText(text: string, width: number): string[] {
       if (tokenWidth > width && !/^[ \t]+$/.test(token) && !token.startsWith("&")) {
         const chars = Array.from(token);
         for (const char of chars) {
-          const charW = /[^\x00-\xff]/.test(char) ? 2 : 1;
+          const charW = codePointWidth(char.codePointAt(0) ?? 0);
           if (currentWidth + charW > width) {
             currentLine += closeAllTags();
             result.push(currentLine);
@@ -197,4 +192,3 @@ export function wrapPangoText(text: string, width: number): string[] {
   
   return result;
 }
-
